@@ -230,8 +230,8 @@ export const googleAPI = {
     return response.data;
   },
 
-  connect: () => {
-    window.location.href = `${API_BASE_URL}/api/google/auth`;
+  connect: (token) => {
+    window.location.href = `${API_BASE_URL}/api/google/auth?token=${token}`;
   },
 
   disconnect: async () => {

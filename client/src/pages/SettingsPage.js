@@ -139,7 +139,7 @@ export default function SettingsPage() {
         setSuccessMessage('✗ No hay sesión activa');
         return;
       }
-      window.location.href = `/api/google/auth?token=${token}`;
+      window.location.href = `${process.env.REACT_APP_API_BASE_URL || ''}/api/google/auth?token=${token}`;
     } catch (err) {
       console.error('Error conectando:', err);
       setSuccessMessage('✗ Error al conectar');
