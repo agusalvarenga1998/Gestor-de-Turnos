@@ -24,10 +24,11 @@ services:
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: 24h
+      # Usando tus URLs reales detectadas en los logs
       - key: FRONTEND_URL
-        value: https://consultorio-frontend.onrender.com 
+        value: https://consultorio-frontend-4cys.onrender.com 
       - key: CORS_ORIGIN
-        value: https://consultorio-frontend.onrender.com 
+        value: https://consultorio-frontend-4cys.onrender.com 
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
@@ -43,10 +44,8 @@ services:
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: build
-    # REGLA DE RUTAS: Para evitar el 404 en React al refrescar o redirigir
     routes:
-      - type: rewrite
-        source: /*
+      - source: /*
         destination: /index.html
     envVars:
       - key: REACT_APP_API_BASE_URL
