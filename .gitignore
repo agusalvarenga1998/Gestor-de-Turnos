@@ -1,0 +1,33 @@
+# Build
+client/build/
+client/node_modules/
+server/node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+
+# Logs
+*.log
+/tmp/
+
+# IDE
+.claude/
+.vscode/
+.idea/
+
+# Temporary files
+proxy.js
+serve-frontend.js
+start-ngrok-frontend.sh
+
+# Dependencies lock files (optional - some prefer to commit these)
+# package-lock.json
+# yarn.lock
+
+# OS
+.DS_Store
+Thumbs.db

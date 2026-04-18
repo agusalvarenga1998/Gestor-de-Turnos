@@ -1,0 +1,145 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  background-color: var(--light-gray);
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 260px;
+  transition: margin-left var(--transition-base);
+}
+
+.topbar {
+  background: white;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  height: 70px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--spacing-xl);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbarContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.breadcrumb {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--gray);
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+.userMenu {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding-left: var(--spacing-lg);
+  border-left: 1px solid var(--border-color);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--dark-gray);
+  font-size: var(--font-size-sm);
+}
+
+.userRole {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.logoutBtn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+}
+
+.logoutBtn:hover:not(:disabled) {
+  background-color: var(--light-gray);
+  transform: scale(1.1);
+}
+
+.logoutBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mainContent {
+    margin-left: 80px;
+  }
+
+  .topbar {
+    padding: 0 var(--spacing-lg);
+  }
+
+  .topbarRight {
+    gap: var(--spacing-md);
+  }
+
+  .userMenu {
+    gap: var(--spacing-sm);
+    padding-left: var(--spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 70px;
+  }
+
+  .topbar {
+    height: 60px;
+    padding: 0 var(--spacing-md);
+  }
+
+  .userInfo {
+    display: none;
+  }
+
+  .topbarContent {
+    padding: 0;
+  }
+
+  .content {
+    padding: var(--spacing-md);
+  }
+}

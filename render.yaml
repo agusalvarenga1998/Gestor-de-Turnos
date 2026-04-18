@@ -1,0 +1,54 @@
+services:
+  - type: web
+    name: consultorio-medico-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        fromDatabase:
+          name: consultorio-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: consultorio-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: consultorio-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: consultorio-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: consultorio-db
+          property: password
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  - type: web
+    name: consultorio-medico-frontend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd client && npm install && npm run build
+    startCommand: cd client && npx serve -s build -l 3000
+    envVars:
+      - key: REACT_APP_API_BASE_URL
+        value: https://consultorio-medico-backend.onrender.com
+
+databases:
+  - name: consultorio-db
+    databaseName: consultorio_medico
+    user: consultorio_user
+    region: oregon

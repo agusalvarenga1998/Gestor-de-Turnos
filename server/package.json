@@ -1,0 +1,47 @@
+{
+  "name": "consultorio-medico-server",
+  "version": "1.0.0",
+  "description": "Backend para Sistema de Gestión de Turnos Médicos",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "db:setup": "node src/db/setup.js",
+    "db:init": "node src/db/init.js",
+    "db:seed": "node src/db/seed.js",
+    "db:reset": "npm run db:setup && npm run db:init && npm run db:seed",
+    "test": "jest --detectOpenHandles",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "medical",
+    "appointments",
+    "turnos",
+    "consultorio"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.15.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.0",
+    "googleapis": "^171.4.0",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "mercadopago": "^2.12.0",
+    "nodemailer": "^8.0.5",
+    "pg": "^8.11.0",
+    "uuid": "^9.0.1",
+    "ws": "^8.15.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2"
+  }
+}

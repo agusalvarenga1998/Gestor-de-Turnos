@@ -1,0 +1,63 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0066cc 0%, #4d94ff 100%);
+}
+
+.content {
+  text-align: center;
+  color: white;
+}
+
+.code {
+  font-size: 5rem;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.title {
+  font-size: 2rem;
+  margin: var(--spacing-md) 0;
+  font-weight: 600;
+}
+
+.message {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-xl);
+  opacity: 0.9;
+}
+
+.button {
+  display: inline-block;
+  background-color: white;
+  color: var(--primary-color);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-lg);
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  opacity: 0.95;
+}
+
+@media (max-width: 768px) {
+  .code {
+    font-size: 3rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .message {
+    font-size: var(--font-size-base);
+  }
+}

@@ -1,0 +1,461 @@
+.pageWrapper {
+  min-height: 100vh;
+  background-color: #f1f5f9;
+  font-family: 'Inter', sans-serif;
+}
+
+.navbar {
+  background: #ffffff;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navLogo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: #1e3a8a;
+}
+
+.navLogo img {
+  height: 55px;
+  width: auto;
+}
+
+.hero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: white;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.heroContent h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.heroContent span {
+  color: #93c5fd;
+}
+
+.mainContent {
+  max-width: 1200px;
+  margin: -3rem auto 4rem;
+  padding: 0 2rem;
+}
+
+.menuGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.menuCard {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.menuCard:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.cardIcon {
+  font-size: 3rem;
+}
+
+.cardInfo h3 {
+  font-size: 1.5rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.bookingSplitLayout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.formCard {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.stickyMap {
+  position: sticky;
+  top: 100px;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.mapFrame {
+  height: 450px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 1rem 0;
+  border: 1px solid #e2e8f0;
+}
+
+.sectionTitle {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fullWidth {
+  grid-column: span 2;
+}
+
+.formGroup label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.formGroup input, .formGroup select, .datePickerInput {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 1rem;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  margin-top: 2rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.submitBtn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.paymentSummary {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-top: 2rem;
+}
+
+.paymentRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  color: #64748b;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #cbd5e1;
+  font-weight: 800;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.backBtn:hover {
+  color: #1e3a8a;
+}
+
+.mapHint {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.errorMsg {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.paymentNotice {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 12px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Services Selection */
+.servicesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.serviceOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #eef2f6;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.serviceOption:hover {
+  border-color: #3b82f6;
+  background: #f8faff;
+}
+
+.serviceSelected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.serviceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.serviceName {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 15px;
+}
+
+.serviceMeta {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.serviceCheck {
+  color: #3b82f6;
+  font-weight: 900;
+  font-size: 18px;
+  width: 24px;
+  text-align: right;
+}
+
+.emptyMsg {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+}
+
+@media (max-width: 1024px) {
+  .menuGrid {
+    grid-template-columns: 1fr; /* Una sola columna en móvil */
+    gap: 1.5rem;
+  }
+
+  .menuCard {
+    padding: 1.5rem; /* Menos padding para que quepa mejor el texto */
+  }
+
+  .heroContent h1 {
+    font-size: 2rem; /* Título más pequeño en móvil */
+  }
+
+  .bookingSplitLayout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .bookingFormSide {
+    order: 2;
+  }
+
+  .bookingMapSide {
+    order: 1;
+    margin-bottom: 1rem;
+  }
+
+  .stickyMap {
+    position: static;
+    padding: 1rem;
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+  }
+
+  .mapFrame {
+    height: 300px; /* Mapa más pequeño en móvil */
+  }
+
+  .mainContent {
+    padding: 0 1rem;
+    margin-top: -2rem;
+  }
+
+  .navContent {
+    padding: 0 1rem;
+  }
+
+  .formCard {
+    padding: 1.2rem; /* Menos padding lateral en móvil */
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .formContainer {
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 2.5rem 1rem;
+  }
+
+  .heroContent h1 {
+    font-size: 1.8rem;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr !important; /* Forzar una columna */
+    gap: 1rem;
+  }
+
+  .fullWidth {
+    grid-column: span 1 !important;
+  }
+
+  .mainContent {
+    padding: 0 0.8rem; /* Margen externo mínimo para ganar espacio */
+  }
+
+  .submitBtn {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+
+.paymentSummary {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.paymentSummary h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.paymentRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.highlightRow {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.totalRow {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid #cbd5e1;
+  color: #2563eb;
+  font-size: 1.15rem;
+}
+
+.totalRow strong {
+  color: #1e3a8a;
+  font-weight: 800;
+}
+
+.paymentNotice {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+  text-align: center;
+}
