@@ -219,7 +219,18 @@ async function initDatabase(retries = 3) {
       VALUES ($1, $2, 'Administrador Central')
       ON CONFLICT (email) DO NOTHING
     `, [adminEmail, hashedPass]);
-    console.log('✓ Usuario admin por defecto verificado/creado');
+    // Aprobar automáticamente a cualquier doctor pendiente (Fix temporal)
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 15);
+    await client.query(`
+      UPDATE doctors 
+      SET status = 'approved', 
+          subscription_status = 'trial', 
+          trial_ends_at = $1,
+          subscription_expires_at = $1
+      WHERE status = 'pending'
+    `, [trialEndsAt]);
+    console.log('✓ Doctores pendientes aprobados automáticamente');
 
     console.log('\n✅ Base de datos inicializada correctamente!');
     process.exit(0);
