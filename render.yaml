@@ -44,6 +44,11 @@ services:
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: build
+    # REGLA DE RUTAS: Para evitar el 404 en React al refrescar o redirigir
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: REACT_APP_API_BASE_URL
         value: https://consultorio-backend-r2su.onrender.com
