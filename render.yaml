@@ -16,9 +16,10 @@ services:
         value: 10000
       - key: HOST
         value: 0.0.0.0
-      # Al ser cuenta Free, debes pegar la "External Database URL" aquí manualmente en el dashboard
       - key: DATABASE_URL
         sync: false 
+      - key: GOOGLE_AUTH_REDIRECT_URI
+        value: https://consultorio-backend-r2su.onrender.com/api/auth/google/callback
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -45,9 +46,6 @@ services:
     staticPublishPath: build
     envVars:
       - key: REACT_APP_API_BASE_URL
-        fromService:
-          type: web
-          name: consultorio-backend
-          property: host
+        value: https://consultorio-backend-r2su.onrender.com
       - key: CI
         value: false
