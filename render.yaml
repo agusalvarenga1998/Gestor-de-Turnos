@@ -3,6 +3,7 @@ databases:
     databaseName: consultorio_medico
     user: consultorio_user
     plan: free
+    region: ohio # Importante: misma región que el backend
 
 services:
   # 1. Web Service para el Backend (Node.js)
