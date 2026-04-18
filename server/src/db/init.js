@@ -67,6 +67,7 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS address TEXT,
       ADD COLUMN IF NOT EXISTS booking_fee DECIMAL(10,2) DEFAULT 0,
       ADD COLUMN IF NOT EXISTS appointment_price DECIMAL(10,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS accumulated_debt DECIMAL(10,2) DEFAULT 0,
       ADD COLUMN IF NOT EXISTS google_refresh_token TEXT,
       ADD COLUMN IF NOT EXISTS google_calendar_id TEXT,
       ADD COLUMN IF NOT EXISTS google_calendar_connected BOOLEAN DEFAULT false;
@@ -219,18 +220,7 @@ async function initDatabase(retries = 3) {
       VALUES ($1, $2, 'Administrador Central')
       ON CONFLICT (email) DO NOTHING
     `, [adminEmail, hashedPass]);
-    // Aprobar automáticamente a cualquier doctor pendiente (Fix temporal)
-    const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 15);
-    await client.query(`
-      UPDATE doctors 
-      SET status = 'approved', 
-          subscription_status = 'trial', 
-          trial_ends_at = $1,
-          subscription_expires_at = $1
-      WHERE status = 'pending'
-    `, [trialEndsAt]);
-    console.log('✓ Doctores pendientes aprobados automáticamente');
+    console.log('✓ Usuario admin por defecto verificado/creado');
 
     console.log('\n✅ Base de datos inicializada correctamente!');
     process.exit(0);
