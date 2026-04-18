@@ -38,9 +38,8 @@ services:
         sync: false
 
   # 2. Static Site para el Frontend (React)
-  - type: web
+  - type: static
     name: consultorio-frontend
-    env: static
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: build
