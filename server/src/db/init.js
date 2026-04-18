@@ -208,6 +208,19 @@ async function initDatabase(retries = 3) {
       );
     `);
 
+    // Crear usuario admin por defecto
+    const adminEmail = 'admin@example.com';
+    const adminPass = 'adminpass123';
+    const bcrypt = (await import('bcryptjs')).default;
+    const hashedPass = await bcrypt.hash(adminPass, 10);
+
+    await client.query(`
+      INSERT INTO admins (email, password_hash, name)
+      VALUES ($1, $2, 'Administrador Central')
+      ON CONFLICT (email) DO NOTHING
+    `, [adminEmail, hashedPass]);
+    console.log('✓ Usuario admin por defecto verificado/creado');
+
     console.log('\n✅ Base de datos inicializada correctamente!');
     process.exit(0);
   } catch (error) {
