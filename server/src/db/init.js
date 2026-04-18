@@ -16,13 +16,13 @@ const poolConfig = process.env.DATABASE_URL
 
 const pool = new Pool(poolConfig);
 
-async function initDatabase() {
-  const client = await pool.connect();
-
+async function initDatabase(retries = 3) {
+  let client;
   try {
+    client = await pool.connect();
     console.log('📊 Inicializando base de datos...\n');
-
-    // Tabla de doctores
+    
+    // ... (resto del código de las tablas)
     await client.query(`
       CREATE TABLE IF NOT EXISTS doctors (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -52,7 +52,6 @@ async function initDatabase() {
     `);
     console.log('✓ Tabla doctors creada');
 
-    // Agregar columnas a doctors si no existen (para migraciones)
     await client.query(`
       ALTER TABLE doctors
       ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE,
@@ -69,9 +68,7 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS google_calendar_id TEXT,
       ADD COLUMN IF NOT EXISTS google_calendar_connected BOOLEAN DEFAULT false;
     `);
-    console.log('✓ Columnas financieras y Google Calendar agregadas a doctors');
 
-    // Tabla de pacientes
     await client.query(`
       CREATE TABLE IF NOT EXISTS patients (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -88,9 +85,7 @@ async function initDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('✓ Tabla patients creada');
 
-    // Tabla de turnos/citas
     await client.query(`
       CREATE TABLE IF NOT EXISTS appointments (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -110,9 +105,20 @@ async function initDatabase() {
         UNIQUE(doctor_id, appointment_date, appointment_time)
       );
     `);
-    console.log('✓ Tabla appointments creada');
 
-    // Agregar columnas necesarias si no existen
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS insurance_companies (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID REFERENCES doctors(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        additional_fee DECIMAL(10,2) DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(doctor_id, name)
+      );
+    `);
+
     await client.query(`
       ALTER TABLE appointments
       ADD COLUMN IF NOT EXISTS google_event_id TEXT,
@@ -122,9 +128,7 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS appointment_code VARCHAR(10),
       ADD COLUMN IF NOT EXISTS delayed_at TIMESTAMP;
     `);
-    console.log('✓ Columnas adicionales agregadas a appointments');
 
-    // Tabla de disponibilidad del doctor
     await client.query(`
       CREATE TABLE IF NOT EXISTS doctor_availability (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -138,9 +142,7 @@ async function initDatabase() {
         UNIQUE(doctor_id, day_of_week, start_time)
       );
     `);
-    console.log('✓ Tabla doctor_availability creada');
 
-    // Tabla de vacaciones
     await client.query(`
       CREATE TABLE IF NOT EXISTS doctor_vacation (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -151,9 +153,7 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('✓ Tabla doctor_vacation creada');
 
-    // Tabla de notificaciones
     await client.query(`
       CREATE TABLE IF NOT EXISTS notifications (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -165,24 +165,7 @@ async function initDatabase() {
         is_sent BOOLEAN DEFAULT false
       );
     `);
-    console.log('✓ Tabla notifications creada');
 
-    // Tabla de obras sociales (asociadas a cada doctor)
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS insurance_companies (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        doctor_id UUID REFERENCES doctors(id) ON DELETE CASCADE,
-        name VARCHAR(255) NOT NULL,
-        additional_fee DECIMAL(10,2) DEFAULT 0,
-        is_active BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(doctor_id, name)
-      );
-    `);
-    console.log('✓ Tabla insurance_companies creada');
-
-    // Tabla intermedia para pacientes y sus obras sociales
     await client.query(`
       CREATE TABLE IF NOT EXISTS patient_insurances (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -193,19 +176,13 @@ async function initDatabase() {
         UNIQUE(patient_id, insurance_company_id)
       );
     `);
-    console.log('✓ Tabla patient_insurances creada');
 
-    // Crear índices
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_appointments_doctor ON appointments(doctor_id);
       CREATE INDEX IF NOT EXISTS idx_appointments_patient ON appointments(patient_id);
       CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(appointment_date);
-      CREATE INDEX IF NOT EXISTS idx_patients_doctor ON patients(doctor_id);
-      CREATE INDEX IF NOT EXISTS idx_notifications_appointment ON notifications(appointment_id);
     `);
-    console.log('✓ Índices creados');
 
-    // Tabla de administradores
     await client.query(`
       CREATE TABLE IF NOT EXISTS admins (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -215,9 +192,7 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('✓ Tabla admins creada');
 
-    // Tabla de suscripciones
     await client.query(`
       CREATE TABLE IF NOT EXISTS subscriptions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -229,16 +204,19 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('✓ Tabla subscriptions creada');
 
     console.log('\n✅ Base de datos inicializada correctamente!');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error al inicializar base de datos:', error.message);
+    console.error(`❌ Error en intento (${4 - retries}/3):`, error.message);
+    if (retries > 0) {
+      console.log('Retentando en 5 segundos...');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      return initDatabase(retries - 1);
+    }
     process.exit(1);
   } finally {
-    await client.release();
-    await pool.end();
+    if (client) client.release();
   }
 }
 
