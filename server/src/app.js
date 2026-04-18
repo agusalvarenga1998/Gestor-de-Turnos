@@ -103,7 +103,7 @@ app.use((req, res) => {
 
 // Variables globales
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || 'localhost';
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Iniciar servidor
 httpServer.listen(PORT, HOST, () => {

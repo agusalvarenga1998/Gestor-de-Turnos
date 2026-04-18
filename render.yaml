@@ -1,54 +1,64 @@
 services:
-  - type: web
-    name: consultorio-medico-backend
-    env: node
-    region: oregon
+  # 1. Base de Datos PostgreSQL
+  - type: db
+    name: consultorio-db
+    databaseName: consultorio_medico
+    user: consultorio_user
     plan: free
-    buildCommand: cd server && npm install
-    startCommand: cd server && npm start
+
+  # 2. Web Service para el Backend (Node.js)
+  - type: web
+    name: consultorio-backend
+    env: node
+    plan: free # Puedes cambiarlo a starter para que no se "duerma"
+    region: ohio
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm run db:init && npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DB_HOST
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_URL
         fromDatabase:
           name: consultorio-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: consultorio-db
-          property: port
-      - key: DB_NAME
-        fromDatabase:
-          name: consultorio-db
-          property: database
-      - key: DB_USER
-        fromDatabase:
-          name: consultorio-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: consultorio-db
-          property: password
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: FRONTEND_URL
+        value: https://consultorio-frontend.onrender.com # Ajustar según tu URL final
+      - key: CORS_ORIGIN
+        value: https://consultorio-frontend.onrender.com # Ajustar según tu URL final
+      # Claves de Google y SMTP (deberás ponerlas en el dashboard de Render)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASSWORD
         sync: false
-      - key: JWT_SECRET
-        sync: false
 
+  # 3. Static Site para el Frontend (React)
   - type: web
-    name: consultorio-medico-frontend
-    env: node
-    region: oregon
+    name: consultorio-frontend
+    env: static
     plan: free
-    buildCommand: cd client && npm install && npm run build
-    startCommand: cd client && npx serve -s build -l 3000
+    region: ohio
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
     envVars:
       - key: REACT_APP_API_BASE_URL
-        value: https://consultorio-medico-backend.onrender.com
-
-databases:
-  - name: consultorio-db
-    databaseName: consultorio_medico
-    user: consultorio_user
-    region: oregon
+        fromService:
+          type: web
+          name: consultorio-backend
+          property: host
+      - key: CI
+        value: false
