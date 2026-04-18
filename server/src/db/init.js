@@ -68,6 +68,10 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS booking_fee DECIMAL(10,2) DEFAULT 0,
       ADD COLUMN IF NOT EXISTS appointment_price DECIMAL(10,2) DEFAULT 0,
       ADD COLUMN IF NOT EXISTS accumulated_debt DECIMAL(10,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS latitude DECIMAL(10,8),
+      ADD COLUMN IF NOT EXISTS longitude DECIMAL(11,8),
+      ADD COLUMN IF NOT EXISTS mp_connected BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS mp_access_token TEXT,
       ADD COLUMN IF NOT EXISTS google_refresh_token TEXT,
       ADD COLUMN IF NOT EXISTS google_calendar_id TEXT,
       ADD COLUMN IF NOT EXISTS google_calendar_connected BOOLEAN DEFAULT false;
