@@ -1,10 +1,3 @@
-databases:
-  - name: consultorio-db
-    databaseName: consultorio_medico
-    user: consultorio_user
-    plan: free
-    region: ohio # Importante: misma región que el backend
-
 services:
   # 1. Web Service para el Backend (Node.js)
   - type: web
@@ -23,10 +16,9 @@ services:
         value: 10000
       - key: HOST
         value: 0.0.0.0
+      # Al ser cuenta Free, debes pegar la "External Database URL" aquí manualmente en el dashboard
       - key: DATABASE_URL
-        fromDatabase:
-          name: consultorio-db
-          property: connectionString
+        sync: false 
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
