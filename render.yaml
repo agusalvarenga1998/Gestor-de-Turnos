@@ -47,7 +47,6 @@ services:
   - type: web
     name: consultorio-frontend
     env: static
-    plan: free
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: build
