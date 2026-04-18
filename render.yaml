@@ -1,16 +1,15 @@
-services:
-  # 1. Base de Datos PostgreSQL
-  - type: db
-    name: consultorio-db
+databases:
+  - name: consultorio-db
     databaseName: consultorio_medico
     user: consultorio_user
     plan: free
 
-  # 2. Web Service para el Backend (Node.js)
+services:
+  # 1. Web Service para el Backend (Node.js)
   - type: web
     name: consultorio-backend
     env: node
-    plan: free # Puedes cambiarlo a starter para que no se "duerma"
+    plan: free 
     region: ohio
     rootDir: server
     buildCommand: npm install
@@ -32,10 +31,9 @@ services:
       - key: JWT_EXPIRES_IN
         value: 24h
       - key: FRONTEND_URL
-        value: https://consultorio-frontend.onrender.com # Ajustar según tu URL final
+        value: https://consultorio-frontend.onrender.com 
       - key: CORS_ORIGIN
-        value: https://consultorio-frontend.onrender.com # Ajustar según tu URL final
-      # Claves de Google y SMTP (deberás ponerlas en el dashboard de Render)
+        value: https://consultorio-frontend.onrender.com 
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
@@ -45,7 +43,7 @@ services:
       - key: SMTP_PASSWORD
         sync: false
 
-  # 3. Static Site para el Frontend (React)
+  # 2. Static Site para el Frontend (React)
   - type: web
     name: consultorio-frontend
     env: static
