@@ -29,6 +29,8 @@ services:
         value: https://consultorio-frontend-4cys.onrender.com 
       - key: CORS_ORIGIN
         value: https://consultorio-frontend-4cys.onrender.com 
+      - key: BACKEND_WEBHOOK_URL
+        value: https://consultorio-backend-r2su.onrender.com/api/webhooks
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET

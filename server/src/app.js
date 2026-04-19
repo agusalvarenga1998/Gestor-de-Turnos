@@ -83,7 +83,7 @@ app.use('/api/availability', availabilityRoutes);
 app.use('/api/google', googleCalendarRoutes);
 app.use('/api/insurance', insuranceRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/appointments/webhook', webhookRoutes);
+app.use('/api/webhooks', webhookRoutes);
 app.use('/api/services', serviceRoutes);
 
 // Configurar WebSocket
