@@ -1,5 +1,6 @@
 import * as appointmentService from '../services/appointmentService.js';
 import * as availabilityService from '../services/availabilityService.js';
+import { query } from '../db/config.js';
 
 // Crear una nueva cita
 export const createAppointment = async (req, res) => {
