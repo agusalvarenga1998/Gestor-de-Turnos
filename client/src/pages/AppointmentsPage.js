@@ -3,10 +3,12 @@ import axios from 'axios';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
 import { appointmentAPI, patientAPI, insuranceAPI } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
 import { useWebSocketContext } from '../hooks/useWebSocketContext';
 import styles from './AppointmentsPage.module.css';
 
 export default function AppointmentsPage() {
+  const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +101,7 @@ export default function AppointmentsPage() {
   const loadAvailableSlots = async (date, duration = 30) => {
     try {
       setLoadingSlots(true);
-      const response = await appointmentAPI.getPublicAvailableSlots(localStorage.getItem('doctorId') || '', date, duration);
+      const response = await appointmentAPI.getPublicAvailableSlots(user?.id || '', date, duration);
       if (response.success) {
         setAvailableSlots(response.slots || []);
       }
