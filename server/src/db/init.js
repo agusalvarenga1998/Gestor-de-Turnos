@@ -139,7 +139,15 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS confirmation_token UUID DEFAULT gen_random_uuid(),
       ADD COLUMN IF NOT EXISTS delay_reason TEXT,
       ADD COLUMN IF NOT EXISTS appointment_code VARCHAR(10),
-      ADD COLUMN IF NOT EXISTS delayed_at TIMESTAMP;
+      ADD COLUMN IF NOT EXISTS delayed_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS duration_minutes INTEGER DEFAULT 30,
+      ADD COLUMN IF NOT EXISTS total_price DECIMAL(10,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS booking_fee_paid DECIMAL(10,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS coverage_amount DECIMAL(10,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS system_fee DECIMAL(10,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'pending',
+      ADD COLUMN IF NOT EXISTS total_amount DECIMAL(10,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE SET NULL;
     `);
 
     await client.query(`
