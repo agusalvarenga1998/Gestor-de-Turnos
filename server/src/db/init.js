@@ -95,6 +95,11 @@ async function initDatabase(retries = 3) {
     `);
 
     await client.query(`
+      ALTER TABLE patients
+      ADD COLUMN IF NOT EXISTS document_number VARCHAR(50);
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS appointments (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
