@@ -134,8 +134,8 @@ export default function InsurancePage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>Obras Sociales</h1>
-            <p className={styles.subtitle}>Gestiona tus obras sociales y montos adicionales</p>
+            <h1 className={styles.title}>Convenios y Beneficios</h1>
+            <p className={styles.subtitle}>Gestiona tus convenios y montos de descuento</p>
           </div>
           <button
             onClick={() => {
@@ -145,7 +145,7 @@ export default function InsurancePage() {
             className={styles.addBtn}
           >
             <Icon name="plus" size={18} color="currentColor" />
-            Nueva Obra Social
+            Nuevo Convenio
           </button>
         </div>
 
@@ -156,7 +156,7 @@ export default function InsurancePage() {
           <div className={styles.modal}>
             <div className={styles.modalContent}>
               <div className={styles.modalHeader}>
-                <h2>{editingId ? 'Editar Obra Social' : 'Nueva Obra Social'}</h2>
+                <h2>{editingId ? 'Editar Convenio' : 'Nuevo Convenio'}</h2>
                 <button
                   onClick={() => {
                     setShowForm(false);
@@ -170,19 +170,19 @@ export default function InsurancePage() {
 
               <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
-                  <label>Nombre*</label>
+                  <label>Convenio / Beneficio*</label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleFormChange}
-                    placeholder="Ej: OSDE, Swiss Medical, etc."
+                    placeholder="Ej: OSDE, Cupón, Descuento Especial, etc."
                     required
                   />
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Monto Adicional ($)</label>
+                  <label>Monto a Descontar ($)</label>
                   <input
                     type="number"
                     name="additional_fee"
@@ -192,12 +192,12 @@ export default function InsurancePage() {
                     step="0.01"
                     min="0"
                   />
-                  <small>Monto adicional que cobras por esta obra social</small>
+                  <small>Monto que se descontará del costo total si el cliente usa este convenio</small>
                 </div>
 
                 <div className={styles.formActions}>
                   <button type="submit" className={styles.submitBtn}>
-                    {editingId ? 'Guardar Cambios' : 'Crear Obra Social'}
+                    {editingId ? 'Guardar Cambios' : 'Crear Convenio'}
                   </button>
                   <button
                     type="button"
@@ -234,8 +234,8 @@ export default function InsurancePage() {
             <table className={styles.insuranceTable}>
               <thead>
                 <tr>
-                  <th>Nombre</th>
-                  <th>Monto Adicional</th>
+                  <th>Convenio</th>
+                  <th>Monto Descuento</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -270,7 +270,7 @@ export default function InsurancePage() {
         )}
 
         <div className={styles.footer}>
-          <p>Total: <strong>{insurances.length}</strong> obra(s) social(es)</p>
+          <p>Total: <strong>{insurances.length}</strong> convenio(s)</p>
         </div>
       </div>
     </DoctorLayout>
