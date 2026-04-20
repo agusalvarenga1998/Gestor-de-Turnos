@@ -409,9 +409,17 @@ router.post('/public/create', async (req, res) => {
 // Ruta pública para buscar por datos del paciente (sin autenticación)
 router.post('/public/search', async (req, res) => {
   try {
-    const { name, lastName, documentNumber } = req.body;
+    const { name, lastName, documentNumber, doctorId } = req.body;
 
-    // Validar que al menos un campo esté completo
+    // Validar doctorId (ahora requerido para precisión)
+    if (!doctorId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Debes seleccionar el profesional / local'
+      });
+    }
+
+    // Validar que al menos un dato del paciente esté completo
     if ((!name || name.length < 2) && (!lastName || lastName.length < 2) && !documentNumber) {
       return res.status(400).json({
         success: false,
@@ -419,34 +427,30 @@ router.post('/public/search', async (req, res) => {
       });
     }
 
-    console.log('🔓 Búsqueda pública de cita por:', { name, lastName, documentNumber });
+    console.log('🔓 Búsqueda pública de cita por:', { name, lastName, documentNumber, doctorId });
 
-    let whereConditions = [];
-    let params = [];
-    let paramIndex = 1;
-
-    // Construir condiciones dinámicamente
+    let patientConditions = [];
     if (name && name.length >= 2) {
-      whereConditions.push(`LOWER(p.name) LIKE LOWER($${paramIndex})`);
+      patientConditions.push(`LOWER(p.name) LIKE LOWER($${paramIndex})`);
       params.push(`%${name}%`);
       paramIndex++;
     }
 
     if (lastName && lastName.length >= 2) {
-      whereConditions.push(`LOWER(p.name) LIKE LOWER($${paramIndex})`);
+      patientConditions.push(`LOWER(p.name) LIKE LOWER($${paramIndex})`);
       params.push(`%${lastName}%`);
       paramIndex++;
     }
 
     if (documentNumber && documentNumber.length > 0) {
-      whereConditions.push(`LOWER(p.document_number) LIKE LOWER($${paramIndex})`);
+      patientConditions.push(`LOWER(p.document_number) LIKE LOWER($${paramIndex})`);
       params.push(`%${documentNumber}%`);
       paramIndex++;
     }
 
-    const whereClause = whereConditions.length > 0
-      ? whereConditions.join(' OR ')
-      : '1=1';
+    const patientClause = patientConditions.length > 0
+      ? `AND (${patientConditions.join(' AND ')})`
+      : '';
 
     // Buscar citas programadas del paciente
     const result = await query(
@@ -466,8 +470,8 @@ router.post('/public/search', async (req, res) => {
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       JOIN doctors d ON a.doctor_id = d.id
-      WHERE (${whereClause})
-      AND a.status = 'scheduled'
+      WHERE a.doctor_id = $1 ${patientClause}
+      AND a.status IN ('scheduled', 'pending', 'pending_payment')
       ORDER BY a.appointment_date DESC, a.appointment_time DESC
       LIMIT 1`,
       params
