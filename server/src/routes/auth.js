@@ -358,12 +358,29 @@ router.get('/google/callback', async (req, res) => {
 
       // Si existe por email pero sin google_id, vinculamos
       if (!doctor.google_id) {
-        console.log('🔗 Vinculando google_id a cuenta existente...');
+        console.log('🔗 Vinculando google_id y tokens a cuenta existente...');
         const updateResult = await query(
-          `UPDATE doctors SET google_id = $1, updated_at = CURRENT_TIMESTAMP
-           WHERE id = $2
+          `UPDATE doctors SET 
+            google_id = $1, 
+            google_access_token = $2, 
+            google_refresh_token = $3,
+            updated_at = CURRENT_TIMESTAMP
+           WHERE id = $4
            RETURNING *`,
-          [userInfo.id, doctor.id]
+          [userInfo.id, userInfo.tokens.access_token, userInfo.tokens.refresh_token, doctor.id]
+        );
+        doctor = updateResult.rows[0];
+      } else {
+        // Si ya tenía google_id, igual actualizamos los tokens por si cambiaron o para asegurar que tenemos el refresh_token
+        console.log('🔄 Actualizando tokens de Google...');
+        const updateResult = await query(
+          `UPDATE doctors SET 
+            google_access_token = $1, 
+            google_refresh_token = COALESCE($2, google_refresh_token),
+            updated_at = CURRENT_TIMESTAMP
+           WHERE id = $3
+           RETURNING *`,
+          [userInfo.tokens.access_token, userInfo.tokens.refresh_token, doctor.id]
         );
         doctor = updateResult.rows[0];
       }
@@ -372,10 +389,10 @@ router.get('/google/callback', async (req, res) => {
       console.log('➕ Creando nuevo doctor con Google...');
       const newDoctorId = uuidv4();
       const insertResult = await query(
-        `INSERT INTO doctors (id, google_id, email, name, status, subscription_status)
-         VALUES ($1, $2, $3, $4, 'pending', 'pending')
+        `INSERT INTO doctors (id, google_id, email, name, google_access_token, google_refresh_token, status, subscription_status)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'pending')
          RETURNING id, email, name, specialization, clinic_name, google_id, status, subscription_status`,
-        [newDoctorId, userInfo.id, userInfo.email, userInfo.name]
+        [newDoctorId, userInfo.id, userInfo.email, userInfo.name, userInfo.tokens.access_token, userInfo.tokens.refresh_token]
       );
       doctor = insertResult.rows[0];
       console.log('✓ Doctor creado (pendiente de aprobación)');

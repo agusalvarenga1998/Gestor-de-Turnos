@@ -2,12 +2,11 @@ import { google } from 'googleapis';
 
 // Función para obtener el cliente OAuth2 configurado
 const getOAuth2Client = () => {
+  // Priorizamos GOOGLE_AUTH_REDIRECT_URI para evitar conflictos con otras variables
   const redirectUri = process.env.GOOGLE_AUTH_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI;
   
   if (!redirectUri) {
-    console.error('❌ ERROR CRÍTICO: No se ha configurado GOOGLE_AUTH_REDIRECT_URI o GOOGLE_REDIRECT_URI en las variables de entorno.');
-  } else {
-    console.log(`📡 Usando Redirect URI: ${redirectUri.substring(0, 20)}...`);
+    console.error('❌ ERROR CRÍTICO: No se ha configurado la URL de redirección de Google.');
   }
 
   return new google.auth.OAuth2(
@@ -17,22 +16,22 @@ const getOAuth2Client = () => {
   );
 };
 
-// Generar URL de autorización para Login/Registro con Google
+// Generar URL de autorización
 export const getAuthUrl = () => {
   const oauth2Client = getOAuth2Client();
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar.events',
     'openid'
   ];
 
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: scopes,
-    prompt: 'consent'
+    prompt: 'consent' // Forzar el consentimiento para asegurar que recibimos el refresh_token
   });
-
-  console.log('🔗 URL de autenticación generada:', url);
 
   return url;
 };
@@ -41,16 +40,19 @@ export const getAuthUrl = () => {
 export const getUserInfo = async (code) => {
   try {
     const oauth2Client = getOAuth2Client();
-    console.log('🔐 Intercambiando code por tokens...');
-
+    
     // Intercambiar código por tokens
+    console.log('🔐 Solicitando tokens a Google...');
     const { tokens } = await oauth2Client.getToken(code);
+    
+    if (!tokens || !tokens.access_token) {
+      console.error('❌ Google नहीं devolvió un access_token válido');
+      throw new Error('No se recibió el token de acceso');
+    }
+
     oauth2Client.setCredentials(tokens);
 
-    console.log('✓ Tokens obtenidos');
-
     // Obtener información del usuario
-    console.log('👤 Obteniendo información del usuario...');
     const oauth2 = google.oauth2({
       auth: oauth2Client,
       version: 'v2'
@@ -58,16 +60,18 @@ export const getUserInfo = async (code) => {
 
     const userInfo = await oauth2.userinfo.get();
 
-    console.log('✓ Información obtenida');
-
     return {
       id: userInfo.data.id,
       email: userInfo.data.email,
       name: userInfo.data.name,
-      picture: userInfo.data.picture
+      picture: userInfo.data.picture,
+      tokens: tokens // Devolvemos los tokens para guardarlos si es necesario (calendario)
     };
   } catch (error) {
-    console.error('❌ Error obteniendo información de Google:', error);
-    throw new Error('No se pudo autenticar con Google');
+    console.error('❌ Error en el proceso de autenticación de Google:', error.message);
+    if (error.response) {
+      console.error('Detalle del error:', error.response.data);
+    }
+    throw error;
   }
 };
