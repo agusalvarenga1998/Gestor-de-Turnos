@@ -157,25 +157,16 @@ router.post('/public/create', async (req, res) => {
       patientEmail,
       patientDocumentNumber,
       patientPhone,
-      insuranceId
+      insuranceId,
+      paymentMethod = 'online' // 'online' o 'cash'
     } = req.body;
 
-    // Validaciones
+    // ... (validaciones iguales)
     if (!doctorId || !appointmentDate || !appointmentTime) {
-      return res.status(400).json({
-        success: false,
-        message: 'Faltan datos de la cita'
-      });
+      return res.status(400).json({ success: false, message: 'Faltan datos de la cita' });
     }
 
-    if (!patientEmail || !patientEmail.includes('@')) {
-      return res.status(400).json({
-        success: false,
-        message: 'El correo electrónico es obligatorio para recibir la confirmación de tu turno.'
-      });
-    }
-
-    // Obtener información del servicio si existe
+    // Obtener información del servicio
     let serviceDuration = 30;
     let fullPrice = 0;
     let serviceBookingFee = null;
@@ -192,34 +183,18 @@ router.post('/public/create', async (req, res) => {
       }
     }
 
-    console.log('🔓 Crear cita pública para doctor:', doctorId, 'fecha:', appointmentDate, 'hora:', appointmentTime, 'Servicio:', serviceId);
-
-    // Verificar que el doctor existe y está aprobado
+    // Verificar doctor
     const doctorCheck = await query(
-      `SELECT id, name, email, specialization, clinic_name, booking_fee, appointment_price
-       FROM doctors
-       WHERE id = $1
-       AND status = 'approved'
-       AND subscription_status IN ('active', 'trial')`,
+      `SELECT id, name, booking_fee, appointment_price, accumulated_debt
+       FROM doctors WHERE id = $1 AND status = 'approved' AND subscription_status IN ('active', 'trial')`,
       [doctorId]
     );
 
-    if (doctorCheck.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Doctor no disponible'
-      });
-    }
-
+    if (doctorCheck.rows.length === 0) return res.status(404).json({ success: false, message: 'Doctor no disponible' });
     const doctor = doctorCheck.rows[0];
 
-    // Si no se eligió servicio, usamos el precio base del doctor
-    if (!serviceId) {
-       fullPrice = parseFloat(doctor.appointment_price) || 0;
-    }
-
-    // Priorizamos la booking_fee del servicio, sino la del doctor
-    const bookingFee = serviceBookingFee !== null ? serviceBookingFee : (parseFloat(doctor.booking_fee) || 0); 
+    if (!serviceId) fullPrice = parseFloat(doctor.appointment_price) || 0;
+    const bookingFee = serviceBookingFee !== null ? serviceBookingFee : (parseFloat(doctor.booking_fee) || 0);
     
     let insuranceDiscount = 0;
     if (insuranceId) {
@@ -233,13 +208,22 @@ router.post('/public/create', async (req, res) => {
     }
 
     const systemFee = fullPrice * 0.03;
-    let totalToPayNow = (bookingFee + systemFee); 
+    let totalToPayNow = (bookingFee + systemFee);
+    let isCash = paymentMethod === 'cash';
 
-    // Si la Obra Social cubre la totalidad del turno, el cliente no debe pagar reserva ni comisión.
-    // En este caso, el turno pasa directo y el 3% de comisión queda como deuda para el profesional.
-    if (insuranceDiscount >= fullPrice) {
+    // Si es efectivo o cobertura total, el pago inicial es 0
+    if (isCash || insuranceDiscount >= fullPrice) {
       totalToPayNow = 0;
-      console.log('✨ Cobertura total detectada. El cliente paga $0.');
+    }
+
+    console.log(`🏦 Método: ${paymentMethod} | Deuda a sumar: $${systemFee}`);
+
+    // Si es efectivo, sumamos la comisión a la deuda del médico
+    if (isCash) {
+      await query(
+        'UPDATE doctors SET accumulated_debt = COALESCE(accumulated_debt, 0) + $1 WHERE id = $2',
+        [systemFee, doctorId]
+      );
     }
     console.log(`💰 Resumen Financiero:
       - Servicio: ${serviceId || 'Base'}

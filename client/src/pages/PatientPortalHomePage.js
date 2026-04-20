@@ -33,7 +33,7 @@ export default function PatientPortalHomePage() {
   const [bookingError, setBookingError] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [patientData, setPatientData] = useState({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '' });
+  const [patientData, setPatientData] = useState({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
   const [doctorInsurances, setDoctorInsurances] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [doctorAvailability, setDoctorAvailability] = useState({ workingDays: [], vacations: [] });
@@ -144,7 +144,8 @@ export default function PatientPortalHomePage() {
         patientEmail: patientData.email,
         patientDocumentNumber: patientData.documentNumber,
         patientPhone: patientData.phone,
-        insuranceId: patientData.insuranceId
+        insuranceId: patientData.insuranceId,
+        paymentMethod: patientData.paymentMethod
       });
 
       if (response.success) {
@@ -316,6 +317,13 @@ export default function PatientPortalHomePage() {
                                 {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                               </select>
                             </div>
+                            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                              <label>MÉTODO DE PAGO</label>
+                              <select name="paymentMethod" onChange={handlePatientDataChange} value={patientData.paymentMethod}>
+                                <option value="online">Pagar Reserva Online (Mercado Pago)</option>
+                                <option value="cash">Pagar en el Local (Efectivo/Transferencia)</option>
+                              </select>
+                            </div>
                           </div>
 
                           <div className={styles.sectionTitle}>{selectedDoctor ? '4' : '3'}. Fecha y Hora</div>
@@ -389,12 +397,12 @@ export default function PatientPortalHomePage() {
                                     </div>
                                     
                                     <div className={`${styles.paymentRow} ${styles.totalRow}`}>
-                                      <strong>PAGAR AHORA (Reserva + App):</strong>
-                                      <strong>${totalNow.toLocaleString()}</strong>
+                                      <strong>{patientData.paymentMethod === 'cash' ? 'PAGAR AHORA:' : 'PAGAR AHORA (Reserva + App):'}</strong>
+                                      <strong>${(patientData.paymentMethod === 'cash' ? 0 : totalNow).toLocaleString()}</strong>
                                     </div>
                                     <div className={styles.paymentRow}>
                                       <span>Abonar en el local:</span>
-                                      <span>${(balanceInLocal > 0 ? balanceInLocal : 0).toLocaleString()}</span>
+                                      <span>${(patientData.paymentMethod === 'cash' ? servicePrice - insuranceDiscount : balanceInLocal).toLocaleString()}</span>
                                     </div>
                                   </>
                                 );
@@ -405,7 +413,7 @@ export default function PatientPortalHomePage() {
 
                           {bookingError && <p className={styles.errorMsg}>{bookingError}</p>}
                           <button type="submit" className={styles.submitBtn} disabled={bookingLoading || !selectedSlot}>
-                            {bookingLoading ? 'PROCESANDO...' : 'CONFIRMAR Y PAGAR'}
+                            {bookingLoading ? 'PROCESANDO...' : (patientData.paymentMethod === 'cash' ? 'CONFIRMAR TURNO' : 'CONFIRMAR Y PAGAR')}
                           </button>
                         </form>
                       )}
