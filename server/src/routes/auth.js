@@ -364,6 +364,7 @@ router.get('/google/callback', async (req, res) => {
             google_id = $1, 
             google_access_token = $2, 
             google_refresh_token = $3,
+            google_calendar_connected = true,
             updated_at = CURRENT_TIMESTAMP
            WHERE id = $4
            RETURNING *`,
@@ -377,6 +378,7 @@ router.get('/google/callback', async (req, res) => {
           `UPDATE doctors SET 
             google_access_token = $1, 
             google_refresh_token = COALESCE($2, google_refresh_token),
+            google_calendar_connected = true,
             updated_at = CURRENT_TIMESTAMP
            WHERE id = $3
            RETURNING *`,
@@ -389,8 +391,8 @@ router.get('/google/callback', async (req, res) => {
       console.log('➕ Creando nuevo doctor con Google...');
       const newDoctorId = uuidv4();
       const insertResult = await query(
-        `INSERT INTO doctors (id, google_id, email, name, google_access_token, google_refresh_token, status, subscription_status)
-         VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'pending')
+        `INSERT INTO doctors (id, google_id, email, name, google_access_token, google_refresh_token, google_calendar_connected, status, subscription_status)
+         VALUES ($1, $2, $3, $4, $5, $6, true, 'pending', 'pending')
          RETURNING id, email, name, specialization, clinic_name, google_id, status, subscription_status`,
         [newDoctorId, userInfo.id, userInfo.email, userInfo.name, userInfo.tokens.access_token, userInfo.tokens.refresh_token]
       );
@@ -428,7 +430,13 @@ router.get('/google/callback', async (req, res) => {
     console.log('✓ JWT generado');
 
     // Redirigir al cliente con el token
-    const redirectUrl = `${FRONTEND_URL}/auth/callback?token=${encodeURIComponent(token)}`;
+    // Si viene del flujo de vincular calendario (tiene doctorId en state), redirigimos a settings
+    let redirectUrl = `${FRONTEND_URL}/auth/callback?token=${encodeURIComponent(token)}`;
+    
+    if (state && state.length > 20) { // Si el state parece un UUID (doctorId)
+      redirectUrl = `${FRONTEND_URL}/settings?token=${encodeURIComponent(token)}&connected=true`;
+    }
+    
     console.log('🔄 Redirigiendo a:', redirectUrl.split('?')[0]);
     console.log('✓ Flujo completado\n');
 
