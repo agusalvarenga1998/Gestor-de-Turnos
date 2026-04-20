@@ -4,45 +4,54 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Usamos el DATABASE_URL de Render si existe, sino usamos las variables individuales
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'consultorio_medico',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 async function migrate() {
-  const client = await pool.connect();
-
+  let client;
   try {
-    console.log('🔄 Ejecutando migraciones...\n');
+    client = await pool.connect();
+    console.log('🔄 Ejecutando migraciones maestras para Google Calendar...\n');
 
-    // Agregar columnas a doctors
-    console.log('➕ Agregando columnas a tabla doctors...');
+    // 1. Tabla Doctors: Asegurar todas las columnas de Google
+    console.log('➕ Verificando columnas en tabla doctors...');
     await client.query(`
       ALTER TABLE doctors
+      ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE,
+      ADD COLUMN IF NOT EXISTS google_access_token TEXT,
       ADD COLUMN IF NOT EXISTS google_refresh_token TEXT,
       ADD COLUMN IF NOT EXISTS google_calendar_id TEXT,
       ADD COLUMN IF NOT EXISTS google_calendar_connected BOOLEAN DEFAULT false;
     `);
-    console.log('✓ Columnas de Google Calendar agregadas a doctors\n');
+    console.log('✓ Tabla doctors actualizada.\n');
 
-    // Agregar columna a appointments
-    console.log('➕ Agregando columna google_event_id a tabla appointments...');
+    // 2. Tabla Appointments: Asegurar google_event_id
+    console.log('➕ Verificando columnas en tabla appointments...');
     await client.query(`
       ALTER TABLE appointments
       ADD COLUMN IF NOT EXISTS google_event_id TEXT;
     `);
-    console.log('✓ Columna google_event_id agregada a appointments\n');
+    console.log('✓ Tabla appointments actualizada.\n');
 
-    console.log('✅ Todas las migraciones completadas exitosamente!');
+    // 3. Hacer password_hash nullable (por si no lo estaba)
+    console.log('🔧 Ajustando restricciones...');
+    await client.query(`
+      ALTER TABLE doctors ALTER COLUMN password_hash DROP NOT NULL;
+    `);
+    console.log('✓ password_hash ahora es opcional.\n');
+
+    console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error en migración:', error.message);
+    console.error('❌ Error crítico en migración:', error.message);
     process.exit(1);
   } finally {
-    client.release();
+    if (client) client.release();
     await pool.end();
   }
 }
