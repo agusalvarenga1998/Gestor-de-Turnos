@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
+import Loading from '../components/Loading';
 import styles from './ServicesPage.module.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5002';
@@ -90,6 +91,14 @@ export default function ServicesPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <DoctorLayout>
+        <Loading />
+      </DoctorLayout>
+    );
+  }
+
   return (
     <DoctorLayout>
       <div className={styles.container}>
@@ -103,9 +112,7 @@ export default function ServicesPage() {
           </button>
         </div>
 
-        {loading ? (
-          <div className={styles.loading}>Cargando servicios...</div>
-        ) : error ? (
+        {error ? (
           <div className={styles.error}>{error}</div>
         ) : (
           <div className={styles.servicesGrid}>

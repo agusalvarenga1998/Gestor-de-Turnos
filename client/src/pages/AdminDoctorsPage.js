@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import AdminLayout from '../components/AdminLayout';
+import Loading from '../components/Loading';
 import axios from 'axios';
 import styles from './AdminDoctorsPage.module.css';
 
@@ -149,7 +150,7 @@ export default function AdminDoctorsPage() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className={styles.container}>Cargando...</div>
+        <Loading />
       </AdminLayout>
     );
   }

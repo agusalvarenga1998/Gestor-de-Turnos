@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
+import Loading from '../components/Loading';
 import { appointmentAPI, patientAPI, insuranceAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useWebSocketContext } from '../hooks/useWebSocketContext';
@@ -323,10 +324,7 @@ export default function AppointmentsPage() {
   if (loading) {
     return (
       <DoctorLayout>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando citas...</p>
-        </div>
+        <Loading />
       </DoctorLayout>
     );
   }

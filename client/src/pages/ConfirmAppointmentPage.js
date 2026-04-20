@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { appointmentAPI } from '../services/api';
 import Icon from '../components/Icon';
+import Loading from '../components/Loading';
 import styles from './ConfirmAppointmentPage.module.css';
 
 export default function ConfirmAppointmentPage() {
@@ -34,14 +35,7 @@ export default function ConfirmAppointmentPage() {
   };
 
   if (loading) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando tu cita...</p>
-        </div>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (error) {

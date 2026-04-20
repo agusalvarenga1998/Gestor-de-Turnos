@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useWebSocketContext } from '../hooks/useWebSocketContext';
 import { doctorAPI, appointmentAPI } from '../services/api';
 import Icon from '../components/Icon';
+import Loading from '../components/Loading';
 import styles from './DashboardNewPage.module.css';
 
 export default function DashboardNewPage() {
@@ -88,10 +89,7 @@ export default function DashboardNewPage() {
   if (loading) {
     return (
       <DoctorLayout>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando datos...</p>
-        </div>
+        <Loading />
       </DoctorLayout>
     );
   }

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { appointmentAPI, insuranceAPI } from '../services/api';
 import DoctorMap from '../components/DoctorMap';
 import SplashLoader from '../components/SplashLoader';
+import Loading from '../components/Loading';
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from 'date-fns/locale';
 import "react-datepicker/dist/react-datepicker.css";
@@ -181,8 +182,9 @@ export default function PatientPortalHomePage() {
   };
 
   return (
-    <>
+    <div className={styles.container}>
       {showSplash && <SplashLoader onComplete={() => setShowSplash(false)} />}
+      {bookingLoading && <Loading />}
       <div className={styles.pageWrapper}>
         <nav className={styles.navbar}>
           <div className={styles.navContent}>

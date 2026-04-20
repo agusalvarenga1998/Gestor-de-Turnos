@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
+import Loading from '../components/Loading';
 import { patientAPI, insuranceAPI } from '../services/api';
 import styles from './PatientsPage.module.css';
 
@@ -209,10 +210,7 @@ export default function PatientsPage() {
   if (loading) {
     return (
       <DoctorLayout>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando pacientes...</p>
-        </div>
+        <Loading />
       </DoctorLayout>
     );
   }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import AdminLayout from '../components/AdminLayout';
+import Loading from '../components/Loading';
 import axios from 'axios';
 import styles from './AdminSubscriptionsPage.module.css';
 
@@ -60,12 +61,7 @@ export default function AdminSubscriptionsPage() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className={styles.container}>
-          <div className={styles.header}>
-            <h1>Historial de Suscripciones</h1>
-          </div>
-          <p>Cargando...</p>
-        </div>
+        <Loading />
       </AdminLayout>
     );
   }

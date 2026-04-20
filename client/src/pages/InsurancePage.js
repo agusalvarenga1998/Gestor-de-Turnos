@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
+import Loading from '../components/Loading';
 import { insuranceAPI } from '../services/api';
 import styles from './InsurancePage.module.css';
 
@@ -123,10 +124,7 @@ export default function InsurancePage() {
   if (loading) {
     return (
       <DoctorLayout>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando obras sociales...</p>
-        </div>
+        <Loading />
       </DoctorLayout>
     );
   }
