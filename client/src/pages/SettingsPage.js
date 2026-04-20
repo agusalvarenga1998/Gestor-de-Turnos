@@ -45,6 +45,7 @@ export default function SettingsPage() {
   });
   const [mapCenter, setMapCenter] = useState([-34.6037, -58.3816]);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [existingSpecializations, setExistingSpecializations] = useState([]);
 
   // Componente para manejar clics en el mapa
   function LocationMarker() {
@@ -88,6 +89,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchGoogleStatus();
+    fetchSpecializations();
 
     // Cargar datos del usuario
     if (user) {
@@ -129,6 +131,18 @@ export default function SettingsPage() {
       console.error('Error obteniendo estado de Google:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSpecializations = async () => {
+    try {
+      // Usamos el endpoint existente que ya devuelve especialidades únicas
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL || ''}/api/appointments/public/specializations`);
+      if (response.data.success) {
+        setExistingSpecializations(response.data.specializations);
+      }
+    } catch (err) {
+      console.error('Error cargando especialidades:', err);
     }
   };
 
@@ -389,16 +403,23 @@ export default function SettingsPage() {
             <form onSubmit={handleSaveProfile} className={styles.form}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="specialization">Especialidad de Medicina</label>
+                  <label htmlFor="specialization">Especialidad / Rubro</label>
                   <input
                     type="text"
                     id="specialization"
                     name="specialization"
+                    list="specialization-list"
                     value={profileData.specialization}
                     onChange={handleProfileChange}
-                    placeholder="Ej: Cardiología, Dermatología, etc."
+                    placeholder="Ej: Estética, Barbería, Abogados, etc."
                     disabled={savingProfile}
                   />
+                  <datalist id="specialization-list">
+                    {existingSpecializations.map((spec, index) => (
+                      <option key={index} value={spec} />
+                    ))}
+                  </datalist>
+                  <small>Elegí una existente o escribí tu propio rubro.</small>
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="license_number">Número de Matrícula</label>

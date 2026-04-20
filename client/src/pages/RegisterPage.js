@@ -18,6 +18,22 @@ export default function RegisterPage() {
     clinic_name: ''
   });
   const [localError, setLocalError] = useState('');
+  const [existingSpecializations, setExistingSpecializations] = useState([]);
+
+  React.useEffect(() => {
+    const fetchSpecializations = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/appointments/public/specializations`);
+        const data = await response.json();
+        if (data.success) {
+          setExistingSpecializations(data.specializations);
+        }
+      } catch (err) {
+        console.error('Error cargando especialidades:', err);
+      }
+    };
+    fetchSpecializations();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -131,11 +147,20 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   name="specialization"
+                  list="specialization-list"
                   value={formData.specialization}
                   onChange={handleChange}
-                  placeholder="Ej: Peluquería, Abogacía, etc."
+                  placeholder="Ej: Estética, Barbería, Abogados, etc."
                   disabled={loading}
                 />
+                <datalist id="specialization-list">
+                  {existingSpecializations.map((spec, index) => (
+                    <option key={index} value={spec} />
+                  ))}
+                </datalist>
+                <small style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
+                  Elegí una existente o escribí tu propio rubro.
+                </small>
               </div>
               <div className={styles.formGroup}>
                 <label>NEGOCIO / LOCAL</label>
