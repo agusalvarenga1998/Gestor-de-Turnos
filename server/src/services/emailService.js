@@ -644,3 +644,96 @@ export async function sendProfessionalApprovalEmail({
     return { sent: false, error: error.message };
   }
 }
+
+// Enviar notificación de nuevo turno al doctor (para aprobar/rechazar)
+export async function sendNewAppointmentNotificationToDoctor({
+  to,
+  doctorName,
+  patientName,
+  appointmentDate,
+  appointmentTime,
+  serviceName,
+  dashboardUrl
+}) {
+  try {
+    if (!to) return { sent: false, reason: 'No email' };
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8fafc; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+          .header { background: #2563eb; padding: 30px; text-align: center; color: white; }
+          .header h1 { margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
+          .content { padding: 30px; }
+          .welcome { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 10px; }
+          .alert-pill { display: inline-block; background-color: #fef3c7; color: #92400e; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 13px; margin-bottom: 20px; }
+          .data-card { background: #f1f5f9; border-radius: 8px; padding: 20px; margin: 20px 0; }
+          .data-row { display: flex; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+          .data-row:last-child { border-bottom: none; margin-bottom: 0; }
+          .label { width: 100px; color: #64748b; font-weight: 600; font-size: 13px; }
+          .value { flex: 1; color: #1e293b; font-weight: 500; }
+          .button { display: block; background: #2563eb; color: white; padding: 16px; text-decoration: none; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 25px; transition: background 0.2s; }
+          .footer { padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Nueva Solicitud de Turno</h1>
+          </div>
+          <div class="content">
+            <p class="welcome">Hola, Dr. ${doctorName}</p>
+            <div class="alert-pill">⚠️ ACCIÓN REQUERIDA</div>
+            <p>Se ha registrado un nuevo turno que requiere tu aprobación manual en el panel de control.</p>
+            
+            <div class="data-card">
+              <div class="data-row">
+                <span class="label">CLIENTE:</span>
+                <span class="value">${patientName}</span>
+              </div>
+              <div class="data-row">
+                <span class="label">FECHA:</span>
+                <span class="value">${new Date(appointmentDate).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+              </div>
+              <div class="data-row">
+                <span class="label">HORA:</span>
+                <span class="value">${appointmentTime} hs</span>
+              </div>
+              <div class="data-row">
+                <span class="label">SERVICIO:</span>
+                <span class="value">${serviceName || 'Consulta General'}</span>
+              </div>
+            </div>
+
+            <p style="font-size: 14px; color: #64748b;">Recordá que podés aceptar o rechazar esta cita desde la sección de Gestión de Turnos.</p>
+            
+            <a href="${dashboardUrl}" class="button">GESTIONAR TURNO AHORA</a>
+          </div>
+          <div class="footer">
+            <p>Enviado automáticamente por TurnoHub Professional Portal.</p>
+            <p>&copy; 2026 TurnoHub. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      to: to,
+      subject: `Nuevo turno pendiente: ${patientName}`,
+      html: htmlContent
+    });
+
+    console.log('✓ Notificación enviada al profesional:', to);
+    return { sent: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Error enviando email al profesional:', error.message);
+    return { sent: false, error: error.message };
+  }
+}

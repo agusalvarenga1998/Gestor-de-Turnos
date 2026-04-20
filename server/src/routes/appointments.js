@@ -2,7 +2,7 @@ import express from 'express';
 import { verifyToken, verifyDoctorRole } from '../middleware/auth.js';
 import * as appointmentController from '../controllers/appointmentController.js';
 import { query } from '../db/config.js';
-import { sendDelayNotification, sendAppointmentConfirmation, sendAppointmentRejectionEmail } from '../services/emailService.js';
+import { sendDelayNotification, sendAppointmentConfirmation, sendAppointmentRejectionEmail, sendNewAppointmentNotificationToDoctor } from '../services/emailService.js';
 import * as availabilityService from '../services/availabilityService.js';
 import * as mpService from '../services/mercadopagoService.js';
 import axios from 'axios';
@@ -185,7 +185,7 @@ router.post('/public/create', async (req, res) => {
 
     // Verificar doctor
     const doctorCheck = await query(
-      `SELECT id, name, booking_fee, appointment_price, accumulated_debt
+      `SELECT id, name, email, booking_fee, appointment_price, accumulated_debt
        FROM doctors WHERE id = $1 AND status = 'approved' AND subscription_status IN ('active', 'trial')`,
       [doctorId]
     );
@@ -323,7 +323,26 @@ router.post('/public/create', async (req, res) => {
         message: 'Tienes una nueva solicitud de turno (Cobertura 100%)',
         appointment: appointment
       });
-      console.log('✅ Cobertura total detectada: Turno enviado directo al doctor.');
+
+      // NOTIFICAR POR EMAIL (Cobertura Total)
+      const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointments`;
+      let serviceLabel = 'Consulta General';
+      if (serviceId) {
+        const srvRes = await query('SELECT name FROM services WHERE id = $1', [serviceId]);
+        if (srvRes.rows.length > 0) serviceLabel = srvRes.rows[0].name;
+      }
+
+      await sendNewAppointmentNotificationToDoctor({
+        to: doctor.email,
+        doctorName: doctor.name,
+        patientName: `${patientName} ${patientLastName}`,
+        appointmentDate: appointmentDate,
+        appointmentTime: appointmentTime,
+        serviceName: serviceLabel,
+        dashboardUrl: dashboardUrl
+      });
+
+      console.log('✅ Cobertura total detectada: Turno enviado directo al doctor y notificado por mail.');
     } else {
       console.log('⏳ Cita en espera de pago. No se notifica al doctor todavía.');
     }
@@ -492,9 +511,10 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
       return res.json({ success: true, status: appointment.status, message: 'El turno ya fue procesado o confirmado previamente.' });
     }
 
-    // 2. Obtener el token de Mercado Pago del médico
-    const doctorResult = await query('SELECT mp_access_token FROM doctors WHERE id = $1', [appointment.doctor_id]);
+    // 2. Obtener el token de Mercado Pago y datos del médico
+    const doctorResult = await query('SELECT name, email, mp_access_token FROM doctors WHERE id = $1', [appointment.doctor_id]);
     const mpToken = doctorResult.rows[0]?.mp_access_token;
+    const doctor = doctorResult.rows[0];
     if (!mpToken) {
       return res.status(400).json({ success: false, message: 'El doctor no tiene Mercado Pago configurado.' });
     }
@@ -526,6 +546,32 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
         message: '¡Cita Pagada (Verificación Activa)! Tienes un nuevo turno confirmado.',
         appointmentId: appointmentId
       });
+
+      // NOTIFICAR POR EMAIL (Pago Verificado Manualmente)
+      const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointments`;
+      
+      // Obtener datos del turno y paciente para el email
+      const apptDataResult = await query(
+        `SELECT a.appointment_date, a.appointment_time, p.name as patient_name, s.name as service_name
+         FROM appointments a
+         JOIN patients p ON a.patient_id = p.id
+         LEFT JOIN services s ON a.service_id = s.id
+         WHERE a.id = $1`,
+        [appointmentId]
+      );
+
+      if (apptDataResult.rows.length > 0) {
+        const ad = apptDataResult.rows[0];
+        await sendNewAppointmentNotificationToDoctor({
+          to: doctor.email,
+          doctorName: doctor.name,
+          patientName: ad.patient_name,
+          appointmentDate: ad.appointment_date,
+          appointmentTime: ad.appointment_time,
+          serviceName: ad.service_name || 'Consulta General',
+          dashboardUrl: dashboardUrl
+        });
+      }
 
       return res.json({ success: true, status: 'pending', message: '¡Pago verificado y turno confirmado exitosamente!' });
     } else {
