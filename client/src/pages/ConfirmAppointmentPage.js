@@ -98,8 +98,8 @@ export default function ConfirmAppointmentPage() {
     const endTime = `${year}${month}${day}T${endHour}${minutes}00`;
 
     // Crear título y descripción
-    const title = `Cita con Dr. ${appointment.doctor_name}`;
-    const description = `Paciente: ${appointment.patient_name}\n${
+    const title = `Cita con ${appointment.doctor_name}`;
+    const description = `Cliente: ${appointment.patient_name}\n${
       appointment.doctor_specialization ? `Especialidad: ${appointment.doctor_specialization}\n` : ''
     }${appointment.reason_for_visit ? `Motivo: ${appointment.reason_for_visit}` : ''}`;
 
@@ -119,7 +119,7 @@ export default function ConfirmAppointmentPage() {
       <div className={styles.card}>
         <div className={styles.header}>
           <Icon name="calendar-check" size={32} color="#2563eb" />
-          <h1>Tu Cita Médica</h1>
+          <h1>Tu Cita</h1>
         </div>
 
         <div className={styles.content}>
@@ -142,10 +142,10 @@ export default function ConfirmAppointmentPage() {
             </div>
           </div>
 
-          {/* Información del Paciente */}
+          {/* Información del Cliente */}
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>
-              <Icon name="user" size={20} color="#2563eb" /> Paciente
+              <Icon name="user" size={20} color="#2563eb" /> Cliente
             </h2>
             <div className={styles.infoBlock}>
               <div className={styles.infoPair}>
@@ -214,7 +214,7 @@ export default function ConfirmAppointmentPage() {
 
         <div className={styles.footer}>
           <p className={styles.footerText}>
-            Sistema de Gestión de Citas Médicas
+            Sistema de Gestión de Turnos
           </p>
         </div>
       </div>

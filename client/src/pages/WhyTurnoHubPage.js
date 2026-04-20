@@ -12,13 +12,13 @@ export default function WhyTurnoHubPage() {
     },
     {
       icon: 'users',
-      title: 'Portal de Pacientes',
-      desc: 'Tus pacientes pueden ver sus turnos, recibir recordatorios y cancelar con un clic.'
+      title: 'Portal de Clientes',
+      desc: 'Tus clientes pueden ver sus turnos, recibir recordatorios y cancelar con un clic.'
     },
     {
       icon: 'shield',
       title: 'Seguridad de Datos',
-      desc: 'Encriptación de punta a punta para que la información de tus pacientes esté siempre segura.'
+      desc: 'Encriptación de punta a punta para que la información de tus clientes esté siempre segura.'
     },
     {
       icon: 'mail',
@@ -27,8 +27,8 @@ export default function WhyTurnoHubPage() {
     },
     {
       icon: 'list',
-      title: 'Historial Clínico',
-      desc: 'Accede rápidamente a la información relevante de cada paciente antes de la consulta.'
+      title: 'Historial / Info',
+      desc: 'Accede rápidamente a la información relevante de cada cliente antes de la cita.'
     },
     {
       icon: 'lock',
@@ -55,7 +55,7 @@ export default function WhyTurnoHubPage() {
         <div className={styles.heroContent}>
           <span className={styles.badge}>MÁS QUE UN GESTOR DE TURNOS</span>
           <h1>Lleva tu consultorio <br /><span>al siguiente nivel</span></h1>
-          <p>TurnoHub es la herramienta definitiva para profesionales de la salud que buscan eficiencia, orden y una mejor experiencia para sus pacientes.</p>
+          <p>TurnoHub es la herramienta definitiva para profesionales que buscan eficiencia, orden y una mejor experiencia para sus clientes.</p>
           <div className={styles.ctaGroup}>
             <Link to="/register" className={styles.primaryBtn}>Empezar ahora gratis</Link>
             <a href="#features" className={styles.secondaryBtn}>Ver características</a>
@@ -67,7 +67,7 @@ export default function WhyTurnoHubPage() {
       <section id="features" className={styles.featuresSection}>
         <div className={styles.sectionHeader}>
           <h2>Todo lo que necesitas en un solo lugar</h2>
-          <p>Diseñado por médicos para médicos. Simplicidad y potencia sin compromisos.</p>
+          <p>Diseñado por profesionales para profesionales. Simplicidad y potencia sin compromisos.</p>
         </div>
         
         <div className={styles.grid}>
@@ -87,14 +87,14 @@ export default function WhyTurnoHubPage() {
       <section className={styles.trustSection}>
         <div className={styles.trustContent}>
           <h2>Únete a la comunidad TurnoHub</h2>
-          <p>Cientos de doctores ya transformaron su forma de trabajar. Únete hoy y recupera el control de tu tiempo.</p>
+          <p>Cientos de profesionales ya transformaron su forma de trabajar. Únete hoy y recupera el control de tu tiempo.</p>
           <Link to="/register" className={styles.finalCta}>Crear mi cuenta profesional</Link>
         </div>
       </section>
 
       {/* Footer */}
       <footer className={styles.footer}>
-        <p>© 2026 TurnoHub Medical Portal. Todos los derechos reservados.</p>
+        <p>© 2026 TurnoHub Portal. Todos los derechos reservados.</p>
       </footer>
     </div>
   );

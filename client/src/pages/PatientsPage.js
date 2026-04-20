@@ -220,8 +220,8 @@ export default function PatientsPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>Mis Pacientes</h1>
-            <p className={styles.subtitle}>Gestiona tu base de datos de pacientes</p>
+            <h1 className={styles.title}>Mis Clientes</h1>
+            <p className={styles.subtitle}>Gestiona tu base de datos de clientes</p>
           </div>
           <button
             onClick={() => {
@@ -231,7 +231,7 @@ export default function PatientsPage() {
             className={styles.addBtn}
           >
             <Icon name="plus" size={18} color="currentColor" />
-            Nuevo Paciente
+            Nuevo Cliente
           </button>
         </div>
 
@@ -254,7 +254,7 @@ export default function PatientsPage() {
           <div className={styles.modal}>
             <div className={styles.modalContent}>
               <div className={styles.modalHeader}>
-                <h2>{editingId ? 'Editar Paciente' : 'Nuevo Paciente'}</h2>
+                <h2>{editingId ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
                 <button
                   onClick={() => {
                     setShowForm(false);
@@ -374,7 +374,7 @@ export default function PatientsPage() {
 
                 <div className={styles.formActions}>
                   <button type="submit" className={styles.submitBtn}>
-                    {editingId ? 'Guardar Cambios' : 'Crear Paciente'}
+                    {editingId ? 'Guardar Cambios' : 'Crear Cliente'}
                   </button>
                   <button
                     type="button"
@@ -395,7 +395,7 @@ export default function PatientsPage() {
         {/* Patients Table / Cards */}
         {filteredPatients.length === 0 ? (
           <div className={styles.emptyState}>
-            <p>No hay pacientes que coincidan con tu búsqueda</p>
+            <p>No hay clientes que coincidan con tu búsqueda</p>
           </div>
         ) : (
           <>
@@ -404,7 +404,7 @@ export default function PatientsPage() {
               <table className={styles.patientsTable}>
                 <thead>
                   <tr>
-                    <th>PACIENTE</th>
+                    <th>CLIENTE</th>
                     <th>CONTACTO</th>
                     <th>VISITAS</th>
                     <th>ÚLTIMA CITA</th>
@@ -422,7 +422,7 @@ export default function PatientsPage() {
 
                     return (
                       <tr key={patient.id}>
-                        <td className={styles.patientCell} data-label="Paciente">
+                        <td className={styles.patientCell} data-label="Cliente">
                           <div className={styles.patientInfo}>
                             <div className={styles.avatar}>{initials}</div>
                             <div>
@@ -473,7 +473,7 @@ export default function PatientsPage() {
         )}
 
         <div className={styles.footer}>
-          <p>Total: <strong>{filteredPatients.length}</strong> paciente(s)</p>
+          <p>Total: <strong>{filteredPatients.length}</strong> cliente(s)</p>
         </div>
       </div>
     </DoctorLayout>

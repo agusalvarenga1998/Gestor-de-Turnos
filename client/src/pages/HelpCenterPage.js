@@ -15,11 +15,11 @@ export default function HelpCenterPage() {
     {
       icon: 'calendar',
       title: 'Gestión de Turnos',
-      topics: ['Configurar horarios', 'Bloquear días', 'Reprogramar pacientes']
+      topics: ['Configurar horarios', 'Bloquear días', 'Reprogramar clientes']
     },
     {
       icon: 'shield',
-      title: 'Pacientes y Privacidad',
+      title: 'Clientes y Privacidad',
       topics: ['Gestión de historias', 'Protección de datos', 'Consentimiento digital']
     },
     {

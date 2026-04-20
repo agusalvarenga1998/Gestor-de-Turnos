@@ -370,14 +370,14 @@ export default function AppointmentsPage() {
 
               <form onSubmit={handleCreateAppointment} className={styles.form}>
                 <div className={styles.formGroup}>
-                  <label>Paciente*</label>
+                  <label>Cliente*</label>
                   <select
                     name="patientId"
                     value={formData.patientId}
                     onChange={handleFormChange}
                     required
                   >
-                    <option value="">Selecciona un paciente</option>
+                    <option value="">Selecciona un cliente</option>
                     {patients.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
@@ -505,7 +505,7 @@ export default function AppointmentsPage() {
             <Icon name="search" size={18} color="#64748b" />
             <input
               type="text"
-              placeholder="Buscar paciente o teléfono..."
+              placeholder="Buscar cliente o teléfono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={styles.searchInput}
@@ -552,7 +552,7 @@ export default function AppointmentsPage() {
               <thead>
                 <tr>
                   <th>Turno</th>
-                  <th>Paciente</th>
+                  <th>Cliente</th>
                   <th>Motivo / Obra Social</th>
                   <th>Costo Total</th>
                   <th>Seña Pagada</th>
@@ -579,7 +579,7 @@ export default function AppointmentsPage() {
                         <div className={styles.time}>{appt.appointment_time}</div>
                         <div className={styles.miniCode}>{appt.appointment_code}</div>
                       </td>
-                      <td className={styles.patientInfo} data-label="Paciente">
+                      <td className={styles.patientInfo} data-label="Cliente">
                         <div className={styles.pName}>{appt.patient_name}</div>
                         <div className={styles.pPhone}>{appt.patient_phone}</div>
                       </td>

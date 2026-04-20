@@ -251,7 +251,7 @@ export default function PatientAppointmentViewPage() {
             {/* Información del Paciente */}
             <div className={styles.patientDetailedInfo}>
               <div className={styles.dataRow}>
-                <span className={styles.dataLabel}>PACIENTE</span>
+                <span className={styles.dataLabel}>CLIENTE</span>
                 <span className={styles.dataValue}>{appointment.patient_name}</span>
               </div>
               <div className={styles.dataRow}>
