@@ -441,6 +441,6 @@ export default function PatientPortalHomePage() {
           )}
         </main>
       </div>
-    </>
+    </div>
   );
 }
