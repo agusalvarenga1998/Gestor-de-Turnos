@@ -4,6 +4,13 @@ import { google } from 'googleapis';
 const getOAuth2Client = () => {
   const redirectUri = process.env.GOOGLE_AUTH_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI;
   
+  if (!redirectUri) {
+    console.error('❌ ERROR: GOOGLE_AUTH_REDIRECT_URI no está definida en las variables de entorno.');
+  } else {
+    console.log('📡 Configuración Google -> Redirect URI:', redirectUri);
+    console.log('📡 Configuración Google -> Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 10) + '...');
+  }
+
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
