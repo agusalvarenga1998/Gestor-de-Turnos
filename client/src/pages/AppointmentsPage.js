@@ -124,9 +124,8 @@ export default function AppointmentsPage() {
     // Filtro por Fecha (Normalizado)
     if (filterDate) {
       filtered = filtered.filter(a => {
-        // Aseguramos que comparamos solo la parte de la fecha YYYY-MM-DD
-        const appDate = new Date(a.appointment_date).toISOString().split('T')[0];
-        return appDate === filterDate;
+        const dateStr = String(a.appointment_date).split('T')[0];
+        return dateStr === filterDate;
       });
     }
 
@@ -150,8 +149,10 @@ export default function AppointmentsPage() {
 
       if (response.success) {
         const sorted = response.appointments.sort((a, b) => {
-          const dateA = new Date(`${a.appointment_date}T${a.appointment_time}`);
-          const dateB = new Date(`${b.appointment_date}T${b.appointment_time}`);
+          const dateAStr = String(a.appointment_date).split('T')[0];
+          const dateBStr = String(b.appointment_date).split('T')[0];
+          const dateA = new Date(`${dateAStr}T${a.appointment_time}`);
+          const dateB = new Date(`${dateBStr}T${b.appointment_time}`);
           return dateB - dateA;
         });
         setAppointments(sorted);
@@ -571,10 +572,11 @@ export default function AppointmentsPage() {
                     <tr key={appt.id}>
                       <td className={styles.dateTime}>
                         <div className={styles.date}>
-                          {new Date(appt.appointment_date + 'T12:00:00').toLocaleDateString('es-ES', {
-                            month: 'short',
-                            day: 'numeric'
-                          })}
+                          {(() => {
+                            const dateStr = String(appt.appointment_date).split('T')[0];
+                            const d = new Date(dateStr + 'T12:00:00');
+                            return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                          })()}
                         </div>
                         <div className={styles.time}>{appt.appointment_time}</div>
                         <div className={styles.miniCode}>{appt.appointment_code}</div>
