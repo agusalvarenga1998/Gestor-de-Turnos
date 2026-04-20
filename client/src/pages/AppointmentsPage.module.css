@@ -215,14 +215,15 @@
   font-weight: 600;
 }
 
-/* Modales */
+/* Modales y Formularios */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -237,6 +238,86 @@
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.form {
+  padding: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.formGroup label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--dark-gray);
+  text-transform: uppercase;
+}
+
+.formGroup input, 
+.formGroup select {
+  padding: 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f8fafc;
+}
+
+.formRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.submitBtn {
+  flex: 1;
+  padding: 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  padding: 1rem;
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--gray);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 /* RESPONSIVE */
@@ -338,10 +419,16 @@
     gap: 0.75rem;
   }
 
-  .acceptBtn, .rejectBtn, .delayBtn {
-    width: 100%;
-    padding: 0.85rem;
-    justify-content: center;
-    font-size: 1rem;
+  .formRow {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+
+  .modalContent {
+    max-height: 95vh;
   }
 }
