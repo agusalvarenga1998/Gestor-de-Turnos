@@ -143,11 +143,11 @@ export default function DashboardNewPage() {
               <tbody>
                 {todayAppointments.map((appt, index) => (
                   <tr key={appt.id}>
-                    <td className={styles.positionCell}>{index + 1}</td>
-                    <td className={styles.patientName}>{appt.patient_name}</td>
-                    <td className={styles.time}>{appt.appointment_time}</td>
-                    <td>{getStatusBadge(appt.status)}</td>
-                    <td>30 min</td>
+                    <td className={styles.positionCell} data-label="Posición">{index + 1}</td>
+                    <td className={styles.patientName} data-label="Cliente">{appt.patient_name}</td>
+                    <td className={styles.time} data-label="Hora">{appt.appointment_time}</td>
+                    <td data-label="Estado">{getStatusBadge(appt.status)}</td>
+                    <td data-label="Duración">30 min</td>
                   </tr>
                 ))}
               </tbody>

@@ -422,7 +422,7 @@ export default function PatientsPage() {
 
                     return (
                       <tr key={patient.id}>
-                        <td className={styles.patientCell}>
+                        <td className={styles.patientCell} data-label="Paciente">
                           <div className={styles.patientInfo}>
                             <div className={styles.avatar}>{initials}</div>
                             <div>
@@ -434,7 +434,7 @@ export default function PatientsPage() {
                             </div>
                           </div>
                         </td>
-                        <td className={styles.contactCell}>
+                        <td className={styles.contactCell} data-label="Contacto">
                           {patient.email && (
                             <div className={styles.contactInfo}>{patient.email}</div>
                           )}
@@ -444,15 +444,15 @@ export default function PatientsPage() {
                             </div>
                           )}
                         </td>
-                        <td className={styles.visitsCell}>
+                        <td className={styles.visitsCell} data-label="Visitas">
                           {patient.visit_count || 0} visitas
                         </td>
-                        <td className={styles.lastVisitCell}>
+                        <td className={styles.lastVisitCell} data-label="Última Cita">
                           {patient.last_appointment_date
                             ? new Date(patient.last_appointment_date).toLocaleDateString('es-ES')
                             : 'Sin citas'}
                         </td>
-                        <td className={styles.actionsCell}>
+                        <td className={styles.actionsCell} data-label="Acciones">
                           <button
                             onClick={() => handleEdit(patient)}
                             className={styles.actionBtn}

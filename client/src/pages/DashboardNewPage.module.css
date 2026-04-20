@@ -36,7 +36,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
-  background: var(--bg-surface);
+  background: white;
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
   font-size: 0.9rem;
@@ -60,92 +60,60 @@
   50% { opacity: 0.5; }
 }
 
-/* Error Box */
-.errorBox {
-  background: #fee2e2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-}
-
 /* Stats Grid */
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
 .statCard {
-  background: var(--bg-surface);
+  background: white;
   border-radius: 0.75rem;
   padding: 1.75rem;
   border-left: 4px solid;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   transition: all var(--transition-base);
 }
 
 .statCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
-.statCard.primary {
-  border-left-color: var(--primary-color);
-}
-
-.statCard.success {
-  border-left-color: var(--success-color);
-}
-
-.statCard.warning {
-  border-left-color: var(--warning-color);
-}
-
-.statCard.info {
-  border-left-color: var(--info-color);
-}
-
-.statCard.danger {
-  border-left-color: var(--danger-color);
-}
+.statCard.primary { border-left-color: var(--primary-color); }
+.statCard.success { border-left-color: var(--success-color); }
+.statCard.warning { border-left-color: var(--warning-color); }
+.statCard.info { border-left-color: var(--info-color); }
 
 .statValue {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 2.2rem;
+  font-weight: 800;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .statLabel {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--gray);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.statSubtext {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
-}
-
 /* Appointments Section */
 .appointmentsSection {
-  background: var(--bg-surface);
+  background: white;
   border-radius: 0.75rem;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .sectionTitle {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 1.5rem 0;
 }
@@ -155,85 +123,46 @@
   border-collapse: collapse;
 }
 
-.appointmentsTable thead {
-  background: var(--bg-primary);
-  border-bottom: 2px solid var(--border-color);
-}
-
 .appointmentsTable th {
   padding: 1rem;
   text-align: left;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gray);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.appointmentsTable tbody tr {
-  border-bottom: 1px solid var(--border-color);
-  transition: background-color var(--transition-base);
-}
-
-.appointmentsTable tbody tr:hover {
-  background-color: var(--bg-primary);
+  border-bottom: 2px solid var(--border-color);
 }
 
 .appointmentsTable td {
-  padding: 1rem;
-  color: var(--text-primary);
-}
-
-.positionCell {
-  font-weight: 600;
-  color: var(--primary-color);
-  font-size: 1.1rem;
-  width: 60px;
-}
-
-.patientName {
-  font-weight: 500;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .time {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary-color);
+  font-size: 1.1rem;
+}
+
+.patientName {
+  font-weight: 600;
+  color: var(--dark-gray);
 }
 
 .statusBadge {
   display: inline-block;
   padding: 0.4rem 0.75rem;
-  border-radius: 0.375rem;
+  border-radius: 50px;
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.5px;
 }
 
-.statusScheduled {
-  background: #dbeafe;
-  color: #1e40af;
-}
+.statusScheduled { background: #dbeafe; color: #1e40af; }
+.statusCompleted { background: #dcfce7; color: #166534; }
 
-.statusCompleted {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.statusCancelled {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-/* Empty State */
-.emptyState {
-  text-align: center;
-  padding: 3rem 2rem;
-  color: var(--text-secondary);
-}
-
-/* Session Info */
+/* Session Info Card */
 .sessionInfo {
-  background: var(--bg-surface);
+  background: white;
   border-radius: 0.75rem;
   padding: 1.5rem;
   display: flex;
@@ -244,15 +173,14 @@
 .infoItem {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .infoLabel {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  color: var(--gray);
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
 }
 
 .infoValue {
@@ -261,65 +189,84 @@
   color: var(--text-primary);
 }
 
-/* Loading */
-.loadingContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: 1rem;
-  color: var(--text-secondary);
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--border-color);
-  border-top-color: var(--primary-color);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Responsive */
 @media (max-width: 768px) {
   .container {
-    padding: 1rem;
+    padding: 1.25rem;
   }
 
   .pageHeader {
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.25rem;
+    text-align: center;
+    align-items: center;
+  }
+
+  .headerRight {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .connectionStatus {
+    width: 100%;
+    justify-content: center;
   }
 
   .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .statCard {
+    padding: 1.5rem;
+  }
+
+  .statValue {
+    font-size: 2rem;
   }
 
   .appointmentsSection {
-    padding: 1rem;
-    overflow-x: auto;
+    padding: 1.25rem;
   }
 
-  .appointmentsTable {
-    font-size: 0.9rem;
+  /* Tabla a Cards en Dashboard */
+  .appointmentsTable, .appointmentsTable thead, .appointmentsTable tbody, .appointmentsTable th, .appointmentsTable td, .appointmentsTable tr {
+    display: block;
   }
 
-  .appointmentsTable th,
+  .appointmentsTable thead { display: none; }
+
+  .appointmentsTable tr {
+    padding: 1rem 0;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
   .appointmentsTable td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem 0;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .appointmentsTable td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--gray);
+    text-transform: uppercase;
   }
 
   .sessionInfo {
     flex-direction: column;
-    gap: 1rem;
-  }
-
-  .title {
-    font-size: 1.5rem;
+    gap: 1.5rem;
+    align-items: center;
+    text-align: center;
   }
 }

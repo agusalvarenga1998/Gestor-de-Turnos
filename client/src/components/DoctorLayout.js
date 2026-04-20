@@ -10,6 +10,12 @@ export default function DoctorLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  // Cerrar el menú móvil cuando cambia la ruta
+  React.useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [navigate]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -18,12 +24,23 @@ export default function DoctorLayout({ children }) {
   };
 
   return (
-    <div className={styles.layout}>
-      <Sidebar />
+    <div className={`${styles.layout} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
+      <div className={styles.sidebarOverlay} onClick={() => setIsMobileMenuOpen(false)}></div>
+      <Sidebar isMobile={true} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
       <div className={styles.mainContent}>
         <header className={styles.topbar}>
           <div className={styles.topbarContent}>
+            <button 
+              className={styles.mobileMenuBtn}
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Abrir menú"
+            >
+              <div className={styles.hamburgerLine}></div>
+              <div className={styles.hamburgerLine}></div>
+              <div className={styles.hamburgerLine}></div>
+            </button>
+
             <div className={styles.breadcrumb}>
               {/* Breadcrumb irá aquí */}
             </div>

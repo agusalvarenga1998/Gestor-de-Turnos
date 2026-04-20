@@ -10,6 +10,46 @@
   flex-direction: column;
   margin-left: 260px;
   transition: margin-left var(--transition-base);
+  width: 100%;
+  min-width: 0;
+}
+
+.mobileMenuBtn {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  margin-right: var(--spacing-md);
+  z-index: 1001;
+}
+
+.hamburgerLine {
+  width: 24px;
+  height: 2px;
+  background-color: var(--dark-gray);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.sidebarOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .topbar {
@@ -123,7 +163,15 @@
 
 @media (max-width: 768px) {
   .mainContent {
-    margin-left: 70px;
+    margin-left: 0 !important;
+  }
+
+  .mobileMenuBtn {
+    display: flex;
+  }
+
+  .layout.mobileMenuOpen .sidebarOverlay {
+    display: block;
   }
 
   .topbar {
@@ -141,5 +189,9 @@
 
   .content {
     padding: var(--spacing-md);
+  }
+
+  .topbarRight {
+    gap: var(--spacing-sm);
   }
 }

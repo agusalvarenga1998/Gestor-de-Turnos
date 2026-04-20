@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import Icon from './Icon';
 import styles from './Sidebar.module.css';
 
-export default function Sidebar() {
+export default function Sidebar({ isMobile, isOpen, onClose }) {
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -23,20 +23,35 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
+    <aside className={`
+      ${styles.sidebar} 
+      ${isCollapsed ? styles.collapsed : ''} 
+      ${isOpen ? styles.open : ''}
+    `}>
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.logo}>
           <img src="/logo_turnohub.png" alt="TurnoHub" className={styles.sidebarLogo} />
-          {!isCollapsed && <span className={styles.logoText}>TurnoHub</span>}
+          {(!isCollapsed || isOpen) && <span className={styles.logoText}>TurnoHub</span>}
         </div>
-        <button
-          className={styles.collapseBtn}
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          title={isCollapsed ? 'Expandir' : 'Contraer'}
-        >
-          {isCollapsed ? '›' : '‹'}
-        </button>
+        
+        {/* Botón colapsar (solo escritorio) */}
+        {!isOpen && (
+          <button
+            className={styles.collapseBtn}
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? 'Expandir' : 'Contraer'}
+          >
+            {isCollapsed ? '›' : '‹'}
+          </button>
+        )}
+
+        {/* Botón cerrar (solo móvil) */}
+        {isOpen && (
+          <button className={styles.closeBtn} onClick={onClose}>
+            <Icon name="x" size={24} color="currentColor" />
+          </button>
+        )}
       </div>
 
       {/* Menu items */}
@@ -47,16 +62,17 @@ export default function Sidebar() {
             to={item.path}
             className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
             title={isCollapsed ? item.label : ''}
+            onClick={isOpen ? onClose : undefined}
           >
             <Icon name={item.icon} size={20} color="currentColor" />
-            {!isCollapsed && <span className={styles.label}>{item.label}</span>}
+            {(!isCollapsed || isOpen) && <span className={styles.label}>{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
       {/* Footer con usuario */}
       <div className={styles.footer}>
-        {!isCollapsed && user && (
+        {(!isCollapsed || isOpen) && user && (
           <div className={styles.userInfo}>
             <div className={styles.userName}>{user.name || 'Profesional'}</div>
             <div className={styles.userEmail}>{user.email}</div>
@@ -68,7 +84,7 @@ export default function Sidebar() {
           title="Cerrar sesión"
         >
           <Icon name="logout" size={20} color="currentColor" />
-          {!isCollapsed && <span>Salir</span>}
+          {(!isCollapsed || isOpen) && <span>Salir</span>}
         </button>
       </div>
     </aside>

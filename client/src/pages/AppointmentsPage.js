@@ -568,7 +568,7 @@ export default function AppointmentsPage() {
                   
                   return (
                     <tr key={appt.id}>
-                      <td className={styles.dateTime}>
+                      <td className={styles.dateTime} data-label="Turno">
                         <div className={styles.date}>
                           {(() => {
                             const dateStr = String(appt.appointment_date).split('T')[0];
@@ -579,32 +579,32 @@ export default function AppointmentsPage() {
                         <div className={styles.time}>{appt.appointment_time}</div>
                         <div className={styles.miniCode}>{appt.appointment_code}</div>
                       </td>
-                      <td className={styles.patientInfo}>
+                      <td className={styles.patientInfo} data-label="Paciente">
                         <div className={styles.pName}>{appt.patient_name}</div>
                         <div className={styles.pPhone}>{appt.patient_phone}</div>
                       </td>
-                      <td className={styles.reasonCol}>
+                      <td className={styles.reasonCol} data-label="Motivo / OS">
                         <div className={styles.reasonText}>{appt.reason_for_visit || 'Visita general'}</div>
                         {appt.insurance_name && (
                           <div className={styles.insuranceBadge}>{appt.insurance_name}</div>
                         )}
                       </td>
-                      <td className={styles.amount}>
+                      <td className={styles.amount} data-label="Total">
                         ${parseFloat(appt.total_price || 0).toLocaleString()}
                       </td>
-                      <td className={styles.feePaid}>
+                      <td className={styles.feePaid} data-label="Seña">
                         ${parseFloat(appt.booking_fee_paid || 0).toLocaleString()}
                       </td>
-                      <td className={styles.coverage}>
+                      <td className={styles.coverage} data-label="Cobertura">
                         {parseFloat(appt.coverage_amount || 0) > 0 ? `-$${parseFloat(appt.coverage_amount).toLocaleString()}` : '-'}
                       </td>
-                      <td>{getStatusBadge(appt.status)}</td>
-                      <td className={styles.toChargeCell}>
+                      <td data-label="Estado">{getStatusBadge(appt.status)}</td>
+                      <td className={styles.toChargeCell} data-label="A COBRAR">
                         <div className={styles.toChargeAmount}>
                           ${toCharge > 0 ? toCharge.toLocaleString() : '0'}
                         </div>
                       </td>
-                      <td className={styles.actions}>
+                      <td className={styles.actions} data-label="Acciones">
                         <div className={styles.actionButtons}>
                         {['pending', 'pending_payment', 'scheduled'].includes(appt.status) ? (
                           <>
