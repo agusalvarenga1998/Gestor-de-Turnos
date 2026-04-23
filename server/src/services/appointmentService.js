@@ -34,12 +34,12 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
     const confirmationToken = uuidv4();
     const appointmentCode = generateShortCode();
 
-    // Obtener información del doctor (precio base y plan)
-    const doctorResult = await query(
-      'SELECT appointment_price, plan_type, commission_rate FROM doctors WHERE id = $1', 
+    // Obtener información del doctor (precio base, plan, nombre y especialidad)
+    const doctorInfoResult = await query(
+      'SELECT name, specialization, appointment_price, plan_type, commission_rate FROM doctors WHERE id = $1', 
       [doctorId]
     );
-    const doctor = doctorResult.rows[0];
+    const doctor = doctorInfoResult.rows[0];
 
     // Determinar precio final
     let finalPrice = servicePrice;
@@ -104,13 +104,12 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
     console.log('✓ Cita insertada en BD');
     console.log('🔐 Token de confirmación:', confirmationToken.substring(0, 8) + '...');
 
-    // Obtener datos del paciente y doctor para enviar email
+    // Obtener datos del paciente para enviar email (el doctor ya lo tenemos)
     console.log('📧 Obteniendo datos para enviar email...');
     const patientResult = await query('SELECT name, email FROM patients WHERE id = $1', [patientId]);
-    const doctorResult = await query('SELECT name, specialization FROM doctors WHERE id = $1', [doctorId]);
 
     const patient = patientResult.rows[0];
-    const doctor = doctorResult.rows[0];
+    // const doctor = doctorInfoResult.rows[0]; // Ya está declarado arriba
 
     // Enviar email de confirmación
     if (patient && patient.email) {
