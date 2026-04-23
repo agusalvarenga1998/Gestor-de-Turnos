@@ -95,6 +95,8 @@ router.get('/doctors', verifyAdmin, async (req, res) => {
         trial_ends_at,
         approved_at,
         accumulated_debt,
+        plan_type,
+        commission_rate,
         created_at
       FROM doctors
       ORDER BY created_at DESC
@@ -340,6 +342,40 @@ router.get('/subscriptions', verifyAdmin, async (req, res) => {
     res.json({ success: true, subscriptions: result.rows });
   } catch (error) {
     console.error('Get subscriptions error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update doctor's plan
+router.patch('/doctors/:id/plan', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { plan_type, commission_rate } = req.body;
+
+    if (!plan_type || !['monthly', 'commission'].includes(plan_type)) {
+      return res.status(400).json({ error: 'Invalid plan type' });
+    }
+
+    const result = await query(
+      `UPDATE doctors
+       SET plan_type = $1,
+           commission_rate = COALESCE($2, commission_rate)
+       WHERE id = $3
+       RETURNING id, name, plan_type, commission_rate`,
+      [plan_type, commission_rate, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Doctor not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Plan actualizado correctamente',
+      doctor: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Update plan error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

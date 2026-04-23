@@ -15,6 +15,8 @@ export default function AdminDoctorsPage() {
   const [actionModal, setActionModal] = useState(null);
   const [extendDays, setExtendDays] = useState(30);
   const [amount, setAmount] = useState(0);
+  const [planType, setPlanType] = useState('monthly');
+  const [commissionRate, setCommissionRate] = useState(3);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -83,6 +85,13 @@ export default function AdminDoctorsPage() {
           response = await axios.patch(
             `${API_BASE_URL}/api/admin/doctors/${doctorId}/reset-debt`,
             {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          break;
+        case 'change-plan':
+          response = await axios.patch(
+            `${API_BASE_URL}/api/admin/doctors/${doctorId}/plan`,
+            { plan_type: planType, commission_rate: parseFloat(commissionRate) || 3 },
             { headers: { Authorization: `Bearer ${token}` } }
           );
           break;
@@ -184,7 +193,25 @@ export default function AdminDoctorsPage() {
                 <td>{doctor.email}</td>
                 <td>{doctor.specialization || '-'}</td>
                 <td>{getStatusBadge(doctor.status)}</td>
-                <td>{getSubscriptionStatus(doctor)}</td>
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {getSubscriptionStatus(doctor)}
+                    <span className={styles.planBadge}>
+                      {doctor.plan_type === 'commission' ? `Comisión (${doctor.commission_rate}%)` : 'Mensualidad'}
+                    </span>
+                    <button 
+                      className={styles.planBtn}
+                      onClick={() => {
+                        setSelectedDoctor(doctor);
+                        setPlanType(doctor.plan_type || 'monthly');
+                        setCommissionRate(doctor.commission_rate || 3);
+                        setActionModal('change-plan');
+                      }}
+                    >
+                      Cambiar Plan
+                    </button>
+                  </div>
+                </td>
                 <td className={styles.expiry}>
                   {doctor.subscription_expires_at
                     ? new Date(doctor.subscription_expires_at).toLocaleDateString('es-ES')
@@ -297,7 +324,40 @@ export default function AdminDoctorsPage() {
               {actionModal === 'extend' && `Extender suscripción de ${selectedDoctor.name}`}
               {actionModal === 'reactivate' && `¿Reactivar la cuenta de ${selectedDoctor.name}?`}
               {actionModal === 'reset-debt' && `Estamos por poner en cero la deuda de $${parseFloat(selectedDoctor.accumulated_debt).toLocaleString()} de ${selectedDoctor.name}. ¿Confirmar cobro?`}
+              {actionModal === 'change-plan' && `Cambiar el plan de servicios para ${selectedDoctor.name}`}
             </p>
+
+            {actionModal === 'change-plan' && (
+              <div className={styles.formGroup}>
+                <label htmlFor="plan_type">Tipo de Plan:</label>
+                <select
+                  id="plan_type"
+                  value={planType}
+                  onChange={(e) => setPlanType(e.target.value)}
+                  className={styles.select}
+                  disabled={actionLoading}
+                >
+                  <option value="monthly">Mensualidad (Fija)</option>
+                  <option value="commission">Comisión (Por Turno)</option>
+                </select>
+              </div>
+            )}
+
+            {actionModal === 'change-plan' && planType === 'commission' && (
+              <div className={styles.formGroup}>
+                <label htmlFor="commission_rate">Porcentaje de Comisión (%):</label>
+                <input
+                  type="number"
+                  id="commission_rate"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(e.target.value)}
+                  disabled={actionLoading}
+                />
+              </div>
+            )}
 
             {(actionModal === 'approve' || actionModal === 'extend') && (
               <>

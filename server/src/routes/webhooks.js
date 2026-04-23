@@ -52,7 +52,7 @@ router.post('/mercadopago', async (req, res) => {
           // 2. Actualizar turno en la base de datos
           const updateResult = await query(
             `UPDATE appointments 
-             SET status = 'pending', payment_status = 'paid', updated_at = CURRENT_TIMESTAMP 
+             SET status = 'pending', payment_status = 'paid', fee_charged = true, updated_at = CURRENT_TIMESTAMP 
              WHERE id = $1
              RETURNING *`,
             [appointmentId]

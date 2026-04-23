@@ -34,11 +34,24 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
     const confirmationToken = uuidv4();
     const appointmentCode = generateShortCode();
 
-    // Obtener precio base del doctor si no hay precio de servicio
+    // Obtener información del doctor (precio base y plan)
+    const doctorResult = await query(
+      'SELECT appointment_price, plan_type, commission_rate FROM doctors WHERE id = $1', 
+      [doctorId]
+    );
+    const doctor = doctorResult.rows[0];
+
+    // Determinar precio final
     let finalPrice = servicePrice;
     if (finalPrice === null || finalPrice === undefined) {
-      const doctorResult = await query('SELECT appointment_price FROM doctors WHERE id = $1', [doctorId]);
-      finalPrice = parseFloat(doctorResult.rows[0]?.appointment_price || 0);
+      finalPrice = parseFloat(doctor?.appointment_price || 0);
+    }
+
+    // Calcular comisión del sistema si el plan es por comisión
+    let systemFee = 0;
+    if (doctor?.plan_type === 'commission') {
+      const rate = parseFloat(doctor.commission_rate || 3) / 100;
+      systemFee = finalPrice * rate;
     }
 
     const result = await query(
@@ -76,7 +89,7 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
         confirmationToken, 
         insurance_company_id || null, 
         0, 
-        0, 
+        systemFee, 
         'paid', 
         appointmentCode,
         finalPrice,
@@ -244,6 +257,20 @@ export const updateAppointment = async (appointmentId, updateData) => {
     );
 
     const updatedAppointment = result.rows[0];
+
+    // Si la cita se completa y no se ha cobrado la comisión, cobrarla ahora
+    if (updatedAppointment.status === 'completed' && !updatedAppointment.fee_charged && updatedAppointment.system_fee > 0) {
+      await query(
+        'UPDATE doctors SET accumulated_debt = accumulated_debt + $1 WHERE id = $2',
+        [updatedAppointment.system_fee, updatedAppointment.doctor_id]
+      );
+      await query(
+        'UPDATE appointments SET fee_charged = true WHERE id = $1',
+        [appointmentId]
+      );
+      updatedAppointment.fee_charged = true;
+      console.log(`✅ Comisión de $${updatedAppointment.system_fee} cargada al doctor por cita completada.`);
+    }
 
     // Sincronizar cambios con Google Calendar si existe el evento
     if (currentAppointment && currentAppointment.google_event_id) {
