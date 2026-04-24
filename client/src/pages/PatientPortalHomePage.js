@@ -405,7 +405,7 @@ export default function PatientPortalHomePage() {
                                 const selectedInsurance = doctorInsurances.find(i => i.id === patientData.insuranceId);
                                 const insuranceDiscount = parseFloat(selectedInsurance?.additional_fee || 0);
 
-                                const systemFee = servicePrice * 0.03;
+                                const systemFee = d?.plan_type === 'commission' ? (servicePrice * 0.03) : 0;
                                 const professionalFee = (selectedService.booking_fee !== null && selectedService.booking_fee !== undefined) 
                                   ? parseFloat(selectedService.booking_fee) 
                                   : parseFloat(d?.booking_fee || 0);
@@ -423,7 +423,7 @@ export default function PatientPortalHomePage() {
                                       <span>${servicePrice.toLocaleString()}</span>
                                     </div>
                                     <div className={styles.paymentRow}>
-                                      <span>Uso de la Aplicación (3%):</span>
+                                      <span>Uso de la Aplicación {d?.plan_type === 'commission' ? '(3%)' : ''}:</span>
                                       <span>${systemFee.toLocaleString()}</span>
                                     </div>
                                     

@@ -60,7 +60,7 @@ router.get('/public/doctors/:specialization', async (req, res) => {
     console.log('🔓 Obtener médicos de especialidad:', specialization);
 
     const result = await query(
-      `SELECT id, name, specialization, clinic_name, phone, latitude, longitude, booking_fee, appointment_price
+      `SELECT id, name, specialization, clinic_name, phone, latitude, longitude, booking_fee, appointment_price, plan_type
        FROM doctors
        WHERE status = 'approved'
        AND subscription_status IN ('active', 'trial')
@@ -185,7 +185,7 @@ router.post('/public/create', async (req, res) => {
 
     // Verificar doctor
     const doctorCheck = await query(
-      `SELECT id, name, email, booking_fee, appointment_price, accumulated_debt
+      `SELECT id, name, email, booking_fee, appointment_price, accumulated_debt, plan_type, commission_rate
        FROM doctors WHERE id = $1 AND status = 'approved' AND subscription_status IN ('active', 'trial')`,
       [doctorId]
     );
@@ -207,7 +207,9 @@ router.post('/public/create', async (req, res) => {
       }
     }
 
-    const systemFee = fullPrice * 0.03;
+    const systemFee = doctor.plan_type === 'commission' 
+      ? (fullPrice * (parseFloat(doctor.commission_rate || 3) / 100)) 
+      : 0;
     let totalToPayNow = (bookingFee + systemFee);
     let isCash = paymentMethod === 'cash';
 
