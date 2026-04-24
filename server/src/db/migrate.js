@@ -45,6 +45,22 @@ async function migrate() {
     `);
     console.log('✓ password_hash ahora es opcional.\n');
 
+    // 4. Tabla Doctors: Columnas de planes y deudas
+    console.log('➕ Verificando columnas de planes en tabla doctors...');
+    await client.query(`
+      ALTER TABLE doctors 
+      ADD COLUMN IF NOT EXISTS plan_type VARCHAR(20) DEFAULT 'monthly',
+      ADD COLUMN IF NOT EXISTS commission_rate DECIMAL(5, 2) DEFAULT 3.00,
+      ADD COLUMN IF NOT EXISTS accumulated_debt DECIMAL(10, 2) DEFAULT 0;
+    `);
+
+    // 5. Tabla Appointments: Columna de cobro de comisión
+    console.log('➕ Verificando columna fee_charged en tabla appointments...');
+    await client.query(`
+      ALTER TABLE appointments 
+      ADD COLUMN IF NOT EXISTS fee_charged BOOLEAN DEFAULT false;
+    `);
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {
