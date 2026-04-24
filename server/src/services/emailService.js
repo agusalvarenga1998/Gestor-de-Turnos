@@ -737,3 +737,74 @@ export async function sendNewAppointmentNotificationToDoctor({
     return { sent: false, error: error.message };
   }
 }
+
+// Enviar recordatorio de cita (24hs antes)
+export async function sendAppointmentReminder({
+  to,
+  patientName,
+  doctorName,
+  appointmentDate,
+  appointmentTime,
+  clinicName,
+  clinicAddress
+}) {
+  try {
+    if (!to) return { sent: false, reason: 'No email' };
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+          .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+          .content { padding: 30px; }
+          .details { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .footer { background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b; }
+          .warning { color: #dc2626; font-weight: bold; margin-top: 20px; border-top: 1px solid #fee2e2; padding-top: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header"><h1>Recordatorio de Turno</h1></div>
+          <div class="content">
+            <p>Hola <strong>${patientName}</strong>,</p>
+            <p>Este es un recordatorio de tu turno programado para mañana:</p>
+            
+            <div class="details">
+              <p><strong>👨‍⚕️ Profesional:</strong> ${doctorName}</p>
+              <p><strong>📅 Fecha:</strong> ${new Date(appointmentDate).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+              <p><strong>🕐 Hora:</strong> ${appointmentTime} hs</p>
+              ${clinicName ? `<p><strong>🏥 Lugar:</strong> ${clinicName}</p>` : ''}
+              ${clinicAddress ? `<p><strong>📍 Dirección:</strong> ${clinicAddress}</p>` : ''}
+            </div>
+
+            <div class="warning">
+              ⚠️ Recordatorio: Al faltar menos de 24 hs para tu cita, ya no es posible realizar cancelaciones o reprogramaciones a través del sistema.
+            </div>
+
+            <p style="margin-top: 25px;">¡Te esperamos!</p>
+          </div>
+          <div class="footer">
+            <p>Enviado por TurnoHub.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      to: to,
+      subject: `Recordatorio: Tu turno con ${doctorName} es mañana`,
+      html: htmlContent
+    });
+
+    return { sent: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Error enviando recordatorio:', error.message);
+    return { sent: false, error: error.message };
+  }
+}

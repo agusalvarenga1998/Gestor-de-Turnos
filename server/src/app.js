@@ -24,6 +24,9 @@ import { requestLogger } from './middleware/requestLogger.js';
 // Imports de WebSocket
 import { setupWebSocket } from './websocket/server.js';
 
+// Imports de Cron
+import { initReminderCron } from './cron/reminderCron.js';
+
 const app = express();
 const httpServer = createServer(app);
 
@@ -110,6 +113,9 @@ httpServer.listen(PORT, HOST, () => {
   console.log(`\n🚀 Servidor iniciado en http://${HOST}:${PORT}`);
   console.log(`📊 Health check: http://${HOST}:${PORT}/health`);
   console.log(`🔌 WebSocket disponible en ws://${HOST}:${process.env.WS_PORT || 5001}\n`);
+  
+  // Iniciar tareas programadas
+  initReminderCron();
 });
 
 // Manejo de errores no capturados
