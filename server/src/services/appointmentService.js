@@ -259,16 +259,31 @@ export const updateAppointment = async (appointmentId, updateData) => {
 
     // Si la cita se completa y no se ha cobrado la comisión, cobrarla ahora
     if (updatedAppointment.status === 'completed' && !updatedAppointment.fee_charged && updatedAppointment.system_fee > 0) {
-      await query(
-        'UPDATE doctors SET accumulated_debt = accumulated_debt + $1 WHERE id = $2',
-        [updatedAppointment.system_fee, updatedAppointment.doctor_id]
-      );
-      await query(
-        'UPDATE appointments SET fee_charged = true WHERE id = $1',
-        [appointmentId]
-      );
-      updatedAppointment.fee_charged = true;
-      console.log(`✅ Comisión de $${updatedAppointment.system_fee} cargada al doctor por cita completada.`);
+      // Verificar el plan actual del doctor
+      const doctorPlanResult = await query('SELECT plan_type FROM doctors WHERE id = $1', [updatedAppointment.doctor_id]);
+      const currentPlan = doctorPlanResult.rows[0]?.plan_type;
+
+      if (currentPlan === 'commission') {
+        await query(
+          'UPDATE doctors SET accumulated_debt = accumulated_debt + $1 WHERE id = $2',
+          [updatedAppointment.system_fee, updatedAppointment.doctor_id]
+        );
+        await query(
+          'UPDATE appointments SET fee_charged = true WHERE id = $1',
+          [appointmentId]
+        );
+        updatedAppointment.fee_charged = true;
+        console.log(`✅ Comisión de $${updatedAppointment.system_fee} cargada al doctor por cita completada.`);
+      } else {
+        console.log(`ℹ️ No se carga comisión porque el doctor está en plan ${currentPlan}.`);
+        // Marcar como cobrada (en 0) para que no se reintente
+        await query(
+          'UPDATE appointments SET fee_charged = true, system_fee = 0 WHERE id = $1',
+          [appointmentId]
+        );
+        updatedAppointment.fee_charged = true;
+        updatedAppointment.system_fee = 0;
+      }
     }
 
     // Sincronizar cambios con Google Calendar si existe el evento

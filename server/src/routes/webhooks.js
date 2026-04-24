@@ -40,31 +40,43 @@ router.post('/mercadopago', async (req, res) => {
       console.log(`📝 Estado del pago en MP: ${status}`);
 
       if (status === 'approved') {
-        // 1. Obtener la comisión del turno
+        // 1. Obtener la comisión del turno y el plan del doctor
         const feeQuery = await query(
-          'SELECT system_fee, doctor_id FROM appointments WHERE id = $1',
+          `SELECT a.system_fee, a.doctor_id, d.plan_type 
+           FROM appointments a
+           JOIN doctors d ON a.doctor_id = d.id
+           WHERE a.id = $1`,
           [appointmentId]
         );
         
         if (feeQuery.rows.length > 0) {
-          const { system_fee, doctor_id } = feeQuery.rows[0];
+          const { system_fee, doctor_id, plan_type } = feeQuery.rows[0];
 
           // 2. Actualizar turno en la base de datos
           const updateResult = await query(
             `UPDATE appointments 
-             SET status = 'pending', payment_status = 'paid', fee_charged = true, updated_at = CURRENT_TIMESTAMP 
+             SET status = 'pending', 
+                 payment_status = 'paid', 
+                 fee_charged = true, 
+                 system_fee = CASE WHEN $2 = 'commission' THEN system_fee ELSE 0 END,
+                 updated_at = CURRENT_TIMESTAMP 
              WHERE id = $1
              RETURNING *`,
-            [appointmentId]
+            [appointmentId, plan_type]
           );
 
           const appointment = updateResult.rows[0];
 
-          // 3. SUMAR DEUDA AL DOCTOR
-          await query(
-            'UPDATE doctors SET accumulated_debt = accumulated_debt + $1 WHERE id = $2',
-            [system_fee, doctor_id]
-          );
+          // 3. SUMAR DEUDA AL DOCTOR (Solo si está en plan por comisión)
+          if (plan_type === 'commission' && system_fee > 0) {
+            await query(
+              'UPDATE doctors SET accumulated_debt = accumulated_debt + $1 WHERE id = $2',
+              [system_fee, doctor_id]
+            );
+            console.log(`✅ Turno ${appointmentId} confirmado y deuda de $${system_fee} cargada al doctor.`);
+          } else {
+            console.log(`✅ Turno ${appointmentId} confirmado. Sin deuda por plan: ${plan_type}`);
+          }
 
           // 4. NOTIFICAR AL DOCTOR MEDIANTE WEBSOCKET
           notifyDoctor(doctor_id, {
