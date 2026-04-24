@@ -422,10 +422,12 @@ export default function PatientPortalHomePage() {
                                       <span>Valor del Servicio:</span>
                                       <span>${servicePrice.toLocaleString()}</span>
                                     </div>
-                                    <div className={styles.paymentRow}>
-                                      <span>Uso de la Aplicación {d?.plan_type === 'commission' ? '(3%)' : ''}:</span>
-                                      <span>${systemFee.toLocaleString()}</span>
-                                    </div>
+                                    {systemFee > 0 && (
+                                      <div className={styles.paymentRow}>
+                                        <span>Uso de la Aplicación (3%):</span>
+                                        <span>${systemFee.toLocaleString()}</span>
+                                      </div>
+                                    )}
                                     
                                     {insuranceDiscount > 0 && (
                                       <div className={styles.paymentRow} style={{ color: '#10b981', fontWeight: '500' }}>
