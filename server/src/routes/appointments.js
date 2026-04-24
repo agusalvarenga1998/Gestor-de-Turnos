@@ -304,10 +304,10 @@ router.post('/public/create', async (req, res) => {
         insuranceId || null,
         totalToPayNow,
         systemFee,
-        totalToPayNow > 0 ? 'pending' : 'paid',
+        (isCash || totalToPayNow > 0) ? 'pending' : 'paid',
         generateShortCode(),
         fullPrice,
-        bookingFee,
+        (isCash || totalToPayNow > 0) ? 0 : bookingFee,
         insuranceDiscount,
         serviceId || null,
         serviceDuration
