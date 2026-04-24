@@ -105,7 +105,7 @@ router.get('/doctors', verifyAdmin, async (req, res) => {
     res.json({ success: true, doctors: result.rows });
   } catch (error) {
     console.error('Get doctors error:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
