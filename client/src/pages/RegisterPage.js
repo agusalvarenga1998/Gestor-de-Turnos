@@ -140,6 +140,7 @@ export default function RegisterPage() {
                   placeholder="profesional@ejemplo.com"
                   disabled={loading}
                 />
+              </div>
               <div className={styles.formGroup}>
                 <label>TELÉFONO DE CONTACTO</label>
                 <input
