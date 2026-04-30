@@ -174,19 +174,32 @@ export const getPublicInsurances = async (req, res) => {
 export const getServiceCoverages = async (req, res) => {
   try {
     const { id } = req.params; // insurance id
+    console.log('🔍 [DEBUG] getServiceCoverages requested for ID:', id);
+    
+    if (!id) {
+      console.log('❌ [DEBUG] No ID provided in params');
+      return res.status(400).json({ success: false, message: 'ID de obra social no proporcionado' });
+    }
+
     const coverages = await insuranceService.getInsuranceServiceCoverages(id);
+    console.log(`✅ [DEBUG] Found ${coverages ? coverages.length : 0} coverages`);
+    
     res.json({
       success: true,
-      coverages
+      coverages: coverages || []
     });
   } catch (error) {
-    console.error('Error obteniendo coberturas por servicio:', error);
+    console.error('❌ [ERROR] getServiceCoverages failed:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener coberturas'
+      message: 'Error interno al obtener coberturas por servicio',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
+
+
 
 export const setServiceCoverage = async (req, res) => {
   try {

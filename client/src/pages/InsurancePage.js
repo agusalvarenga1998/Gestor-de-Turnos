@@ -140,28 +140,45 @@ export default function InsurancePage() {
 
   // Lógica para Cobertura por Servicio
   const handleConfigureCoverage = async (insurance) => {
+    console.log('🔘 Configure Coverage for:', insurance);
+    if (!insurance || !insurance.id) {
+      console.error('❌ No insurance ID found');
+      alert('Error: No se pudo identificar la obra social seleccionada.');
+      return;
+    }
+
     setConfiguringInsurance(insurance);
     setLoading(true);
     try {
+      console.log('📡 Fetching coverages for:', insurance.id);
       const response = await insuranceAPI.getServiceCoverages(insurance.id);
+      console.log('📥 Coverages Response:', response);
+      
       if (response.success) {
         const coverageMap = {};
-        response.coverages.forEach(c => {
-          coverageMap[c.service_id] = {
-            type: c.coverage_type,
-            value: c.coverage_value
-          };
-        });
+        if (response.coverages && Array.isArray(response.coverages)) {
+          response.coverages.forEach(c => {
+            coverageMap[c.service_id] = {
+              type: c.coverage_type,
+              value: c.coverage_value
+            };
+          });
+        }
         setCoverages(coverageMap);
         setShowCoverageModal(true);
+      } else {
+        alert(response.message || 'Error al obtener coberturas');
       }
     } catch (err) {
-      console.error('Error cargando coberturas:', err);
-      alert('Error al cargar coberturas por servicio');
+      console.error('❌ Error cargando coberturas:', err);
+      // Intentar extraer el mensaje de error de Axios si existe
+      const msg = err.response?.data?.message || err.response?.data?.error || err.message;
+      alert(`Error al cargar coberturas por servicio: ${msg}`);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleCoverageChange = (serviceId, field, value) => {
     setCoverages(prev => ({
