@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
 import Loading from '../components/Loading';
-import { insuranceAPI } from '../services/api';
+import { insuranceAPI, serviceAPI } from '../services/api';
 import styles from './InsurancePage.module.css';
 
 export default function InsurancePage() {
   const [insurances, setInsurances] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -16,25 +17,48 @@ export default function InsurancePage() {
     additional_fee: ''
   });
 
+  // Estado para configuración de servicios
+  const [configuringInsurance, setConfiguringInsurance] = useState(null);
+  const [showCoverageModal, setShowCoverageModal] = useState(false);
+  const [coverages, setCoverages] = useState({}); // { serviceId: { type, value } }
+  const [savingCoverage, setSavingCoverage] = useState(false);
+
   useEffect(() => {
-    fetchInsurances();
+    fetchInitialData();
   }, []);
 
-  const fetchInsurances = async () => {
+  const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const response = await insuranceAPI.getInsurances();
+      const [insuranceRes, servicesRes] = await Promise.all([
+        insuranceAPI.getInsurances(),
+        serviceAPI.getMyServices()
+      ]);
 
-      if (response.success) {
-        setInsurances(response.insurances);
+      if (insuranceRes.success) {
+        setInsurances(insuranceRes.insurances);
+      }
+      if (servicesRes.success) {
+        setServices(servicesRes.services);
       }
 
       setError(null);
     } catch (err) {
-      console.error('Error cargando obras sociales:', err);
-      setError('Error al cargar las obras sociales');
+      console.error('Error cargando datos:', err);
+      setError('Error al cargar los datos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInsurances = async () => {
+    try {
+      const response = await insuranceAPI.getInsurances();
+      if (response.success) {
+        setInsurances(response.insurances);
+      }
+    } catch (err) {
+      console.error('Error cargando obras sociales:', err);
     }
   };
 
@@ -70,14 +94,7 @@ export default function InsurancePage() {
       }
 
       if (response.success) {
-        setInsurances(prev => {
-          if (editingId) {
-            return prev.map(i => i.id === editingId ? response.insurance : i);
-          } else {
-            return [...prev, response.insurance];
-          }
-        });
-
+        await fetchInsurances();
         resetForm();
         setShowForm(false);
       }
@@ -121,7 +138,65 @@ export default function InsurancePage() {
     setEditingId(null);
   };
 
-  if (loading) {
+  // Lógica para Cobertura por Servicio
+  const handleConfigureCoverage = async (insurance) => {
+    setConfiguringInsurance(insurance);
+    setLoading(true);
+    try {
+      const response = await insuranceAPI.getServiceCoverages(insurance.id);
+      if (response.success) {
+        const coverageMap = {};
+        response.coverages.forEach(c => {
+          coverageMap[c.service_id] = {
+            type: c.coverage_type,
+            value: c.coverage_value
+          };
+        });
+        setCoverages(coverageMap);
+        setShowCoverageModal(true);
+      }
+    } catch (err) {
+      console.error('Error cargando coberturas:', err);
+      alert('Error al cargar coberturas por servicio');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCoverageChange = (serviceId, field, value) => {
+    setCoverages(prev => ({
+      ...prev,
+      [serviceId]: {
+        ...(prev[serviceId] || { type: 'fixed_amount', value: 0 }),
+        [field]: value
+      }
+    }));
+  };
+
+  const saveCoverage = async (serviceId) => {
+    const coverage = coverages[serviceId];
+    if (!coverage) return;
+
+    setSavingCoverage(serviceId);
+    try {
+      const response = await insuranceAPI.setServiceCoverage(configuringInsurance.id, {
+        serviceId,
+        coverageType: coverage.type,
+        coverageValue: parseFloat(coverage.value) || 0
+      });
+      
+      if (response.success) {
+        // Opcional: mostrar un mini feedback de "Guardado"
+      }
+    } catch (err) {
+      console.error('Error guardando cobertura:', err);
+      alert('No se pudo guardar la cobertura para este servicio');
+    } finally {
+      setSavingCoverage(null);
+    }
+  };
+
+  if (loading && !showCoverageModal) {
     return (
       <DoctorLayout>
         <Loading />
@@ -151,7 +226,7 @@ export default function InsurancePage() {
 
         {error && <div className={styles.errorBox}>{error}</div>}
 
-        {/* Form Modal */}
+        {/* Form Modal (Crear/Editar Obra Social) */}
         {showForm && (
           <div className={styles.modal}>
             <div className={styles.modalContent}>
@@ -182,7 +257,7 @@ export default function InsurancePage() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Monto a Descontar ($)</label>
+                  <label>Monto a Descontar Global ($)</label>
                   <input
                     type="number"
                     name="additional_fee"
@@ -192,7 +267,7 @@ export default function InsurancePage() {
                     step="0.01"
                     min="0"
                   />
-                  <small>Monto que se descontará del costo total si el cliente usa este convenio</small>
+                  <small>Este monto se usará por defecto para todos los servicios si no configuras uno específico.</small>
                 </div>
 
                 <div className={styles.formActions}>
@@ -211,6 +286,88 @@ export default function InsurancePage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Cobertura por Servicio */}
+        {showCoverageModal && configuringInsurance && (
+          <div className={styles.modal}>
+            <div className={`${styles.modalContent} ${styles.largeModal}`}>
+              <div className={styles.modalHeader}>
+                <div>
+                  <h2>Configurar Coberturas: {configuringInsurance.name}</h2>
+                  <p className={styles.modalSubtitle}>Define cuánto cubre esta obra social para cada servicio específico.</p>
+                </div>
+                <button
+                  onClick={() => setShowCoverageModal(false)}
+                  className={styles.closeBtn}
+                >
+                  <Icon name="x" size={20} color="currentColor" />
+                </button>
+              </div>
+
+              <div className={styles.coverageList}>
+                <div className={styles.coverageHeader}>
+                  <span>Servicio</span>
+                  <span>Tipo de Cobertura</span>
+                  <span>Valor</span>
+                  <span>Acción</span>
+                </div>
+                {services.length === 0 ? (
+                  <p className={styles.emptyServices}>No tienes servicios creados para configurar.</p>
+                ) : (
+                  services.map(service => {
+                    const coverage = coverages[service.id] || { type: 'fixed_amount', value: 0 };
+                    const isSaving = savingCoverage === service.id;
+
+                    return (
+                      <div key={service.id} className={styles.coverageItem}>
+                        <div className={styles.serviceInfo}>
+                          <strong>{service.name}</strong>
+                          <span>Precio base: ${parseFloat(service.price).toFixed(2)}</span>
+                        </div>
+                        <div className={styles.coverageInputs}>
+                          <select 
+                            value={coverage.type}
+                            onChange={(e) => handleCoverageChange(service.id, 'type', e.target.value)}
+                            className={styles.selectInput}
+                          >
+                            <option value="fixed_amount">Monto Fijo ($)</option>
+                            <option value="percentage">Porcentaje (%)</option>
+                          </select>
+                          <input 
+                            type="number"
+                            value={coverage.value}
+                            onChange={(e) => handleCoverageChange(service.id, 'value', e.target.value)}
+                            className={styles.valueInput}
+                            placeholder="0.00"
+                            step="0.01"
+                          />
+                        </div>
+                        <div className={styles.coverageAction}>
+                          <button 
+                            onClick={() => saveCoverage(service.id)}
+                            disabled={isSaving}
+                            className={styles.saveCoverageBtn}
+                          >
+                            {isSaving ? '...' : 'Guardar'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              
+              <div className={styles.modalFooter}>
+                <button 
+                  onClick={() => setShowCoverageModal(false)}
+                  className={styles.doneBtn}
+                >
+                  Finalizar
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -235,7 +392,7 @@ export default function InsurancePage() {
               <thead>
                 <tr>
                   <th>Convenio</th>
-                  <th>Monto Descuento</th>
+                  <th>Monto Global</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -248,9 +405,17 @@ export default function InsurancePage() {
                     </td>
                     <td className={styles.actions}>
                       <button
+                        onClick={() => handleConfigureCoverage(insurance)}
+                        className={styles.configBtn}
+                        title="Configurar por Servicio"
+                      >
+                        <Icon name="settings" size={18} color="currentColor" />
+                        Servicios
+                      </button>
+                      <button
                         onClick={() => handleEdit(insurance)}
                         className={styles.iconBtn}
-                        title="Editar"
+                        title="Editar nombre/global"
                       >
                         <Icon name="edit" size={18} color="currentColor" />
                       </button>

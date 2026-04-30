@@ -198,12 +198,41 @@ router.post('/public/create', async (req, res) => {
     
     let insuranceDiscount = 0;
     if (insuranceId) {
-      const insuranceCheck = await query(
-        'SELECT additional_fee FROM insurance_companies WHERE id = $1',
-        [insuranceId]
-      );
-      if (insuranceCheck.rows.length > 0) {
-        insuranceDiscount = parseFloat(insuranceCheck.rows[0].additional_fee) || 0;
+      // 1. Intentar buscar cobertura específica para este servicio
+      if (serviceId) {
+        const serviceCoverageCheck = await query(
+          'SELECT coverage_type, coverage_value FROM insurance_service_coverage WHERE insurance_company_id = $1 AND service_id = $2 AND is_active = TRUE',
+          [insuranceId, serviceId]
+        );
+        
+        if (serviceCoverageCheck.rows.length > 0) {
+          const coverage = serviceCoverageCheck.rows[0];
+          if (coverage.coverage_type === 'percentage') {
+            insuranceDiscount = (fullPrice * parseFloat(coverage.coverage_value)) / 100;
+          } else {
+            insuranceDiscount = parseFloat(coverage.coverage_value);
+          }
+          console.log(`🛡️ Cobertura específica encontrada: ${coverage.coverage_type} ${coverage.coverage_value} (Total: $${insuranceDiscount})`);
+        } else {
+          // 2. Si no hay específica, usar el monto global de la obra social
+          const insuranceCheck = await query(
+            'SELECT additional_fee FROM insurance_companies WHERE id = $1',
+            [insuranceId]
+          );
+          if (insuranceCheck.rows.length > 0) {
+            insuranceDiscount = parseFloat(insuranceCheck.rows[0].additional_fee) || 0;
+            console.log(`🛡️ Usando cobertura global de obra social: $${insuranceDiscount}`);
+          }
+        }
+      } else {
+        // Fallback si no hay serviceId (no debería pasar con el nuevo flujo)
+        const insuranceCheck = await query(
+          'SELECT additional_fee FROM insurance_companies WHERE id = $1',
+          [insuranceId]
+        );
+        if (insuranceCheck.rows.length > 0) {
+          insuranceDiscount = parseFloat(insuranceCheck.rows[0].additional_fee) || 0;
+        }
       }
     }
 

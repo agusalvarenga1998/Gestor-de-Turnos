@@ -20,4 +20,8 @@ router.delete('/:id', insuranceController.deleteInsurance);
 router.get('/patient/:patientId', insuranceController.getPatientInsurances);
 router.put('/patient/:patientId', insuranceController.setPatientInsurances);
 
+// Rutas para coberturas por servicio
+router.get('/:id/coverages', insuranceController.getServiceCoverages);
+router.post('/:id/coverages', insuranceController.setServiceCoverage);
+
 export default router;

@@ -371,3 +371,146 @@
     flex-wrap: wrap;
   }
 }
+
+.configBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.configBtn:hover {
+  background: #dbeafe;
+  border-color: #3b82f6;
+}
+
+.largeModal {
+  max-width: 800px;
+}
+
+.modalSubtitle {
+  margin: 0.25rem 0 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.coverageList {
+  padding: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.coverageHeader {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f3f4f6;
+  font-weight: 700;
+  font-size: 13px;
+  color: #374151;
+  gap: 1rem;
+}
+
+.coverageItem {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 1rem;
+}
+
+.serviceInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.serviceInfo strong {
+  font-size: 14px;
+  color: #111827;
+}
+
+.serviceInfo span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.coverageInputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.selectInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.valueInput {
+  width: 80px;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.saveCoverageBtn {
+  width: 100%;
+  padding: 0.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.saveCoverageBtn:hover {
+  background: #059669;
+}
+
+.saveCoverageBtn:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+}
+
+.modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.doneBtn {
+  padding: 0.75rem 2rem;
+  background: #1f2937;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.doneBtn:hover {
+  background: #111827;
+}
+
+.emptyServices {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 14px;
+}

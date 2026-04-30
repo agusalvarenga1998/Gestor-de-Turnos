@@ -170,3 +170,53 @@ export const getPublicInsurances = async (req, res) => {
     });
   }
 };
+
+export const getServiceCoverages = async (req, res) => {
+  try {
+    const { id } = req.params; // insurance id
+    const coverages = await insuranceService.getInsuranceServiceCoverages(id);
+    res.json({
+      success: true,
+      coverages
+    });
+  } catch (error) {
+    console.error('Error obteniendo coberturas por servicio:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener coberturas'
+    });
+  }
+};
+
+export const setServiceCoverage = async (req, res) => {
+  try {
+    const { id } = req.params; // insurance id
+    const { serviceId, coverageType, coverageValue } = req.body;
+
+    if (!serviceId) {
+      return res.status(400).json({
+        success: false,
+        message: 'El ID del servicio es requerido'
+      });
+    }
+
+    const coverage = await insuranceService.setInsuranceServiceCoverage(
+      id,
+      serviceId,
+      coverageType || 'fixed_amount',
+      coverageValue || 0
+    );
+
+    res.json({
+      success: true,
+      coverage
+    });
+  } catch (error) {
+    console.error('Error configurando cobertura por servicio:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al configurar cobertura'
+    });
+  }
+};
+

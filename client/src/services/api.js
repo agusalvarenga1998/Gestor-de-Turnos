@@ -223,6 +223,14 @@ export const patientAPI = {
   }
 };
 
+// Servicios de Servicios (del médico)
+export const serviceAPI = {
+  getMyServices: async () => {
+    const response = await apiClient.get('/api/services/doctor/me');
+    return response.data;
+  }
+};
+
 // Google Calendar Integration
 export const googleAPI = {
   getStatus: async () => {
@@ -277,6 +285,14 @@ export const insuranceAPI = {
   getPublicInsurances: async (doctorId) => {
     // Usamos axios directamente para rutas públicas sin token
     const response = await axios.get(`${API_BASE_URL}/api/insurance/public/doctor/${doctorId}`);
+    return response.data;
+  },
+  getServiceCoverages: async (id) => {
+    const response = await apiClient.get(`/api/insurance/${id}/coverages`);
+    return response.data;
+  },
+  setServiceCoverage: async (id, data) => {
+    const response = await apiClient.post(`/api/insurance/${id}/coverages`, data);
     return response.data;
   }
 };

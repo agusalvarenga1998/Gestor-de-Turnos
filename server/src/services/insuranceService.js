@@ -12,6 +12,17 @@ export const getInsurancesByDoctor = async (doctorId) => {
   return result.rows;
 };
 
+// Obtener todas las coberturas por servicio de una obra social
+export const getInsuranceServiceCoverages = async (insuranceId) => {
+  const result = await query(
+    `SELECT * FROM insurance_service_coverage
+     WHERE insurance_company_id = $1`,
+    [insuranceId]
+  );
+  return result.rows;
+};
+
+
 // Crear una nueva obra social
 export const createInsurance = async (doctorId, name, additionalFee = 0) => {
   const result = await query(
@@ -99,4 +110,30 @@ export const setPatientInsurances = async (patientId, insuranceIds) => {
   );
 
   return result.rows;
+};
+
+// Configurar cobertura para un servicio específico
+export const setInsuranceServiceCoverage = async (insuranceId, serviceId, coverageType, coverageValue) => {
+  const result = await query(
+    `INSERT INTO insurance_service_coverage (id, insurance_company_id, service_id, coverage_type, coverage_value)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (insurance_company_id, service_id)
+     DO UPDATE SET 
+        coverage_type = EXCLUDED.coverage_type,
+        coverage_value = EXCLUDED.coverage_value,
+        updated_at = CURRENT_TIMESTAMP
+     RETURNING *`,
+    [uuidv4(), insuranceId, serviceId, coverageType, coverageValue]
+  );
+  return result.rows[0];
+};
+
+// Eliminar cobertura de un servicio específico
+export const deleteInsuranceServiceCoverage = async (insuranceId, serviceId) => {
+  await query(
+    `DELETE FROM insurance_service_coverage
+     WHERE insurance_company_id = $1 AND service_id = $2`,
+    [insuranceId, serviceId]
+  );
+  return true;
 };
