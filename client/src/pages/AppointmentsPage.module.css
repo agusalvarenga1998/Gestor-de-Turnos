@@ -208,6 +208,28 @@
   border-color: var(--border-color);
 }
 
+.whatsappBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: #25d366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.whatsappBtn:hover {
+  background-color: #128c7e;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+}
+
 .statusBadge {
   padding: 0.4rem 0.75rem;
   border-radius: 50px;

@@ -321,6 +321,27 @@ export default function AppointmentsPage() {
     }
   };
 
+  const handleWhatsAppReminder = (appt) => {
+    if (!appt.patient_phone) {
+      alert('Este cliente no tiene un teléfono registrado');
+      return;
+    }
+
+    // Limpiar el teléfono (solo números)
+    const cleanPhone = appt.patient_phone.replace(/\D/g, '');
+    
+    // Formatear fecha para el mensaje
+    const dateStr = String(appt.appointment_date).split('T')[0];
+    const d = new Date(dateStr + 'T12:00:00');
+    const formattedDate = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+    
+    const message = `Hola ${appt.patient_name}, te recuerdo tu cita con ${user.name} el día ${formattedDate} a las ${appt.appointment_time}. ¡Te esperamos!`;
+    const encodedMessage = encodeURIComponent(message);
+    
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   if (loading) {
     return (
       <DoctorLayout>
@@ -624,6 +645,14 @@ export default function AppointmentsPage() {
                             >
                               ✗ Rechazar
                             </button>
+                            <button
+                              onClick={() => handleWhatsAppReminder(appt)}
+                              className={styles.whatsappBtn}
+                              title="Recordar cita por WhatsApp"
+                            >
+                              <Icon name="whatsapp" size={18} color="#FFF" />
+                              WPP
+                            </button>
                           </>
                         ) : (
                           <>
@@ -642,6 +671,14 @@ export default function AppointmentsPage() {
                               title="Registrar retraso"
                             >
                               ⏱️ Retraso
+                            </button>
+                            <button
+                              onClick={() => handleWhatsAppReminder(appt)}
+                              className={styles.whatsappBtn}
+                              title="Recordar cita por WhatsApp"
+                            >
+                              <Icon name="whatsapp" size={18} color="#FFF" />
+                              WPP
                             </button>
                           </>
                         )}

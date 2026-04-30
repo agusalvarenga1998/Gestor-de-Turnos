@@ -14,6 +14,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     name: '',
+    phone: '',
     specialization: '',
     clinic_name: ''
   });
@@ -68,6 +69,7 @@ export default function RegisterPage() {
       email: formData.email,
       password: formData.password,
       name: formData.name,
+      phone: formData.phone,
       specialization: formData.specialization,
       clinic_name: formData.clinic_name
     });
@@ -136,6 +138,16 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="profesional@ejemplo.com"
+                  disabled={loading}
+                />
+              <div className={styles.formGroup}>
+                <label>TELÉFONO DE CONTACTO</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Ej: +54 9 11 1234-5678"
                   disabled={loading}
                 />
               </div>
