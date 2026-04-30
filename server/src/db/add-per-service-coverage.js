@@ -36,7 +36,7 @@ async function migrate() {
       CREATE TABLE IF NOT EXISTS insurance_service_coverage (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         insurance_company_id UUID NOT NULL REFERENCES insurance_companies(id) ON DELETE CASCADE,
-        service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+        service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
         coverage_type VARCHAR(20) NOT NULL DEFAULT 'fixed_amount', -- 'fixed_amount' o 'percentage'
         coverage_value DECIMAL(10,2) NOT NULL DEFAULT 0,
         is_active BOOLEAN DEFAULT true,
