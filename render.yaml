@@ -48,7 +48,8 @@ services:
     buildCommand: npm install && npm run build
     staticPublishPath: build
     routes:
-      - source: /*
+      - type: rewrite
+        source: /*
         destination: /index.html
     envVars:
       - key: REACT_APP_API_BASE_URL
