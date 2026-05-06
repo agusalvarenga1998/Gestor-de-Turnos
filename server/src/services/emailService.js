@@ -1,11 +1,17 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
+// Forzar IPv4 para evitar el error ENETUNREACH (IPv6) con Gmail en Render
+dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 
 // Crear transportador de email con Gmail
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD

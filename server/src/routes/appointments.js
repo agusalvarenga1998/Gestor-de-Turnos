@@ -355,7 +355,7 @@ router.post('/public/create', async (req, res) => {
         appointment: appointment
       });
 
-      // NOTIFICAR POR EMAIL (Cobertura Total)
+      // NOTIFICAR POR EMAIL (Cobertura Total) - SIN AWAIT para no bloquear al usuario
       const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointments`;
       let serviceLabel = 'Consulta General';
       if (serviceId) {
@@ -363,7 +363,7 @@ router.post('/public/create', async (req, res) => {
         if (srvRes.rows.length > 0) serviceLabel = srvRes.rows[0].name;
       }
 
-      await sendNewAppointmentNotificationToDoctor({
+      sendNewAppointmentNotificationToDoctor({
         to: doctor.email,
         doctorName: doctor.name,
         patientName: `${patientName} ${patientLastName}`,
@@ -371,7 +371,7 @@ router.post('/public/create', async (req, res) => {
         appointmentTime: appointmentTime,
         serviceName: serviceLabel,
         dashboardUrl: dashboardUrl
-      });
+      }).catch(err => console.error("Error asíncrono enviando email:", err));
 
       console.log('✅ Cobertura total detectada: Turno enviado directo al doctor y notificado por mail.');
     } else {
@@ -597,7 +597,7 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
 
       if (apptDataResult.rows.length > 0) {
         const ad = apptDataResult.rows[0];
-        await sendNewAppointmentNotificationToDoctor({
+        sendNewAppointmentNotificationToDoctor({
           to: doctor.email,
           doctorName: doctor.name,
           patientName: ad.patient_name,
@@ -605,7 +605,7 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
           appointmentTime: ad.appointment_time,
           serviceName: ad.service_name || 'Consulta General',
           dashboardUrl: dashboardUrl
-        });
+        }).catch(err => console.error("Error asíncrono email:", err));
       }
 
       return res.json({ success: true, status: 'pending', message: '¡Pago verificado y turno confirmado exitosamente!' });
