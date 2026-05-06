@@ -10,11 +10,26 @@ dotenv.config();
 // Crear transportador de email con Gmail
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false, // true para 465, false para otros puertos
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD
+  },
+  tls: {
+    rejectUnauthorized: false // Ayuda en entornos como Render
+  },
+  connectionTimeout: 10000, // 10 segundos
+  greetingTimeout: 10000,
+  socketTimeout: 15000
+});
+
+// Verificar conexión al inicio
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('❌ Error de conexión SMTP:', error.message);
+  } else {
+    console.log('🚀 Servidor de email listo para enviar mensajes');
   }
 });
 
