@@ -2,40 +2,17 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import dns from 'dns';
 
-// Forzar IPv4 para evitar el error ENETUNREACH (IPv6) con Gmail en Render
+// Forzar IPv4 para evitar el error ENETUNREACH (IPv6) ocasional en Render
 dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 
-// Crear transportador de email con Gmail (Usando IP directa y puerto 465 que suele ser más estable en Render)
+// Crear transportador de email con Gmail (Configuración original simplificada)
 const transporter = nodemailer.createTransport({
-  host: '173.194.76.108', // smtp.gmail.com (IPv4 - Puerto 465)
-  port: 465,
-  secure: true,
+  service: 'gmail',
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD
-  },
-  tls: {
-    servername: 'smtp.gmail.com',
-    rejectUnauthorized: false
-  },
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000
-});
-
-// Forzar familia de direcciones IPv4 en el transporte
-transporter.on('token', token => {
-  // Solo para debug si fuera necesario
-});
-
-// Verificar conexión al inicio
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('❌ Error de conexión SMTP:', error.message);
-  } else {
-    console.log('🚀 Servidor de email listo para enviar mensajes');
   }
 });
 
