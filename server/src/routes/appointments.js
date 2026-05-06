@@ -716,10 +716,21 @@ router.patch('/:appointmentId/accept', verifyToken, verifyDoctorRole, async (req
       });
     }
 
+    if (appointmentData.status === 'scheduled') {
+      // Si ya estaba programada (ej. por un clic anterior que falló en la UI), 
+      // devolvemos éxito para que la UI se sincronice
+      return res.json({
+        success: true,
+        message: 'La cita ya se encontraba aceptada',
+        appointment: appointmentData
+      });
+    }
+
     if (appointmentData.status !== 'pending' && appointmentData.status !== 'pending_payment') {
+      console.log(`⚠️ Intentando aceptar cita ${appointmentId} pero el estado actual es: '${appointmentData.status}'`);
       return res.status(400).json({
         success: false,
-        message: 'Esta cita no está pendiente de aprobación o pago'
+        message: 'Esta cita no está pendiente de aprobación o pago (Estado actual: ' + appointmentData.status + ')'
       });
     }
 
@@ -735,9 +746,9 @@ router.patch('/:appointmentId/accept', verifyToken, verifyDoctorRole, async (req
 
     console.log('✓ Cita aceptada:', appointmentId);
 
-    // Enviar email de confirmación al paciente
+    // Enviar email de confirmación al paciente de manera asíncrona
     if (appointmentData.patient_email) {
-      await sendAppointmentConfirmation({
+      sendAppointmentConfirmation({
         to: appointmentData.patient_email,
         patientName: appointmentData.patient_name,
         doctorName: appointmentData.doctor_name,
@@ -745,9 +756,9 @@ router.patch('/:appointmentId/accept', verifyToken, verifyDoctorRole, async (req
         appointmentDate: appointmentData.appointment_date,
         appointmentTime: appointmentData.appointment_time,
         appointmentCode: appointmentData.appointment_code,
-        confirmUrl: `http://localhost:3000/patient/appointment/${appointmentId}`
-      });
-      console.log('📧 Email de confirmación enviado a:', appointmentData.patient_email);
+        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`
+      }).catch(err => console.error('Error asíncrono enviando confirmación:', err));
+      console.log('📧 Email de confirmación programado para:', appointmentData.patient_email);
     }
 
     res.json({
