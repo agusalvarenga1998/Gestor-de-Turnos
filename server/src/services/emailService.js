@@ -7,21 +7,22 @@ dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 
-// Crear transportador de email con Gmail
+// Crear transportador de email con Gmail (Usando IP directa de IPv4 para evitar ENETUNREACH en Render)
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  host: '74.125.136.108', // IP de smtp.gmail.com (IPv4)
   port: 587,
-  secure: false, // true para 465, false para otros puertos
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD
   },
   tls: {
-    rejectUnauthorized: false // Ayuda en entornos como Render
+    servername: 'smtp.gmail.com', // Crítico para que el certificado SSL sea válido
+    rejectUnauthorized: false
   },
-  connectionTimeout: 10000, // 10 segundos
-  greetingTimeout: 10000,
-  socketTimeout: 15000
+  connectionTimeout: 20000, // 20 segundos
+  greetingTimeout: 20000,
+  socketTimeout: 30000
 });
 
 // Verificar conexión al inicio
