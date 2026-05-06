@@ -171,6 +171,7 @@ export default function PatientHistoryPage() {
                       <span>{new Date(record.created_at).toLocaleString('es-ES')}</span>
                       <button onClick={() => handleDelete(record.id)} className={styles.deleteBtn}>
                         <Icon name="trash-2" size={16} />
+                        Eliminar
                       </button>
                     </div>
                   </div>
