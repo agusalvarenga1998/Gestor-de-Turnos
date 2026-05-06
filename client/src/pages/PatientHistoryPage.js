@@ -30,14 +30,21 @@ export default function PatientHistoryPage() {
   }, [patientId]);
 
   const getAbsoluteUrl = (fileUrl) => {
-    // En desarrollo con CRA proxy o en producción con proxy/webserver, 
-    // las rutas relativas son preferibles.
-    return fileUrl;
+    if (!fileUrl) return '';
+    if (fileUrl.startsWith('http')) return fileUrl;
+    
+    // Si estamos en producción (Render), necesitamos apuntar al backend explícitamente
+    const apiBase = process.env.REACT_APP_API_BASE_URL || 
+                    (window.location.hostname.includes('onrender.com') 
+                      ? 'https://consultorio-backend-r2su.onrender.com' 
+                      : '');
+    
+    return `${apiBase}${fileUrl}`;
   };
 
   const openViewer = (fileUrl, type) => {
-    // Si la URL es relativa, la pasamos tal cual para que el navegador la pida al mismo origen
-    setViewerModal({ show: true, file: fileUrl, type });
+    const absoluteUrl = getAbsoluteUrl(fileUrl);
+    setViewerModal({ show: true, file: absoluteUrl, type });
   };
 
   const fetchData = async () => {
