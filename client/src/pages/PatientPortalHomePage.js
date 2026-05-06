@@ -403,7 +403,19 @@ export default function PatientPortalHomePage() {
                                 
                                 // Obtener descuento de obra social si existe
                                 const selectedInsurance = doctorInsurances.find(i => i.id === patientData.insuranceId);
-                                const insuranceDiscount = parseFloat(selectedInsurance?.additional_fee || 0);
+                                let insuranceDiscount = 0;
+                                if (selectedInsurance) {
+                                  const specificCoverage = selectedInsurance.coverages?.find(c => c.service_id === selectedService.id);
+                                  if (specificCoverage) {
+                                    if (specificCoverage.coverage_type === 'percentage') {
+                                      insuranceDiscount = servicePrice * (parseFloat(specificCoverage.coverage_value) / 100);
+                                    } else {
+                                      insuranceDiscount = parseFloat(specificCoverage.coverage_value);
+                                    }
+                                  } else {
+                                    insuranceDiscount = parseFloat(selectedInsurance.additional_fee || 0);
+                                  }
+                                }
 
                                 const systemFee = d?.plan_type === 'commission' ? (servicePrice * 0.03) : 0;
                                 const professionalFee = (selectedService.booking_fee !== null && selectedService.booking_fee !== undefined) 

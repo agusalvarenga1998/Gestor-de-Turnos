@@ -157,6 +157,12 @@ export const getPublicInsurances = async (req, res) => {
   try {
     const { doctorId } = req.params;
     const insurances = await insuranceService.getInsurancesByDoctor(doctorId);
+    
+    // Adjuntar las coberturas específicas por servicio para cada obra social
+    for (let insurance of insurances) {
+      const coverages = await insuranceService.getInsuranceServiceCoverages(insurance.id);
+      insurance.coverages = coverages || [];
+    }
 
     res.json({
       success: true,
