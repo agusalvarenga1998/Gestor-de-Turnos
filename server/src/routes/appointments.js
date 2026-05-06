@@ -827,7 +827,10 @@ router.patch('/:appointmentId/reject', verifyToken, verifyDoctorRole, async (req
 
     const appointmentData = appointmentCheck.rows[0];
 
+    console.log(`🔍 Intentando rechazar cita ${appointmentId}. Doctor solicitante: ${doctorId}. Doctor cita: ${appointmentData.doctor_id}. Estado actual: ${appointmentData.status}`);
+
     if (appointmentData.doctor_id !== doctorId) {
+      console.log('❌ Rechazo denegado: ID de doctor no coincide');
       return res.status(403).json({
         success: false,
         message: 'No tienes permiso para rechazar esta cita'
@@ -842,7 +845,8 @@ router.patch('/:appointmentId/reject', verifyToken, verifyDoctorRole, async (req
       });
     }
 
-    if (appointmentData.status !== 'pending' && appointmentData.status !== 'pending_payment') {
+    if (appointmentData.status !== 'pending' && appointmentData.status !== 'pending_payment' && appointmentData.status !== 'scheduled') {
+      console.log(`❌ Rechazo denegado: Estado '${appointmentData.status}' no permitido`);
       return res.status(400).json({
         success: false,
         message: 'Esta cita no está en un estado que permita rechazo (Estado actual: ' + appointmentData.status + ')'
