@@ -2,7 +2,7 @@ import express from 'express';
 import { query } from '../db/config.js';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { notifyDoctor } from '../websocket/server.js';
-import { sendNewAppointmentNotificationToDoctor } from '../services/emailService.js';
+import { sendNewAppointmentNotificationToDoctor, sendAppointmentConfirmation } from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -17,7 +17,7 @@ router.post('/mercadopago', async (req, res) => {
 
       // 1. Buscamos el token del doctor asociado a este turno
       const apptQuery = await query(
-        `SELECT d.mp_access_token, d.email as doctor_email, d.name as doctor_name 
+        `SELECT d.mp_access_token, d.email as doctor_email, d.name as doctor_name, d.specialization as doctor_specialization 
          FROM appointments a
          JOIN doctors d ON a.doctor_id = d.id
          WHERE a.id = $1`,
@@ -97,11 +97,13 @@ router.post('/mercadopago', async (req, res) => {
             if (srvResult.rows.length > 0) serviceName = srvResult.rows[0].name;
           }
 
-          // Obtener nombre del paciente para el email
-          const patResult = await query('SELECT name FROM patients WHERE id = $1', [appointment.patient_id]);
+          // Obtener nombre y email del paciente para el email
+          const patResult = await query('SELECT name, email FROM patients WHERE id = $1', [appointment.patient_id]);
           const patientFullName = patResult.rows[0]?.name || 'Cliente';
+          const patientEmail = patResult.rows[0]?.email;
 
-          await sendNewAppointmentNotificationToDoctor({
+          // NOTIFICAR AL DOCTOR
+          sendNewAppointmentNotificationToDoctor({
             to: apptQuery.rows[0].doctor_email,
             doctorName: apptQuery.rows[0].doctor_name,
             patientName: patientFullName,
@@ -109,7 +111,21 @@ router.post('/mercadopago', async (req, res) => {
             appointmentTime: appointment.appointment_time,
             serviceName: serviceName,
             dashboardUrl: dashboardUrl
-          });
+          }).catch(err => console.error("Error asíncrono email doctor webhook:", err));
+
+          // NOTIFICAR AL PACIENTE
+          if (patientEmail) {
+            sendAppointmentConfirmation({
+              to: patientEmail,
+              patientName: patientFullName,
+              doctorName: apptQuery.rows[0].doctor_name,
+              doctorSpecialty: apptQuery.rows[0].doctor_specialization,
+              appointmentDate: appointment.appointment_date,
+              appointmentTime: appointment.appointment_time,
+              appointmentCode: appointment.appointment_code,
+              confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`
+            }).catch(err => console.error("Error asíncrono email paciente webhook:", err));
+          }
 
           console.log(`✅ Turno ${appointmentId} confirmado y deuda de $${system_fee} cargada al doctor.`);
         }

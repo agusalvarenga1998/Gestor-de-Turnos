@@ -371,9 +371,21 @@ router.post('/public/create', async (req, res) => {
         appointmentTime: appointmentTime,
         serviceName: serviceLabel,
         dashboardUrl: dashboardUrl
-      }).catch(err => console.error("Error asíncrono enviando email:", err));
+      }).catch(err => console.error("Error asíncrono enviando email al doctor:", err));
 
-      console.log('✅ Cobertura total detectada: Turno enviado directo al doctor y notificado por mail.');
+      // NOTIFICAR AL PACIENTE (Cobertura Total / Efectivo)
+      sendAppointmentConfirmation({
+        to: patientEmail,
+        patientName: `${patientName} ${patientLastName}`,
+        doctorName: doctor.name,
+        doctorSpecialty: doctor.specialization,
+        appointmentDate: appointmentDate,
+        appointmentTime: appointmentTime,
+        appointmentCode: appointment.appointment_code,
+        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointment.id}`
+      }).catch(err => console.error("Error asíncrono enviando email al paciente:", err));
+
+      console.log('✅ Cobertura total/Efectivo detectada: Turno notificado a ambos por mail.');
     } else {
       console.log('⏳ Cita en espera de pago. No se notifica al doctor todavía.');
     }
@@ -587,7 +599,7 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
       
       // Obtener datos del turno y paciente para el email
       const apptDataResult = await query(
-        `SELECT a.appointment_date, a.appointment_time, p.name as patient_name, s.name as service_name
+        `SELECT a.appointment_date, a.appointment_time, a.appointment_code, p.name as patient_name, p.email as patient_email, s.name as service_name
          FROM appointments a
          JOIN patients p ON a.patient_id = p.id
          LEFT JOIN services s ON a.service_id = s.id
@@ -605,7 +617,19 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
           appointmentTime: ad.appointment_time,
           serviceName: ad.service_name || 'Consulta General',
           dashboardUrl: dashboardUrl
-        }).catch(err => console.error("Error asíncrono email:", err));
+        }).catch(err => console.error("Error asíncrono email doctor:", err));
+
+        // Notificar al paciente por Email (Pago Verificado)
+        sendAppointmentConfirmation({
+          to: ad.patient_email,
+          patientName: ad.patient_name,
+          doctorName: doctor.name,
+          doctorSpecialty: doctor.specialization,
+          appointmentDate: ad.appointment_date,
+          appointmentTime: ad.appointment_time,
+          appointmentCode: ad.appointment_code,
+          confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`
+        }).catch(err => console.error("Error asíncrono email paciente:", err));
       }
 
       return res.json({ success: true, status: 'pending', message: '¡Pago verificado y turno confirmado exitosamente!' });
