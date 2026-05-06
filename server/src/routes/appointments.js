@@ -834,10 +834,18 @@ router.patch('/:appointmentId/reject', verifyToken, verifyDoctorRole, async (req
       });
     }
 
-    if (appointmentData.status !== 'pending') {
+    if (appointmentData.status === 'rejected') {
+      return res.json({
+        success: true,
+        message: 'La cita ya se encontraba rechazada',
+        appointment: appointmentData
+      });
+    }
+
+    if (appointmentData.status !== 'pending' && appointmentData.status !== 'pending_payment') {
       return res.status(400).json({
         success: false,
-        message: 'Esta cita no está pendiente de aprobación'
+        message: 'Esta cita no está en un estado que permita rechazo (Estado actual: ' + appointmentData.status + ')'
       });
     }
 
@@ -854,17 +862,17 @@ router.patch('/:appointmentId/reject', verifyToken, verifyDoctorRole, async (req
 
     console.log('✗ Cita rechazada:', appointmentId);
 
-    // Enviar email de rechazo al paciente
+    // Enviar email de rechazo al paciente de manera asíncrona
     if (appointmentData.patient_email) {
-      await sendAppointmentRejectionEmail({
+      sendAppointmentRejectionEmail({
         to: appointmentData.patient_email,
         patientName: appointmentData.patient_name,
         doctorName: appointmentData.doctor_name,
         appointmentDate: appointmentData.appointment_date,
         appointmentTime: appointmentData.appointment_time,
         reason: reason || null
-      });
-      console.log('📧 Email de rechazo enviado a:', appointmentData.patient_email);
+      }).catch(err => console.error('Error asíncrono enviando rechazo:', err));
+      console.log('📧 Email de rechazo programado para:', appointmentData.patient_email);
     }
 
     res.json({
