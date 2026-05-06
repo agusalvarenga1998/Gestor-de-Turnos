@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Usa ruta relativa para que funcione con proxy
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000');
+// Usa ruta relativa para que funcione con el proxy de desarrollo (package.json)
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

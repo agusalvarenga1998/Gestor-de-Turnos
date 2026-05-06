@@ -123,7 +123,9 @@ httpServer.listen(PORT, HOST, () => {
   // Asegurar que existe la carpeta de subidas
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('📁 Carpeta de subidas creada');
+    console.log('📁 Carpeta de subidas creada en:', uploadsDir);
+  } else {
+    console.log('📁 Carpeta de subidas detectada en:', uploadsDir);
   }
 
   console.log(`\n🚀 Servidor iniciado en http://${HOST}:${PORT}`);
