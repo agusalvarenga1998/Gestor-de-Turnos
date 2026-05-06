@@ -147,7 +147,8 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS system_fee DECIMAL(10,2) DEFAULT 0,
       ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'pending',
       ADD COLUMN IF NOT EXISTS total_amount DECIMAL(10,2) DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE SET NULL;
+      ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE SET NULL,
+      ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT false;
     `);
 
     await client.query(`
