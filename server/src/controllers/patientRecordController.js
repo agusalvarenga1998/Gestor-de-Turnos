@@ -2,6 +2,7 @@ import * as patientRecordService from '../services/patientRecordService.js';
 import * as patientService from '../services/patientService.js';
 import path from 'path';
 import fs from 'fs';
+import { uploadsDir } from '../utils/paths.js';
 
 export const createRecord = async (req, res) => {
   try {
@@ -87,7 +88,8 @@ export const deleteRecord = async (req, res) => {
 
     // Opcional: Eliminar archivo físico si existe
     if (record.file_path) {
-      const fullPath = path.join(process.cwd(), record.file_path);
+      const filename = path.basename(record.file_path);
+      const fullPath = path.join(uploadsDir, filename);
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath);
       }

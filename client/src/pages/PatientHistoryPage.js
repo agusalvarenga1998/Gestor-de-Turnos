@@ -23,10 +23,22 @@ export default function PatientHistoryPage() {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
+  const [viewerModal, setViewerModal] = useState({ show: false, file: null, type: null });
 
   useEffect(() => {
     fetchData();
   }, [patientId]);
+
+  const getAbsoluteUrl = (fileUrl) => {
+    // En desarrollo con CRA proxy o en producción con proxy/webserver, 
+    // las rutas relativas son preferibles.
+    return fileUrl;
+  };
+
+  const openViewer = (fileUrl, type) => {
+    // Si la URL es relativa, la pasamos tal cual para que el navegador la pida al mismo origen
+    setViewerModal({ show: true, file: fileUrl, type });
+  };
 
   const fetchData = async () => {
     try {
@@ -162,16 +174,24 @@ export default function PatientHistoryPage() {
                     <div className={styles.fileAttachment}>
                       {record.type === 'image' ? (
                         <div className={styles.imagePreview}>
-                          <img src={record.file_path} alt={record.file_name} />
-                          <a href={record.file_path} target="_blank" rel="noopener noreferrer" className={styles.downloadLink}>
+                          <img 
+                            src={getAbsoluteUrl(record.file_path)} 
+                            alt={record.file_name} 
+                            onClick={() => openViewer(record.file_path, 'image')}
+                            style={{ cursor: 'zoom-in' }}
+                          />
+                          <button onClick={() => openViewer(record.file_path, 'image')} className={styles.viewBtn}>
                             Ver imagen completa
-                          </a>
+                          </button>
                         </div>
                       ) : (
                         <div className={styles.fileBox}>
                           <Icon name="file" size={20} />
                           <span>{record.file_name}</span>
-                          <a href={record.file_path} target="_blank" rel="noopener noreferrer" className={styles.downloadLink}>
+                          <button onClick={() => openViewer(record.file_path, record.file_type)} className={styles.viewBtn}>
+                            Ver documento
+                          </button>
+                          <a href={getAbsoluteUrl(record.file_path)} download={record.file_name} className={styles.downloadLink}>
                             Descargar
                           </a>
                         </div>
@@ -278,6 +298,32 @@ export default function PatientHistoryPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Visor de Archivos */}
+        {viewerModal.show && (
+          <div className={styles.viewerOverlay} onClick={() => setViewerModal({ show: false, file: null, type: null })}>
+            <div className={styles.viewerContent} onClick={e => e.stopPropagation()}>
+              <div className={styles.viewerHeader}>
+                <button onClick={() => setViewerModal({ show: false, file: null, type: null })} className={styles.closeViewer}>
+                  <Icon name="x" size={24} />
+                </button>
+              </div>
+              <div className={styles.viewerBody}>
+                {viewerModal.type === 'image' ? (
+                  <img src={viewerModal.file} alt="Visualización" className={styles.fullImage} />
+                ) : viewerModal.file?.toLowerCase().endsWith('.pdf') || viewerModal.type?.includes('pdf') ? (
+                  <iframe src={viewerModal.file} title="Document Viewer" className={styles.pdfViewer} />
+                ) : (
+                  <div className={styles.unsupportedViewer}>
+                    <Icon name="file" size={64} />
+                    <p>Este tipo de archivo no se puede previsualizar directamente.</p>
+                    <a href={viewerModal.file} download className={styles.addBtn}>Descargar Archivo</a>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

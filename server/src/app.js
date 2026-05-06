@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
+import fs from 'fs';
 
 // Imports de rutas
 import authRoutes from './routes/auth.js';
@@ -18,6 +19,7 @@ import webhookRoutes from './routes/webhooks.js';
 import serviceRoutes from './routes/services.js';
 import patientRecordRoutes from './routes/patientRecords.js';
 import path from 'path';
+import { uploadsDir } from './utils/paths.js';
 
 // Imports de middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -45,8 +47,10 @@ app.use(helmet({
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
       "connect-src": ["'self'", "https:", "wss:", "ws:", "http://localhost:5002", "ws://localhost:5002"],
+      "img-src": ["'self'", "data:", "blob:", "https:", "http://localhost:5000"],
     },
   },
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 app.use(cors({
@@ -93,7 +97,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/patient-records', patientRecordRoutes);
 
 // Servir archivos estáticos (uploads)
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 // Configurar WebSocket
 const wss = new WebSocketServer({ server: httpServer });
@@ -116,6 +120,12 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 // Iniciar servidor
 httpServer.listen(PORT, HOST, () => {
+  // Asegurar que existe la carpeta de subidas
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('📁 Carpeta de subidas creada');
+  }
+
   console.log(`\n🚀 Servidor iniciado en http://${HOST}:${PORT}`);
   console.log(`📊 Health check: http://${HOST}:${PORT}/health`);
   console.log(`🔌 WebSocket disponible en ws://${HOST}:${process.env.WS_PORT || 5001}\n`);

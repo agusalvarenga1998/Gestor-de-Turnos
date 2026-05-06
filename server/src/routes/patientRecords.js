@@ -4,17 +4,17 @@ import path from 'path';
 import fs from 'fs';
 import { verifyToken, verifyDoctorRole } from '../middleware/auth.js';
 import * as patientRecordController from '../controllers/patientRecordController.js';
+import { uploadsDir } from '../utils/paths.js';
 
 const router = express.Router();
 
 // Configuración de Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
     }
-    cb(null, uploadDir);
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
