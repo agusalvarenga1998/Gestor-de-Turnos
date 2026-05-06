@@ -12,6 +12,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage';
 import DashboardNewPage from './pages/DashboardNewPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import PatientsPage from './pages/PatientsPage';
+import PatientHistoryPage from './pages/PatientHistoryPage';
 import SettingsPage from './pages/SettingsPage';
 import WorkingHoursPage from './pages/WorkingHoursPage';
 import InsurancePage from './pages/InsurancePage';
@@ -100,6 +101,7 @@ function AppContent() {
           <Route path="/dashboard" element={<DashboardNewPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/patients" element={<PatientsPage />} />
+          <Route path="/patients/:patientId/history" element={<PatientHistoryPage />} />
           <Route path="/insurance" element={<InsurancePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/working-hours" element={<WorkingHoursPage />} />

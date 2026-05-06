@@ -228,6 +228,25 @@ async function initDatabase(retries = 3) {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    console.log('✓ Tabla services creada');
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS patient_records (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+        doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+        type VARCHAR(50) NOT NULL, -- 'note', 'document', 'image'
+        title VARCHAR(255),
+        content TEXT,
+        file_path TEXT,
+        file_name VARCHAR(255),
+        file_type VARCHAR(100),
+        file_size INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla patient_records creada');
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS subscriptions (

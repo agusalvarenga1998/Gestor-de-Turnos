@@ -31,3 +31,6 @@ start-ngrok-frontend.sh
 # OS
 .DS_Store
 Thumbs.db
+
+# Uploads
+server/uploads/

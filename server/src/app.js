@@ -16,6 +16,8 @@ import insuranceRoutes from './routes/insurance.js';
 import adminRoutes from './routes/admin.js';
 import webhookRoutes from './routes/webhooks.js';
 import serviceRoutes from './routes/services.js';
+import patientRecordRoutes from './routes/patientRecords.js';
+import path from 'path';
 
 // Imports de middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -88,6 +90,10 @@ app.use('/api/insurance', insuranceRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/patient-records', patientRecordRoutes);
+
+// Servir archivos estáticos (uploads)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Configurar WebSocket
 const wss = new WebSocketServer({ server: httpServer });

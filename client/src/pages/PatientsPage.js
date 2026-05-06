@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
 import Loading from '../components/Loading';
@@ -453,13 +454,23 @@ export default function PatientsPage() {
                             : 'Sin citas'}
                         </td>
                         <td className={styles.actionsCell} data-label="Acciones">
-                          <button
-                            onClick={() => handleEdit(patient)}
-                            className={styles.actionBtn}
-                            title="Editar"
-                          >
-                            Ver/Editar
-                          </button>
+                          <div className={styles.actionButtons}>
+                            <Link
+                              to={`/patients/${patient.id}/history`}
+                              className={styles.historyBtn}
+                              title="Historial"
+                            >
+                              <Icon name="folder-open" size={16} />
+                              Historial
+                            </Link>
+                            <button
+                              onClick={() => handleEdit(patient)}
+                              className={styles.actionBtn}
+                              title="Editar"
+                            >
+                              Editar
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

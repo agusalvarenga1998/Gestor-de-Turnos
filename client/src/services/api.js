@@ -223,6 +223,32 @@ export const patientAPI = {
   }
 };
 
+// Servicios de Historial de Pacientes (Registros)
+export const patientRecordAPI = {
+  getRecords: async (patientId) => {
+    const response = await apiClient.get(`/api/patient-records/${patientId}`);
+    return response.data;
+  },
+
+  createRecord: async (patientId, formData) => {
+    // Usamos axios directamente para poder enviar FormData (archivos)
+    const token = localStorage.getItem('token');
+    const response = await axios.post(`${API_BASE_URL}/api/patient-records/${patientId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true'
+      }
+    });
+    return response.data;
+  },
+
+  deleteRecord: async (recordId) => {
+    const response = await apiClient.delete(`/api/patient-records/${recordId}`);
+    return response.data;
+  }
+};
+
 // Servicios de Servicios (del médico)
 export const serviceAPI = {
   getMyServices: async () => {
