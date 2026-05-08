@@ -42,13 +42,14 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import Loading from './components/Loading';
 
 function AppContent() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, isSubscriptionExpired } = useAuth();
 
   if (loading) {
     return <Loading />;
   }
 
   return (
+    <>
     <Routes>
       {/* Portal del Cliente (públicas) - siempre disponible */}
       <Route path="/patient" element={<PatientPortalHomePage />} />
@@ -115,6 +116,12 @@ function AppContent() {
       <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
       <Route path="*" element={isAuthenticated ? <NotFoundPage /> : <Navigate to="/login" replace />} />
     </Routes>
+    
+    {/* Overlay de suscripción expirada */}
+    {isAuthenticated && isSubscriptionExpired && (
+      <SubscriptionExpiredPage />
+    )}
+    </>
   );
 }
 

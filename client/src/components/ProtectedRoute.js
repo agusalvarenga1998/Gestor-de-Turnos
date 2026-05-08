@@ -20,10 +20,8 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/account-suspended" replace />;
   }
 
-  // Si la suscripción está expirada
-  if (user && isSubscriptionExpired) {
-    return <Navigate to="/subscription-expired" replace />;
-  }
+  // Nota: La suscripción expirada se maneja ahora como un overlay en App.js
+  // para permitir que la app se vea de fondo.
 
   // Si no está autenticado
   if (!isAuthenticated) {

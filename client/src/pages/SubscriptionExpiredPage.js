@@ -9,14 +9,14 @@ export default function SubscriptionExpiredPage() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    // No es necesario navegar manualmente, App.js lo hará al detectar isAuthenticated = false
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.iconWrapper}>
-          <div className={styles.icon}>⚠️</div>
+          <div className={styles.icon}>💎</div>
         </div>
 
         <h1 className={styles.title}>Acceso Restringido</h1>
@@ -27,15 +27,15 @@ export default function SubscriptionExpiredPage() {
           </p>
           
           <p>
-            Tu periodo de acceso ha llegado a su fin. Para continuar utilizando las funcionalidades de TurnoHub, contacta al administrador para habilitar tu cuenta.
+            Tu periodo de acceso ha llegado a su fin. Para continuar utilizando todas las funcionalidades de <strong>TurnoHub</strong>, contacta al administrador para habilitar tu cuenta.
           </p>
         </div>
 
         {user && (
           <div className={styles.infoBox}>
-            <h3>Información de tu Cuenta:</h3>
+            <h3>Información de Cuenta:</h3>
             <div className={styles.infoItem}>
-              <span className={styles.label}>Nombre:</span>
+              <span className={styles.label}>Profesional:</span>
               <span className={styles.value}>{user?.name}</span>
             </div>
             <div className={styles.infoItem}>
@@ -45,13 +45,6 @@ export default function SubscriptionExpiredPage() {
           </div>
         )}
 
-        <div className={styles.contactBox}>
-          <h3>Próximos Pasos:</h3>
-          <p>
-            Para renovar tu suscripción, comunícate con el administrador del sistema usando la información anterior.
-          </p>
-        </div>
-
         <button
           className={styles.logoutBtn}
           onClick={handleLogout}
@@ -60,7 +53,7 @@ export default function SubscriptionExpiredPage() {
         </button>
 
         <p className={styles.supportText}>
-          ¿Necesitas ayuda? Contacta al administrador
+          Contacta al soporte para planes y renovaciones
         </p>
       </div>
     </div>
