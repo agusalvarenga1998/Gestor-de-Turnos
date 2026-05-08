@@ -6,6 +6,7 @@ import { getPatientsByDoctor } from '../services/patientService.js';
 
 const router = express.Router();
 
+// Middleware global para todas las rutas de doctor (protegidas)
 router.use(verifyToken);
 router.use(verifyDoctorRole);
 router.use(checkSubscription);
@@ -40,7 +41,7 @@ router.get('/profile', async (req, res) => {
 });
 
 // Actualizar perfil del doctor
-router.patch('/profile', verifyToken, verifyDoctorRole, async (req, res) => {
+router.patch('/profile', async (req, res) => {
   try {
     const { name, specialization, phone, clinic_name, clinic_address, latitude, longitude, booking_fee } = req.body;
 
@@ -82,7 +83,7 @@ router.patch('/profile', verifyToken, verifyDoctorRole, async (req, res) => {
 });
 
 // Dashboard del doctor (resumen)
-router.get('/dashboard', verifyToken, verifyDoctorRole, async (req, res) => {
+router.get('/dashboard', async (req, res) => {
   try {
     const todayAppointments = await getAppointmentsForToday(req.user.id);
     const allAppointments = await getAppointmentsByDoctor(req.user.id);
@@ -110,7 +111,7 @@ router.get('/dashboard', verifyToken, verifyDoctorRole, async (req, res) => {
 });
 
 // Obtener horarios de trabajo del doctor
-router.get('/working-hours', verifyToken, verifyDoctorRole, async (req, res) => {
+router.get('/working-hours', async (req, res) => {
   try {
     const doctorId = req.user.id;
 
@@ -137,7 +138,7 @@ router.get('/working-hours', verifyToken, verifyDoctorRole, async (req, res) => 
 });
 
 // Actualizar horarios de trabajo del doctor
-router.post('/working-hours', verifyToken, verifyDoctorRole, async (req, res) => {
+router.post('/working-hours', async (req, res) => {
   try {
     const doctorId = req.user.id;
     const { availability } = req.body;

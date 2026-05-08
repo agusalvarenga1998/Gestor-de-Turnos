@@ -4,23 +4,7 @@ import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/
 
 const router = express.Router();
 
-// Middleware global para rutas de servicios (protegidas)
-router.use(verifyToken, verifyDoctorRole, checkSubscription);
-
-// Obtener servicios del profesional autenticado
-router.get('/doctor/me', async (req, res) => {
-  try {
-    const doctorId = req.user.id;
-    const result = await query(
-      'SELECT * FROM services WHERE doctor_id = $1 ORDER BY created_at DESC',
-      [doctorId]
-    );
-    res.json({ success: true, services: result.rows });
-  } catch (error) {
-    console.error('Error fetching my services:', error);
-    res.status(500).json({ error: 'Error al obtener tus servicios' });
-  }
-});
+// --- Rutas Públicas (Sin Autenticación) ---
 
 // Obtener todos los servicios de un profesional (público)
 router.get('/doctor/:doctorId', async (req, res) => {
@@ -37,10 +21,29 @@ router.get('/doctor/:doctorId', async (req, res) => {
   }
 });
 
-// --- Rutas protegidas para el profesional ---
+// --- Rutas Protegidas (Requieren suscripción activa) ---
+
+router.use(verifyToken);
+router.use(verifyDoctorRole);
+router.use(checkSubscription);
+
+// Obtener servicios del profesional autenticado
+router.get('/doctor/me', async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const result = await query(
+      'SELECT * FROM services WHERE doctor_id = $1 ORDER BY created_at DESC',
+      [doctorId]
+    );
+    res.json({ success: true, services: result.rows });
+  } catch (error) {
+    console.error('Error fetching my services:', error);
+    res.status(500).json({ error: 'Error al obtener tus servicios' });
+  }
+});
 
 // Crear un nuevo servicio
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { name, description, price, duration_minutes, booking_fee } = req.body;
     const doctorId = req.user.id;
@@ -64,7 +67,7 @@ router.post('/', verifyToken, async (req, res) => {
 });
 
 // Actualizar un servicio
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, price, duration_minutes, is_active, booking_fee } = req.body;
@@ -89,8 +92,8 @@ router.put('/:id', verifyToken, async (req, res) => {
   }
 });
 
-// Eliminar un servicio (soft delete o hard delete)
-router.delete('/:id', verifyToken, async (req, res) => {
+// Eliminar un servicio
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const doctorId = req.user.id;

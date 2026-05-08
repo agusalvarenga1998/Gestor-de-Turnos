@@ -4,6 +4,7 @@ import * as availabilityController from '../controllers/availabilityController.j
 
 const router = express.Router();
 
+// Todas las rutas de disponibilidad requieren token de doctor y suscripción activa
 router.use(verifyToken);
 router.use(verifyDoctorRole);
 router.use(checkSubscription);
@@ -15,8 +16,9 @@ router.patch('/:availabilityId', availabilityController.updateAvailability);
 router.delete('/:availabilityId', availabilityController.deleteAvailability);
 
 // Vacaciones
-router.get('/vacations', verifyToken, verifyDoctorRole, availabilityController.getVacations);
-router.get('/vacations/active', verifyToken, verifyDoctorRole, availabilityController.getActiveVacations);
-router.delete('/vacations/:vacationId', verifyToken, verifyDoctorRole, availabilityController.deleteVacation);
+router.post('/vacations', availabilityController.addVacation);
+router.get('/vacations', availabilityController.getVacations);
+router.get('/vacations/active', availabilityController.getActiveVacations);
+router.delete('/vacations/:vacationId', availabilityController.deleteVacation);
 
 export default router;
