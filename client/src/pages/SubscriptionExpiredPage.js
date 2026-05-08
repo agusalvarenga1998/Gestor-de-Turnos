@@ -19,15 +19,15 @@ export default function SubscriptionExpiredPage() {
           <div className={styles.icon}>⚠️</div>
         </div>
 
-        <h1 className={styles.title}>Suscripción Expirada</h1>
-
+        <h1 className={styles.title}>Acceso Restringido</h1>
+        
         <div className={styles.message}>
-          <p>
-            Tu suscripción a TurnoHub ha expirado y no puedes acceder al sistema en este momento.
+          <p className={styles.highlight}>
+            Debes pagar para seguir usando la app.
           </p>
-
+          
           <p>
-            Para reactivar tu acceso, contacta al administrador del sistema para renovar tu suscripción.
+            Tu periodo de acceso ha llegado a su fin. Para continuar utilizando las funcionalidades de TurnoHub, contacta al administrador para habilitar tu cuenta.
           </p>
         </div>
 

@@ -1,16 +1,14 @@
 import express from 'express';
-import { verifyToken, verifyDoctorRole } from '../middleware/auth.js';
+import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
 import * as patientController from '../controllers/patientController.js';
 
 const router = express.Router();
 
+// Todas las rutas de pacientes requieren suscripción activa
+router.use(verifyToken);
+router.use(verifyDoctorRole);
+router.use(checkSubscription);
+
 // Rutas protegidas para doctores
-router.post('/', verifyToken, verifyDoctorRole, patientController.createPatient);
-router.get('/', verifyToken, verifyDoctorRole, patientController.getPatients);
-router.get('/search', verifyToken, verifyDoctorRole, patientController.searchPatients);
-router.get('/inactive', verifyToken, verifyDoctorRole, patientController.getInactivePatients);
-router.get('/:patientId', verifyToken, verifyDoctorRole, patientController.getPatient);
-router.patch('/:patientId', verifyToken, verifyDoctorRole, patientController.updatePatient);
-router.delete('/:patientId', verifyToken, verifyDoctorRole, patientController.deletePatient);
 
 export default router;

@@ -36,6 +36,9 @@ apiClient.interceptors.response.use(
       // Token expirado o inválido
       localStorage.removeItem('token');
       window.location.href = '/login';
+    } else if (error.response?.status === 403 && error.response?.data?.subscriptionExpired) {
+      // Suscripción expirada
+      window.location.href = '/subscription-expired';
     }
     return Promise.reject(error);
   }

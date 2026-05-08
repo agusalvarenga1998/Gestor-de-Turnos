@@ -143,7 +143,7 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({
         success: false,
         subscriptionExpired: true,
-        message: 'Tu suscripción ha expirado. Contacta al administrador para renovarla'
+        message: 'Debes pagar para seguir usando la app'
       });
     }
 
@@ -202,9 +202,23 @@ router.get('/verify', verifyToken, async (req, res) => {
       });
     }
 
+    const doctorData = doctor.rows[0];
+    const now = new Date();
+    let subscriptionStatus = doctorData.subscription_status;
+
+    // Actualizar estado de suscripción basado en fechas
+    if (subscriptionStatus === 'trial' && doctorData.trial_ends_at && new Date(doctorData.trial_ends_at) < now) {
+      subscriptionStatus = 'expired';
+    } else if (subscriptionStatus === 'active' && doctorData.subscription_expires_at && new Date(doctorData.subscription_expires_at) < now) {
+      subscriptionStatus = 'expired';
+    }
+
     res.json({
       success: true,
-      doctor: doctor.rows[0]
+      doctor: {
+        ...doctorData,
+        subscription_status: subscriptionStatus
+      }
     });
   } catch (error) {
     console.error('Error al verificar token:', error);
@@ -421,6 +435,25 @@ router.get('/google/callback', async (req, res) => {
       console.log('❌ Doctor rechazado, redirigiendo a login...');
       const redirectUrl = `${FRONTEND_URL}/login?error=${encodeURIComponent('Tu solicitud de cuenta fue rechazada')}`;
       console.log('🔄 Redirigiendo a:', redirectUrl.split('?')[0]);
+      console.log('✓ Flujo completado\n');
+      return res.redirect(redirectUrl);
+    }
+
+    // Verificar suscripción
+    const now = new Date();
+    let isExpired = false;
+    if (doctor.subscription_status === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) {
+      isExpired = true;
+    } else if (doctor.subscription_status === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now) {
+      isExpired = true;
+    } else if (doctor.subscription_status === 'expired') {
+      isExpired = true;
+    }
+
+    if (isExpired) {
+      console.log('⏳ Suscripción expirada, redirigiendo a página de expiración...');
+      const redirectUrl = `${FRONTEND_URL}/subscription-expired`;
+      console.log('🔄 Redirigiendo a:', redirectUrl);
       console.log('✓ Flujo completado\n');
       return res.redirect(redirectUrl);
     }

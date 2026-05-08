@@ -25,15 +25,66 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
-// Middleware para verificar rol de doctor
-export const verifyDoctorRole = (req, res, next) => {
+// Middleware para verificar rol de doctor y suscripción activa
+export const verifyDoctorRole = async (req, res, next) => {
   if (!req.user || req.user.role !== 'doctor') {
     return res.status(403).json({
       success: false,
       message: 'Acceso denegado. Solo doctores pueden acceder a este recurso.'
     });
   }
+
+  // Si ya sabemos que está expirada por el token, bloqueamos
+  if (req.user.subscription_status === 'expired') {
+    return res.status(403).json({
+      success: false,
+      subscriptionExpired: true,
+      message: 'Debes pagar para seguir usando la app'
+    });
+  }
+
   next();
+};
+
+// Middleware específico para verificar suscripción consultando la DB (más seguro)
+export const checkSubscription = async (req, res, next) => {
+  try {
+    const { query } = await import('../db/config.js');
+    
+    const result = await query(
+      'SELECT status, subscription_status, trial_ends_at, subscription_expires_at FROM doctors WHERE id = $1',
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Doctor no encontrado' });
+    }
+
+    const doctor = result.rows[0];
+    const now = new Date();
+    let isExpired = false;
+
+    if (doctor.subscription_status === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) {
+      isExpired = true;
+    } else if (doctor.subscription_status === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now) {
+      isExpired = true;
+    } else if (doctor.subscription_status === 'expired') {
+      isExpired = true;
+    }
+
+    if (isExpired) {
+      return res.status(403).json({
+        success: false,
+        subscriptionExpired: true,
+        message: 'Debes pagar para seguir usando la app'
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Error verificando suscripción:', error);
+    next(); // En caso de error, permitimos pasar para no bloquear la app por error de DB
+  }
 };
 
 // Generar JWT

@@ -1,11 +1,14 @@
 import express from 'express';
 import { query } from '../db/config.js';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Middleware global para rutas de servicios (protegidas)
+router.use(verifyToken, verifyDoctorRole, checkSubscription);
+
 // Obtener servicios del profesional autenticado
-router.get('/doctor/me', verifyToken, async (req, res) => {
+router.get('/doctor/me', async (req, res) => {
   try {
     const doctorId = req.user.id;
     const result = await query(

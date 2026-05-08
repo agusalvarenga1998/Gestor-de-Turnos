@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifyToken, verifyDoctorRole } from '../middleware/auth.js';
+import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
 import * as appointmentController from '../controllers/appointmentController.js';
 import { query } from '../db/config.js';
 import { sendDelayNotification, sendAppointmentConfirmation, sendAppointmentRejectionEmail, sendNewAppointmentNotificationToDoctor } from '../services/emailService.js';
@@ -696,17 +696,23 @@ router.get('/public/:token', async (req, res) => {
 });
 
 // ===== RUTAS PROTEGIDAS PARA DOCTORES =====
-router.post('/', verifyToken, verifyDoctorRole, appointmentController.createAppointment);
-router.get('/', verifyToken, verifyDoctorRole, appointmentController.getAppointments);
-router.get('/today', verifyToken, verifyDoctorRole, appointmentController.getTodayAppointments);
-router.get('/available-slots', verifyToken, verifyDoctorRole, appointmentController.getAvailableSlots);
-router.get('/statistics', verifyToken, verifyDoctorRole, appointmentController.getStatistics);
-router.get('/:appointmentId', verifyToken, verifyDoctorRole, appointmentController.getAppointment);
-router.patch('/:appointmentId', verifyToken, verifyDoctorRole, appointmentController.updateAppointment);
-router.delete('/:appointmentId', verifyToken, verifyDoctorRole, appointmentController.cancelAppointment);
+
+// Todas las rutas de este router requieren token de doctor y suscripción activa
+router.use(verifyToken);
+router.use(verifyDoctorRole);
+router.use(checkSubscription);
+
+router.post('/', appointmentController.createAppointment);
+router.get('/', appointmentController.getAppointments);
+router.get('/today', appointmentController.getTodayAppointments);
+router.get('/available-slots', appointmentController.getAvailableSlots);
+router.get('/statistics', appointmentController.getStatistics);
+router.get('/:appointmentId', appointmentController.getAppointment);
+router.patch('/:appointmentId', appointmentController.updateAppointment);
+router.delete('/:appointmentId', appointmentController.cancelAppointment);
 
 // Aceptar una cita pendiente (doctor aprueba la solicitud)
-router.patch('/:appointmentId/accept', verifyToken, verifyDoctorRole, async (req, res) => {
+router.patch('/:appointmentId/accept', async (req, res) => {
   try {
     const { appointmentId } = req.params;
     const doctorId = req.user.id;
@@ -800,7 +806,7 @@ router.patch('/:appointmentId/accept', verifyToken, verifyDoctorRole, async (req
 });
 
 // Rechazar una cita pendiente (doctor rechaza la solicitud)
-router.patch('/:appointmentId/reject', verifyToken, verifyDoctorRole, async (req, res) => {
+router.patch('/:appointmentId/reject', async (req, res) => {
   try {
     const { appointmentId } = req.params;
     const { reason } = req.body;
@@ -894,7 +900,7 @@ router.patch('/:appointmentId/reject', verifyToken, verifyDoctorRole, async (req
 });
 
 // Actualizar retraso de cita
-router.patch('/:appointmentId/delay', verifyToken, verifyDoctorRole, async (req, res) => {
+router.patch('/:appointmentId/delay', async (req, res) => {
   try {
     const { appointmentId } = req.params;
     const { delay_minutes, delay_reason } = req.body;

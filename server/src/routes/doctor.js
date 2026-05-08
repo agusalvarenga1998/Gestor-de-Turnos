@@ -1,13 +1,17 @@
 import express from 'express';
-import { verifyToken, verifyDoctorRole } from '../middleware/auth.js';
+import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
 import { query, transaction } from '../db/config.js';
 import { getAppointmentsForToday, getAppointmentsByDoctor } from '../services/appointmentService.js';
 import { getPatientsByDoctor } from '../services/patientService.js';
 
 const router = express.Router();
 
+router.use(verifyToken);
+router.use(verifyDoctorRole);
+router.use(checkSubscription);
+
 // Obtener perfil del doctor
-router.get('/profile', verifyToken, verifyDoctorRole, async (req, res) => {
+router.get('/profile', async (req, res) => {
   try {
     const result = await query(
       `SELECT id, email, name, specialization, phone, clinic_name, clinic_address, profile_image_url, latitude, longitude, booking_fee

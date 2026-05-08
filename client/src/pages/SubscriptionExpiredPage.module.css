@@ -49,6 +49,17 @@
   margin-bottom: 0;
 }
 
+.highlight {
+  font-size: var(--font-size-lg) !important;
+  font-weight: 700;
+  color: #f5576c !important;
+  text-align: center;
+  background: #fff5f5;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-xl) !important;
+}
+
 .infoBox {
   background: #fff5f5;
   border-left: 4px solid #f5576c;

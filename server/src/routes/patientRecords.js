@@ -2,11 +2,15 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { verifyToken, verifyDoctorRole } from '../middleware/auth.js';
+import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
 import * as patientRecordController from '../controllers/patientRecordController.js';
 import { uploadsDir } from '../utils/paths.js';
 
 const router = express.Router();
+
+router.use(verifyToken);
+router.use(verifyDoctorRole);
+router.use(checkSubscription);
 
 // Configuración de Multer
 const storage = multer.diskStorage({
