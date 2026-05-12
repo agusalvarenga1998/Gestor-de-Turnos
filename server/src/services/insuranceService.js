@@ -157,3 +157,27 @@ export const getDoctorServicesAndCoverages = async (doctorId) => {
   );
   return result.rows;
 };
+
+export const getInsuranceByName = async (doctorId, name) => {
+  const result = await query(
+    'SELECT * FROM insurance_companies WHERE doctor_id = $1 AND LOWER(name) = LOWER($2)',
+    [doctorId, name]
+  );
+  return result.rows[0];
+};
+
+export const getServiceByName = async (doctorId, name) => {
+  const result = await query(
+    'SELECT * FROM services WHERE doctor_id = $1 AND LOWER(name) = LOWER($2)',
+    [doctorId, name]
+  );
+  return result.rows[0];
+};
+
+export const getOnlyServicesByDoctor = async (doctorId) => {
+  const result = await query(
+    'SELECT name FROM services WHERE doctor_id = $1 ORDER BY name ASC',
+    [doctorId]
+  );
+  return result.rows;
+};

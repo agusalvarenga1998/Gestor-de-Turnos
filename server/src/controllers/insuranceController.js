@@ -4,31 +4,27 @@ import * as XLSX from 'xlsx';
 export const exportInsuranceCoverages = async (req, res) => {
   try {
     const doctorId = req.user.id;
-    const data = await insuranceService.getDoctorServicesAndCoverages(doctorId);
+    const services = await insuranceService.getOnlyServicesByDoctor(doctorId);
 
-    // Formatear para Excel
-    const worksheetData = data.map(row => ({
-      'ID Convenio': row.insurance_id,
-      'Convenio': row.insurance_name,
-      'ID Servicio': row.service_id,
-      'Servicio': row.service_name,
-      'Precio Base': row.base_price,
-      'Tipo Cobertura (monto/porcentaje)': row.coverage_type === 'percentage' ? 'porcentaje' : 'monto',
-      'Valor Descuento': row.coverage_value || 0
+    // Formatear para Excel (Solo nombres de servicios como plantilla)
+    const worksheetData = services.map(s => ({
+      'CONVENIO': '',
+      'SERVICIO': s.name,
+      'DESCUENTO': ''
     }));
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Beneficios');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Plantilla Beneficios');
 
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=beneficios.xlsx');
+    res.setHeader('Content-Disposition', 'attachment; filename=plantilla_beneficios.xlsx');
     res.send(buffer);
   } catch (error) {
-    console.error('Error exportando beneficios:', error);
-    res.status(500).json({ success: false, message: 'Error al exportar beneficios' });
+    console.error('Error exportando plantilla:', error);
+    res.status(500).json({ success: false, message: 'Error al exportar plantilla' });
   }
 };
 
@@ -38,6 +34,7 @@ export const importInsuranceCoverages = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No se subió ningún archivo' });
     }
 
+    const doctorId = req.user.id;
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -52,18 +49,40 @@ export const importInsuranceCoverages = async (req, res) => {
 
     for (const row of data) {
       try {
-        const insuranceId = row['ID Convenio'];
-        const serviceId = row['ID Servicio'];
-        const typeRaw = String(row['Tipo Cobertura (monto/porcentaje)'] || '').toLowerCase();
-        const value = parseFloat(row['Valor Descuento'] || 0);
+        const convenioName = row['CONVENIO'] || row['Convenio'];
+        const servicioName = row['SERVICIO'] || row['Servicio'];
+        const descuentoRaw = row['DESCUENTO'] || row['Descuento'] || '0';
 
-        if (!insuranceId || !serviceId) continue;
+        if (!convenioName || !servicioName) continue;
 
-        const type = typeRaw.includes('porcentaje') ? 'percentage' : 'fixed_amount';
+        // Buscar IDs por nombre
+        const insurance = await insuranceService.getInsuranceByName(doctorId, String(convenioName).trim());
+        const service = await insuranceService.getServiceByName(doctorId, String(servicioName).trim());
+
+        if (!insurance) {
+          errors.push(`Convenio "${convenioName}" no encontrado`);
+          continue;
+        }
+        if (!service) {
+          errors.push(`Servicio "${servicioName}" no encontrado`);
+          continue;
+        }
+
+        // Determinar tipo y valor
+        let type = 'fixed_amount';
+        let value = 0;
+        const discountStr = String(descuentoRaw);
+
+        if (discountStr.includes('%')) {
+          type = 'percentage';
+          value = parseFloat(discountStr.replace('%', '')) || 0;
+        } else {
+          value = parseFloat(discountStr) || 0;
+        }
 
         await insuranceService.setInsuranceServiceCoverage(
-          insuranceId,
-          serviceId,
+          insurance.id,
+          service.id,
           type,
           value
         );
@@ -75,7 +94,7 @@ export const importInsuranceCoverages = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Se actualizaron ${importedCount} beneficios correctamente`,
+      message: `Se procesaron ${importedCount} beneficios correctamente`,
       importedCount,
       errors: errors.length > 0 ? errors : null
     });
