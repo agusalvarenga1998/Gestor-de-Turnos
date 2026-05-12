@@ -232,14 +232,6 @@ export default function LoginPage() {
             ¿Eres administrador? <Link to="/admin/login">Ingresa aquí</Link>
           </div>
 
-          {/* Info de Demo - Caja inferior estilo imagen */}
-          <div className={styles.demoBox}>
-            <p className={styles.demoTitle}>DEMO</p>
-            <div className={styles.demoCreds}>
-              <p>Email: <span>profesional@example.com</span></p>
-              <p>Pass: <span>password123</span></p>
-            </div>
-          </div>
         </div>
       </main>
     </div>

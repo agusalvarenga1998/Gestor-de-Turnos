@@ -176,14 +176,6 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Info de Demo Admin */}
-          <div className={styles.demoBox}>
-            <p className={styles.demoTitle}>ADMIN DEMO</p>
-            <div className={styles.demoCreds}>
-              <p>User: <span>admin@example.com</span></p>
-              <p>Key: <span>adminpass123</span></p>
-            </div>
-          </div>
         </div>
       </main>
     </div>
