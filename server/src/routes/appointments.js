@@ -497,7 +497,9 @@ router.post('/public/search', async (req, res) => {
       ? `AND (${patientConditions.join(' AND ')})`
       : '';
 
-    // Buscar citas programadas del paciente
+    console.log('🔓 Ejecutando búsqueda SQL con params:', params);
+
+    // Buscar citas programadas o recientes del paciente
     const result = await query(
       `SELECT
         a.id,
@@ -516,22 +518,22 @@ router.post('/public/search', async (req, res) => {
       JOIN patients p ON a.patient_id = p.id
       JOIN doctors d ON a.doctor_id = d.id
       WHERE a.doctor_id = $1 ${patientClause}
-      AND a.status IN ('scheduled', 'pending', 'pending_payment')
+      AND a.status IN ('scheduled', 'pending', 'pending_payment', 'completed')
       ORDER BY a.appointment_date DESC, a.appointment_time DESC
       LIMIT 1`,
       params
     );
 
+    console.log('✓ Resultados de búsqueda:', result.rows.length);
+
     if (result.rows.length === 0) {
-      return res.status(404).json({
+      return res.json({
         success: false,
-        message: 'No se encontró ninguna cita con esos datos'
+        message: 'No se encontró ninguna cita con esos datos. Verifica que el nombre o DNI coincidan con los usados al agendar.'
       });
     }
 
     const appointment = result.rows[0];
-    console.log('✓ Cita encontrada:', appointment.patient_name);
-
     res.json({
       success: true,
       appointment
