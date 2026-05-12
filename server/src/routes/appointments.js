@@ -60,7 +60,7 @@ router.get('/public/doctors/:specialization', async (req, res) => {
     console.log('🔓 Obtener médicos de especialidad:', specialization);
 
     const result = await query(
-      `SELECT id, name, specialization, clinic_name, phone, latitude, longitude, booking_fee, appointment_price, plan_type
+      `SELECT id, name, specialization, clinic_name, phone, address, latitude, longitude, booking_fee, appointment_price, plan_type
        FROM doctors
        WHERE status = 'approved'
        AND subscription_status IN ('active', 'trial')
