@@ -435,7 +435,8 @@ router.post('/public/create', async (req, res) => {
         totalAmount: appointment.total_amount,
         status: totalToPayNow > 0 ? 'pending_payment' : 'pending',
         doctorName: doctor.name,
-        clinicName: doctor.clinic_name
+        clinicName: doctor.clinic_name,
+        address: doctor.address
       },
       paymentRequired: !!initPoint,
       initPoint: initPoint

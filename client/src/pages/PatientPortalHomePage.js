@@ -34,7 +34,7 @@ export default function PatientPortalHomePage() {
   const [selectedSlot, setSelectedSlot] = useState('');
   const [bookingError, setBookingError] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(null);
   const [patientData, setPatientData] = useState({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
   const [doctorInsurances, setDoctorInsurances] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
@@ -166,7 +166,7 @@ export default function PatientPortalHomePage() {
         if (response.paymentRequired && response.initPoint) {
           window.location.href = response.initPoint;
         } else {
-          setBookingSuccess(true);
+          setBookingSuccess(response.appointment);
           setBookingLoading(false);
         }
       }
@@ -301,6 +301,25 @@ export default function PatientPortalHomePage() {
                           <div className={styles.successIcon}>✓</div>
                           <h2>¡Turno solicitado!</h2>
                           <p>Recibirás un email con la confirmación.</p>
+                          
+                          <div className={styles.successDetails}>
+                            <div className={styles.detailItem}>
+                              <strong>Fecha:</strong> {new Date(bookingSuccess.appointmentDate + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </div>
+                            <div className={styles.detailItem}>
+                              <strong>Hora:</strong> {bookingSuccess.appointmentTime} hs
+                            </div>
+                            <div className={styles.detailItem}>
+                              <strong>Profesional:</strong> {bookingSuccess.doctorName}
+                            </div>
+                            <div className={styles.detailItem}>
+                              <strong>Dirección:</strong> {bookingSuccess.address || 'Consultorio del profesional'}
+                            </div>
+                          </div>
+                          
+                          <button className={styles.doneBtn} onClick={() => { setBookingSuccess(null); setActiveTab(null); }}>
+                            Volver al Inicio
+                          </button>
                         </div>
                       ) : (
                         <form onSubmit={handleBookAppointment}>
@@ -320,8 +339,16 @@ export default function PatientPortalHomePage() {
                                 <option value="">Selecciona...</option>
                                 {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                               </select>
+                              </div>
                             </div>
                           </div>
+
+                          {selectedDoctor && (
+                            <div className={styles.doctorAddressInfo}>
+                              <Icon name="map-pin" size={16} />
+                              <span>{doctors.find(d => d.id === selectedDoctor)?.address || 'Dirección no especificada'}</span>
+                            </div>
+                          )}
 
                           {selectedDoctor && (
                             <>
