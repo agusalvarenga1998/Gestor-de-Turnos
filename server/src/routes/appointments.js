@@ -472,6 +472,8 @@ router.post('/public/search', async (req, res) => {
 
     console.log('🔓 Búsqueda pública de cita por:', { name, lastName, documentNumber, doctorId });
 
+    let params = [doctorId];
+    let paramIndex = 2;
     let patientConditions = [];
     if (name && name.length >= 2) {
       patientConditions.push(`LOWER(p.name) LIKE LOWER($${paramIndex})`);
