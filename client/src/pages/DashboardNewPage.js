@@ -68,17 +68,14 @@ export default function DashboardNewPage() {
     fetchDashboardData();
   }, []);
 
-  const StatCard = ({ label, value, subtext, color = 'primary', iconName }) => (
-    <div className={`${styles.statCard} ${styles[color]}`}>
-      <div className={styles.statContent}>
-        <div className={styles.statInfo}>
-          <div className={styles.statLabel}>{label}</div>
-          <div className={styles.statValue}>{value}</div>
-          {subtext && <div className={styles.statSubtext}>{subtext}</div>}
-        </div>
-        <div className={styles.statIconWrapper}>
-          <Icon name={iconName} size={28} />
-        </div>
+  const StatItem = ({ label, value, iconName, color }) => (
+    <div className={`${styles.statItem} ${styles[color]}`}>
+      <div className={styles.statIcon}>
+        <Icon name={iconName} size={20} />
+      </div>
+      <div className={styles.statData}>
+        <span className={styles.statLabel}>{label}</span>
+        <span className={styles.statValue}>{value}</span>
       </div>
     </div>
   );
@@ -105,77 +102,83 @@ export default function DashboardNewPage() {
     <DoctorLayout>
       <div className={styles.container}>
         {/* Header */}
-        <div className={styles.pageHeader}>
-          <div className={styles.welcomeSection}>
-            <div className={styles.avatarPlaceholder}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'D'}
-            </div>
-            <div>
-              <h1 className={styles.title}>Hola, Dr. {user?.name} 👋</h1>
-              <p className={styles.subtitle}>Aquí tienes un resumen de tu actividad de hoy.</p>
-            </div>
+        <header className={styles.mainHeader}>
+          <div className={styles.welcomeInfo}>
+            <h1 className={styles.greeting}>Buen día, {user?.name}</h1>
+            <p className={styles.dateDisplay}>
+              {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
           </div>
-          <div className={styles.headerRight}>
-            <div className={styles.connectionStatus}>
-              <div className={`${styles.statusIndicator} ${isConnected ? styles.connected : ''}`}></div>
-              <span>{isConnected ? 'Conectado' : 'Desconectado'}</span>
+          
+          <div className={styles.headerActions}>
+            <div className={styles.connectionBadge}>
+              <span className={`${styles.dot} ${isConnected ? styles.online : ''}`}></span>
+              {isConnected ? 'Sistema en línea' : 'Sin conexión'}
             </div>
           </div>
-        </div>
+        </header>
 
-        {error && <div className={styles.errorBox}>{error}</div>}
-
-        <div className={styles.statsGrid}>
-          <StatCard label="Completados" value={stats.completed_appointments} color="success" iconName="check-circle" />
-          <StatCard label="En Espera" value={stats.pending_appointments} color="warning" iconName="clock" />
-          <StatCard label="Turnos Hoy" value={stats.appointments_today || 0} subtext="Programados para hoy" color="primary" iconName="calendar" />
-          <StatCard label="Total Clientes" value={stats.total_patients} color="info" iconName="users" />
-        </div>
-
-        {/* Appointments Table */}
-        <div className={styles.appointmentsSection}>
-          <h2 className={styles.sectionTitle}>Turnos de Hoy</h2>
-
-          {todayAppointments.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p>No hay turnos programados para hoy</p>
+        <div className={styles.dashboardGrid}>
+          {/* Main Column: Agenda */}
+          <main className={styles.agendaColumn}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>Agenda de hoy</h2>
+              <span className={styles.countBadge}>{todayAppointments.length} turnos</span>
             </div>
-          ) : (
-            <table className={styles.appointmentsTable}>
-              <thead>
-                <tr>
-                  <th>Posición</th>
-                  <th>Cliente</th>
-                  <th>Hora</th>
-                  <th>Estado</th>
-                  <th>Duración</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todayAppointments.map((appt, index) => (
-                  <tr key={appt.id}>
-                    <td className={styles.positionCell} data-label="Posición">{index + 1}</td>
-                    <td className={styles.patientName} data-label="Cliente">{appt.patient_name}</td>
-                    <td className={styles.time} data-label="Hora">{appt.appointment_time}</td>
-                    <td data-label="Estado">{getStatusBadge(appt.status)}</td>
-                    <td data-label="Duración">30 min</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
 
-        {/* Session Info */}
-        <div className={styles.sessionInfo}>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Inicio de sesión</span>
-            <span className={styles.infoValue}>{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Estado</span>
-            <span className={styles.infoValue}>{isConnected ? 'Activo' : 'Inactivo'}</span>
-          </div>
+            <div className={styles.appointmentList}>
+              {todayAppointments.length === 0 ? (
+                <div className={styles.emptyAgenda}>
+                  <Icon name="calendar" size={40} />
+                  <p>No tienes compromisos programados para hoy.</p>
+                </div>
+              ) : (
+                todayAppointments.map((appt, index) => (
+                  <div key={appt.id} className={styles.apptCard}>
+                    <div className={styles.apptTime}>
+                      <span className={styles.timeValue}>{appt.appointment_time}</span>
+                      <span className={styles.duration}>30m</span>
+                    </div>
+                    <div className={styles.apptDetails}>
+                      <h3 className={styles.patientName}>{appt.patient_name}</h3>
+                      <p className={styles.apptReason}>{appt.reason_for_visit || 'Consulta general'}</p>
+                    </div>
+                    <div className={styles.apptStatus}>
+                      {getStatusBadge(appt.status)}
+                    </div>
+                    <div className={styles.apptAction}>
+                      <button className={styles.viewBtn}>Ver</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </main>
+
+          {/* Sidebar Column: Stats & Info */}
+          <aside className={styles.statsColumn}>
+            <div className={styles.summaryCard}>
+              <h2 className={styles.summaryTitle}>Resumen General</h2>
+              
+              <div className={styles.statsList}>
+                <StatItem label="Turnos hoy" value={stats.appointments_today || 0} iconName="calendar" color="blue" />
+                <StatItem label="Pendientes" value={stats.pending_appointments} iconName="clock" color="orange" />
+                <StatItem label="Completados" value={stats.completed_appointments} iconName="check-circle" color="green" />
+                <StatItem label="Total clientes" value={stats.total_patients} iconName="users" color="purple" />
+              </div>
+            </div>
+
+            <div className={styles.quickInfo}>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Último acceso</span>
+                <span className={styles.value}>{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Estado servidor</span>
+                <span className={styles.value}>Estable</span>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </DoctorLayout>
