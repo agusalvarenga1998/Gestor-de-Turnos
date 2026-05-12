@@ -339,7 +339,6 @@ export default function PatientPortalHomePage() {
                                 <option value="">Selecciona...</option>
                                 {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                               </select>
-                              </div>
                             </div>
                           </div>
 
