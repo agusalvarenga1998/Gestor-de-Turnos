@@ -22,6 +22,7 @@ export default function InsurancePage() {
   const [showCoverageModal, setShowCoverageModal] = useState(false);
   const [coverages, setCoverages] = useState({}); // { serviceId: { type, value } }
   const [savingCoverage, setSavingCoverage] = useState(false);
+  const [importErrors, setImportErrors] = useState(null);
 
   useEffect(() => {
     fetchInitialData();
@@ -244,6 +245,7 @@ export default function InsurancePage() {
       const response = await insuranceAPI.importInsurances(formDataImport);
       if (response.success) {
         alert(response.message);
+        setImportErrors(response.errors || null);
         fetchInitialData();
       }
     } catch (err) {
@@ -304,6 +306,18 @@ export default function InsurancePage() {
         </div>
 
         {error && <div className={styles.errorBox}>{error}</div>}
+        
+        {importErrors && (
+          <div className={styles.importErrorBox}>
+            <h3>Errores en la última importación:</h3>
+            <ul>
+              {importErrors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+            <button onClick={() => setImportErrors(null)} className={styles.clearErrorsBtn}>Cerrar</button>
+          </div>
+        )}
 
         {/* Form Modal (Crear/Editar Obra Social) */}
         {showForm && (
