@@ -190,7 +190,7 @@ export default function WorkingHoursPage() {
 
                   {!isAvailable && (
                     <div className={styles.notAvailable}>
-                      No labora este día
+                      No Trabajo Este Día
                     </div>
                   )}
                 </div>

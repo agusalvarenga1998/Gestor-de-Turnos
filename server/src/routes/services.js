@@ -4,31 +4,8 @@ import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/
 
 const router = express.Router();
 
-// --- Rutas Públicas (Sin Autenticación) ---
-
-// Obtener todos los servicios de un profesional (público)
-router.get('/doctor/:doctorId', async (req, res) => {
-  try {
-    const { doctorId } = req.params;
-    const result = await query(
-      'SELECT * FROM services WHERE doctor_id = $1 AND is_active = TRUE ORDER BY name ASC',
-      [doctorId]
-    );
-    res.json({ success: true, services: result.rows });
-  } catch (error) {
-    console.error('Error fetching services:', error);
-    res.status(500).json({ error: 'Error al obtener servicios' });
-  }
-});
-
-// --- Rutas Protegidas (Requieren suscripción activa) ---
-
-router.use(verifyToken);
-router.use(verifyDoctorRole);
-router.use(checkSubscription);
-
-// Obtener servicios del profesional autenticado
-router.get('/doctor/me', async (req, res) => {
+// --- Rutas Protegidas (Obtener mis servicios) ---
+router.get('/doctor/me', verifyToken, verifyDoctorRole, checkSubscription, async (req, res) => {
   try {
     const doctorId = req.user.id;
     const result = await query(
@@ -41,6 +18,36 @@ router.get('/doctor/me', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener tus servicios' });
   }
 });
+
+// --- Rutas Públicas (Sin Autenticación) ---
+
+// Obtener todos los servicios de un profesional (público)
+router.get('/doctor/:doctorId', async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    
+    // Si por alguna razón llega "me" aquí (aunque ya debería haber sido capturado arriba),
+    // evitamos el error de casteo de UUID en Postgres
+    if (doctorId === 'me') {
+      return res.status(401).json({ error: 'No autenticado' });
+    }
+
+    const result = await query(
+      'SELECT * FROM services WHERE doctor_id = $1 AND is_active = TRUE ORDER BY name ASC',
+      [doctorId]
+    );
+    res.json({ success: true, services: result.rows });
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ error: 'Error al obtener servicios' });
+  }
+});
+
+// --- Middleware para el resto de rutas (Requieren suscripción activa) ---
+router.use(verifyToken);
+router.use(verifyDoctorRole);
+router.use(checkSubscription);
+
 
 // Crear un nuevo servicio
 router.post('/', async (req, res) => {
