@@ -77,6 +77,13 @@ async function migrate() {
       );
     `);
 
+    // 7. Tabla Services: Columna code
+    console.log('➕ Verificando columna code en tabla services...');
+    await client.query(`
+      ALTER TABLE services 
+      ADD COLUMN IF NOT EXISTS code VARCHAR(50);
+    `);
+
 
 
     console.log('✅ Base de datos sincronizada exitosamente!');
