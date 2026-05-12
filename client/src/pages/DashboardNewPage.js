@@ -68,11 +68,18 @@ export default function DashboardNewPage() {
     fetchDashboardData();
   }, []);
 
-  const StatCard = ({ label, value, subtext, color = 'primary' }) => (
+  const StatCard = ({ label, value, subtext, color = 'primary', iconName }) => (
     <div className={`${styles.statCard} ${styles[color]}`}>
-      <div className={styles.statValue}>{value}</div>
-      <div className={styles.statLabel}>{label}</div>
-      {subtext && <div className={styles.statSubtext}>{subtext}</div>}
+      <div className={styles.statContent}>
+        <div className={styles.statInfo}>
+          <div className={styles.statLabel}>{label}</div>
+          <div className={styles.statValue}>{value}</div>
+          {subtext && <div className={styles.statSubtext}>{subtext}</div>}
+        </div>
+        <div className={styles.statIconWrapper}>
+          <Icon name={iconName} size={28} />
+        </div>
+      </div>
     </div>
   );
 
@@ -99,9 +106,14 @@ export default function DashboardNewPage() {
       <div className={styles.container}>
         {/* Header */}
         <div className={styles.pageHeader}>
-          <div>
-            <h1 className={styles.title}>Dashboard</h1>
-            <p className={styles.subtitle}>Bienvenido, {user?.name}</p>
+          <div className={styles.welcomeSection}>
+            <div className={styles.avatarPlaceholder}>
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'D'}
+            </div>
+            <div>
+              <h1 className={styles.title}>Hola, Dr. {user?.name} 👋</h1>
+              <p className={styles.subtitle}>Aquí tienes un resumen de tu actividad de hoy.</p>
+            </div>
           </div>
           <div className={styles.headerRight}>
             <div className={styles.connectionStatus}>
@@ -113,12 +125,11 @@ export default function DashboardNewPage() {
 
         {error && <div className={styles.errorBox}>{error}</div>}
 
-        {/* Stats Grid */}
         <div className={styles.statsGrid}>
-          <StatCard label="Completados" value={stats.completed_appointments} color="success" />
-          <StatCard label="En Espera" value={stats.pending_appointments} color="warning" />
-          <StatCard label="Total Hoy" value={stats.appointments_today || 0} subtext="Turnos hoy" color="primary" />
-          <StatCard label="Clientes" value={stats.total_patients} color="info" />
+          <StatCard label="Completados" value={stats.completed_appointments} color="success" iconName="check-circle" />
+          <StatCard label="En Espera" value={stats.pending_appointments} color="warning" iconName="clock" />
+          <StatCard label="Turnos Hoy" value={stats.appointments_today || 0} subtext="Programados para hoy" color="primary" iconName="calendar" />
+          <StatCard label="Total Clientes" value={stats.total_patients} color="info" iconName="users" />
         </div>
 
         {/* Appointments Table */}
