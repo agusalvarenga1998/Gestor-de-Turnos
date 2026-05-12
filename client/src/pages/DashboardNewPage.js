@@ -21,6 +21,8 @@ export default function DashboardNewPage() {
   });
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [error, setError] = useState(null);
+  const [delayModal, setDelayModal] = useState({ show: false, appointmentId: null });
+  const [delayMinutes, setDelayMinutes] = useState(15);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -67,6 +69,34 @@ export default function DashboardNewPage() {
 
     fetchDashboardData();
   }, []);
+
+  const handleDelay = async () => {
+    if (!delayMinutes || delayMinutes <= 0) {
+      alert('Por favor ingresa minutos válidos');
+      return;
+    }
+
+    try {
+      const response = await appointmentAPI.updateDelay(delayModal.appointmentId, {
+        delay_minutes: delayMinutes,
+        delay_reason: 'Retraso desde Dashboard'
+      });
+
+      if (response.success) {
+        setTodayAppointments(prev =>
+          prev.map(a => a.id === delayModal.appointmentId
+            ? { ...a, delay_minutes: delayMinutes }
+            : a)
+        );
+        alert(`✓ Retraso de ${delayMinutes} minutos registrado`);
+        setDelayModal({ show: false, appointmentId: null });
+        setDelayMinutes(15);
+      }
+    } catch (err) {
+      console.error('Error registrando retraso:', err);
+      alert('Error al registrar el retraso');
+    }
+  };
 
   const StatItem = ({ label, value, iconName, color }) => (
     <div className={`${styles.statItem} ${styles[color]}`}>
@@ -148,6 +178,18 @@ export default function DashboardNewPage() {
                     </div>
                     <div className={styles.apptAction}>
                       <button className={styles.viewBtn}>Ver</button>
+                      {appt.status === 'scheduled' && (
+                        <button 
+                          className={styles.delayBtn}
+                          onClick={() => setDelayModal({ show: true, appointmentId: appt.id })}
+                        >
+                          <Icon name="clock" size={16} />
+                          Retrasar
+                        </button>
+                      )}
+                      {appt.delay_minutes > 0 && (
+                        <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -181,6 +223,70 @@ export default function DashboardNewPage() {
           </aside>
         </div>
       </div>
+
+      {/* Delay Modal */}
+      {delayModal.show && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Registrar Retraso</h2>
+              <button
+                onClick={() => {
+                  setDelayModal({ show: false, appointmentId: null });
+                  setDelayMinutes(15);
+                }}
+                className={styles.closeBtn}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '2rem' }}>
+              <div className={styles.delayOptions}>
+                {[15, 30, 45, 60].map(mins => (
+                  <button
+                    key={mins}
+                    onClick={() => setDelayMinutes(mins)}
+                    className={`${styles.optionBtn} ${delayMinutes === mins ? styles.active : ''}`}
+                  >
+                    {mins} min
+                  </button>
+                ))}
+              </div>
+
+              <div className={styles.customInput}>
+                <label>O ingresa minutos personalizados:</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="180"
+                  value={delayMinutes}
+                  onChange={(e) => setDelayMinutes(parseInt(e.target.value) || 0)}
+                  className={styles.input}
+                />
+              </div>
+
+              <div className={styles.modalButtons}>
+                <button
+                  onClick={() => {
+                    setDelayModal({ show: false, appointmentId: null });
+                    setDelayMinutes(15);
+                  }}
+                  className={styles.cancelBtn}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDelay}
+                  className={styles.confirmBtn}
+                >
+                  Confirmar Retraso
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DoctorLayout>
   );
 }
