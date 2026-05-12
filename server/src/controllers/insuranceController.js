@@ -47,31 +47,50 @@ export const importInsuranceCoverages = async (req, res) => {
     let importedCount = 0;
     let errors = [];
 
+    // Helper para encontrar columnas sin importar mayúsculas o espacios
+    const getColumnValue = (row, possibleNames) => {
+      const keys = Object.keys(row);
+      for (const name of possibleNames) {
+        const foundKey = keys.find(k => k.trim().toLowerCase() === name.toLowerCase());
+        if (foundKey) return row[foundKey];
+      }
+      return null;
+    };
+
     for (const row of data) {
       try {
-        const convenioName = row['CONVENIO'] || row['Convenio'];
-        const servicioName = row['SERVICIO'] || row['Servicio'];
-        const descuentoRaw = row['DESCUENTO'] || row['Descuento'] || '0';
+        const convenioName = getColumnValue(row, ['CONVENIO', 'Convenio', 'convenio']);
+        const servicioName = getColumnValue(row, ['SERVICIO', 'Servicio', 'servicio']);
+        const descuentoRaw = getColumnValue(row, ['DESCUENTO', 'Descuento', 'descuento']) || '0';
 
-        if (!convenioName || !servicioName) continue;
+        if (!convenioName || !servicioName) {
+          errors.push(`Fila omitida: Asegúrate de que las columnas se llamen exactamente CONVENIO y SERVICIO`);
+          continue;
+        }
 
-        // Buscar IDs por nombre
-        const insurance = await insuranceService.getInsuranceByName(doctorId, String(convenioName).trim());
-        const service = await insuranceService.getServiceByName(doctorId, String(servicioName).trim());
+        const cleanConvenio = String(convenioName).trim();
+        const cleanServicio = String(servicioName).trim();
 
+        // 1. Buscar Obra Social - Si no existe, crearla
+        let insurance = await insuranceService.getInsuranceByName(doctorId, cleanConvenio);
+        
         if (!insurance) {
-          errors.push(`Convenio "${convenioName}" no encontrado`);
-          continue;
+          console.log(`Convenio "${cleanConvenio}" no existe. Creándolo automáticamente...`);
+          insurance = await insuranceService.createInsurance(doctorId, cleanConvenio, 0);
         }
+
+        // 2. Buscar Servicio - Este debe existir previamente
+        const service = await insuranceService.getServiceByName(doctorId, cleanServicio);
+
         if (!service) {
-          errors.push(`Servicio "${servicioName}" no encontrado`);
+          errors.push(`Servicio "${cleanServicio}" no encontrado. Crea primero el servicio en la sección de Servicios.`);
           continue;
         }
 
-        // Determinar tipo y valor
+        // 3. Determinar tipo y valor de descuento
         let type = 'fixed_amount';
         let value = 0;
-        const discountStr = String(descuentoRaw);
+        const discountStr = String(descuentoRaw).trim();
 
         if (discountStr.includes('%')) {
           type = 'percentage';
@@ -88,13 +107,18 @@ export const importInsuranceCoverages = async (req, res) => {
         );
         importedCount++;
       } catch (err) {
+        console.error('Error procesando fila:', err);
         errors.push(`Error en fila: ${err.message}`);
       }
     }
 
+    console.log(`Import finished. Success: ${importedCount}, Errors: ${errors.length}`);
+
     res.json({
       success: true,
-      message: `Se procesaron ${importedCount} beneficios correctamente`,
+      message: importedCount > 0 
+        ? `Se procesaron ${importedCount} beneficios correctamente`
+        : `No se pudo procesar ningún beneficio. Revisa los nombres y encabezados.`,
       importedCount,
       errors: errors.length > 0 ? errors : null
     });
