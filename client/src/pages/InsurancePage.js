@@ -213,6 +213,48 @@ export default function InsurancePage() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      setLoading(true);
+      const data = await insuranceAPI.exportInsurances();
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'beneficios.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Error exportando Excel:', err);
+      alert('Error al exportar los datos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formDataImport = new FormData();
+    formDataImport.append('file', file);
+
+    try {
+      setLoading(true);
+      const response = await insuranceAPI.importInsurances(formDataImport);
+      if (response.success) {
+        alert(response.message);
+        fetchInitialData();
+      }
+    } catch (err) {
+      console.error('Error importando Excel:', err);
+      alert('Error al importar el archivo: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+      e.target.value = '';
+    }
+  };
+
   if (loading && !showCoverageModal) {
     return (
       <DoctorLayout>
@@ -229,16 +271,36 @@ export default function InsurancePage() {
             <h1 className={styles.title}>Convenios y Beneficios</h1>
             <p className={styles.subtitle}>Gestiona tus convenios y montos de descuento</p>
           </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
-            className={styles.addBtn}
-          >
-            <Icon name="plus" size={18} color="currentColor" />
-            Nuevo Convenio
-          </button>
+          <div className={styles.headerActions}>
+            <button
+              onClick={handleExportExcel}
+              className={styles.exportBtn}
+              title="Descargar plantilla con servicios"
+            >
+              <Icon name="download" size={18} color="currentColor" />
+              Exportar
+            </button>
+            <label className={styles.importBtn}>
+              <Icon name="upload" size={18} color="currentColor" />
+              Importar
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                onChange={handleImportExcel} 
+                style={{ display: 'none' }} 
+              />
+            </label>
+            <button
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+              className={styles.addBtn}
+            >
+              <Icon name="plus" size={18} color="currentColor" />
+              Nuevo Convenio
+            </button>
+          </div>
         </div>
 
         {error && <div className={styles.errorBox}>{error}</div>}

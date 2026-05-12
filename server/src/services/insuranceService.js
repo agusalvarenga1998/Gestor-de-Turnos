@@ -137,3 +137,23 @@ export const deleteInsuranceServiceCoverage = async (insuranceId, serviceId) => 
   );
   return true;
 };
+// Obtener todos los servicios y sus coberturas actuales para exportar
+export const getDoctorServicesAndCoverages = async (doctorId) => {
+  const result = await query(
+    `SELECT 
+        ic.id as insurance_id, 
+        ic.name as insurance_name, 
+        s.id as service_id, 
+        s.name as service_name,
+        s.price as base_price,
+        isc.coverage_type,
+        isc.coverage_value
+     FROM insurance_companies ic
+     CROSS JOIN services s
+     LEFT JOIN insurance_service_coverage isc ON ic.id = isc.insurance_company_id AND s.id = isc.service_id
+     WHERE ic.doctor_id = $1 AND s.doctor_id = $1
+     ORDER BY ic.name ASC, s.name ASC`,
+    [doctorId]
+  );
+  return result.rows;
+};

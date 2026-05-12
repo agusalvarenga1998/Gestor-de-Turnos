@@ -323,6 +323,20 @@ export const insuranceAPI = {
   setServiceCoverage: async (id, data) => {
     const response = await apiClient.post(`/api/insurance/${id}/coverages`, data);
     return response.data;
+  },
+  exportInsurances: async () => {
+    const response = await apiClient.get('/api/insurance/export', {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+  importInsurances: async (formData) => {
+    const response = await apiClient.post('/api/insurance/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
   }
 };
 

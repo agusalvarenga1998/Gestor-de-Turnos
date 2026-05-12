@@ -1,4 +1,89 @@
 import * as insuranceService from '../services/insuranceService.js';
+import * as XLSX from 'xlsx';
+
+export const exportInsuranceCoverages = async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const data = await insuranceService.getDoctorServicesAndCoverages(doctorId);
+
+    // Formatear para Excel
+    const worksheetData = data.map(row => ({
+      'ID Convenio': row.insurance_id,
+      'Convenio': row.insurance_name,
+      'ID Servicio': row.service_id,
+      'Servicio': row.service_name,
+      'Precio Base': row.base_price,
+      'Tipo Cobertura (monto/porcentaje)': row.coverage_type === 'percentage' ? 'porcentaje' : 'monto',
+      'Valor Descuento': row.coverage_value || 0
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Beneficios');
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=beneficios.xlsx');
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error exportando beneficios:', error);
+    res.status(500).json({ success: false, message: 'Error al exportar beneficios' });
+  }
+};
+
+export const importInsuranceCoverages = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No se subió ningún archivo' });
+    }
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    if (data.length === 0) {
+      return res.status(400).json({ success: false, message: 'El archivo Excel está vacío' });
+    }
+
+    let importedCount = 0;
+    let errors = [];
+
+    for (const row of data) {
+      try {
+        const insuranceId = row['ID Convenio'];
+        const serviceId = row['ID Servicio'];
+        const typeRaw = String(row['Tipo Cobertura (monto/porcentaje)'] || '').toLowerCase();
+        const value = parseFloat(row['Valor Descuento'] || 0);
+
+        if (!insuranceId || !serviceId) continue;
+
+        const type = typeRaw.includes('porcentaje') ? 'percentage' : 'fixed_amount';
+
+        await insuranceService.setInsuranceServiceCoverage(
+          insuranceId,
+          serviceId,
+          type,
+          value
+        );
+        importedCount++;
+      } catch (err) {
+        errors.push(`Error en fila: ${err.message}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Se actualizaron ${importedCount} beneficios correctamente`,
+      importedCount,
+      errors: errors.length > 0 ? errors : null
+    });
+  } catch (error) {
+    console.error('Error importando beneficios:', error);
+    res.status(500).json({ success: false, message: 'Error al procesar el archivo Excel' });
+  }
+};
 
 export const getInsurances = async (req, res) => {
   try {

@@ -22,7 +22,8 @@ export default function ServicesPage() {
     description: '',
     price: '',
     booking_fee: '',
-    duration_minutes: 30
+    duration_minutes: 30,
+    code: ''
   });
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function ServicesPage() {
       }
       setIsModalOpen(false);
       setEditingService(null);
-      setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30 });
+      setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30, code: '' });
       fetchServices();
     } catch (err) {
       alert('Error al guardar el servicio');
@@ -74,7 +75,8 @@ export default function ServicesPage() {
       description: service.description || '',
       price: service.price,
       booking_fee: service.booking_fee || '',
-      duration_minutes: service.duration_minutes
+      duration_minutes: service.duration_minutes,
+      code: service.code || ''
     });
     setIsModalOpen(true);
   };
@@ -88,6 +90,38 @@ export default function ServicesPage() {
       fetchServices();
     } catch (err) {
       alert('Error al eliminar');
+    }
+  };
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formDataImport = new FormData();
+    formDataImport.append('file', file);
+
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API_BASE_URL}/api/services/import`, formDataImport, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      if (response.data.success) {
+        alert(response.data.message);
+        if (response.data.errors) {
+          console.warn('Errores de importación:', response.data.errors);
+        }
+        fetchServices();
+      }
+    } catch (err) {
+      console.error('Error importing Excel:', err);
+      alert('Error al importar el archivo Excel: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+      // Reset input
+      e.target.value = '';
     }
   };
 
@@ -107,9 +141,20 @@ export default function ServicesPage() {
             <h1>Mis Servicios</h1>
             <p className={styles.subtitle}>Define qué ofreces, cuánto cuesta y cuánto dura cada turno.</p>
           </div>
-          <button className={styles.addBtn} onClick={() => { setEditingService(null); setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30 }); setIsModalOpen(true); }}>
-            <Icon name="plus" size={18} /> Nuevo Servicio
-          </button>
+          <div className={styles.headerActions}>
+            <label className={styles.importBtn}>
+              <Icon name="upload" size={18} /> Importar Excel
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                onChange={handleImportExcel} 
+                style={{ display: 'none' }} 
+              />
+            </label>
+            <button className={styles.addBtn} onClick={() => { setEditingService(null); setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30, code: '' }); setIsModalOpen(true); }}>
+              <Icon name="plus" size={18} /> Nuevo Servicio
+            </button>
+          </div>
         </div>
 
         {error ? (
@@ -119,7 +164,10 @@ export default function ServicesPage() {
             {services.map(service => (
               <div key={service.id} className={styles.serviceCard}>
                 <div className={styles.serviceHeader}>
-                  <h3>{service.name}</h3>
+                  <div className={styles.titleInfo}>
+                    <h3>{service.name}</h3>
+                    {service.code && <span className={styles.serviceCode}>{service.code}</span>}
+                  </div>
                   <div className={styles.badge}>{service.duration_minutes} min</div>
                 </div>
                 <p className={styles.description}>{service.description || 'Sin descripción'}</p>
@@ -152,15 +200,26 @@ export default function ServicesPage() {
             <div className={styles.modal}>
               <h2>{editingService ? 'Editar Servicio' : 'Nuevo Servicio'}</h2>
               <form onSubmit={handleSubmit}>
-                <div className={styles.formGroup}>
-                  <label>Nombre del Servicio</label>
-                  <input 
-                    type="text" 
-                    value={formData.name} 
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    placeholder="Ej: Corte de Cabello, Consulta General..."
-                    required
-                  />
+                <div className={styles.row}>
+                  <div className={styles.formGroup}>
+                    <label>Nombre del Servicio*</label>
+                    <input 
+                      type="text" 
+                      value={formData.name} 
+                      onChange={e => setFormData({...formData, name: e.target.value})}
+                      placeholder="Ej: Corte de Cabello..."
+                      required
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Código (Opcional)</label>
+                    <input 
+                      type="text" 
+                      value={formData.code} 
+                      onChange={e => setFormData({...formData, code: e.target.value})}
+                      placeholder="Ej: SERV-01"
+                    />
+                  </div>
                 </div>
                 <div className={styles.formGroup}>
                   <label>Descripción (Opcional)</label>

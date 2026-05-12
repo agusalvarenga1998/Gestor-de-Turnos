@@ -1,7 +1,9 @@
 import express from 'express';
 import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
 import * as insuranceController from '../controllers/insuranceController.js';
+import multer from 'multer';
 
+const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 // Ruta pública para pacientes
@@ -9,6 +11,10 @@ router.get('/public/doctor/:doctorId', insuranceController.getPublicInsurances);
 
 // Todas las rutas siguientes requieren autenticación de doctor y suscripción activa
 router.use(verifyToken, verifyDoctorRole, checkSubscription);
+
+// Rutas de Exportación/Importación
+router.get('/export', insuranceController.exportInsuranceCoverages);
+router.post('/import', upload.single('file'), insuranceController.importInsuranceCoverages);
 
 // Rutas para obras sociales del doctor
 router.get('/', insuranceController.getInsurances);
