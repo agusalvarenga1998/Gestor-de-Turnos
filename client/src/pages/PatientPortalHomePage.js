@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { appointmentAPI, insuranceAPI } from '../services/api';
 import DoctorMap from '../components/DoctorMap';
+import Icon from '../components/Icon';
 import SplashLoader from '../components/SplashLoader';
 import Loading from '../components/Loading';
 import DatePicker, { registerLocale } from "react-datepicker";
