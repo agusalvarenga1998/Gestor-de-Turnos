@@ -136,30 +136,6 @@ export default function AdminDashboardPage() {
           </button>
         </div>
 
-        {/* Quick Actions */}
-        <div className={styles.quickActions}>
-          <h2>Acciones Rápidas</h2>
-          <div className={styles.actionsList}>
-            <div className={styles.actionItem}>
-              <p>📋 Revisar solicitudes pendientes</p>
-              <button
-                onClick={() => navigate('/admin/doctors')}
-                className={styles.smallBtn}
-              >
-                Ir
-              </button>
-            </div>
-            <div className={styles.actionItem}>
-              <p>⏱️ Extender suscripciones que vencen pronto</p>
-              <button
-                onClick={() => navigate('/admin/doctors')}
-                className={styles.smallBtn}
-              >
-                Ir
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     </AdminLayout>

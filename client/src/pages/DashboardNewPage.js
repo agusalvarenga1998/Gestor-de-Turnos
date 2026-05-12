@@ -167,7 +167,7 @@ export default function DashboardNewPage() {
                   <div key={appt.id} className={styles.apptCard}>
                     <div className={styles.apptTime}>
                       <span className={styles.timeValue}>{appt.appointment_time}</span>
-                      <span className={styles.duration}>30m</span>
+                      <span className={styles.duration}>{appt.duration_minutes || 30}m</span>
                     </div>
                     <div className={styles.apptDetails}>
                       <h3 className={styles.patientName}>{appt.patient_name}</h3>
@@ -210,15 +210,6 @@ export default function DashboardNewPage() {
               </div>
             </div>
 
-            <div className={styles.quickInfo}>
-              <div className={styles.infoRow}>
-                <span className={styles.label}>Último acceso</span>
-                <span className={styles.value}>{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-              </div>
-              <div className={styles.infoRow}>
-                <span className={styles.label}>Estado servidor</span>
-                <span className={styles.value}>Estable</span>
-              </div>
             </div>
           </aside>
         </div>
