@@ -83,7 +83,9 @@ export const importInsuranceCoverages = async (req, res) => {
         const service = await insuranceService.getServiceByName(doctorId, cleanServicio);
 
         if (!service) {
-          errors.push(`Servicio "${cleanServicio}" no encontrado. Crea primero el servicio en la sección de Servicios.`);
+          const availableServices = await insuranceService.getOnlyServicesByDoctor(doctorId);
+          const serviceNames = availableServices.map(s => `"${s.name}"`).join(', ');
+          errors.push(`Servicio "${cleanServicio}" no encontrado. Tus servicios actuales son: ${serviceNames}. Asegúrate de que el nombre coincida exactamente.`);
           continue;
         }
 
