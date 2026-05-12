@@ -627,16 +627,14 @@ export default function AppointmentsPage() {
                       </td>
                       <td className={styles.actions} data-label="Acciones">
                         <div className={styles.actionButtons}>
-                        {['pending', 'pending_payment', 'scheduled'].includes(appt.status) ? (
+                        {['pending', 'pending_payment'].includes(appt.status) ? (
                           <>
                             <button
                               onClick={() => handleAcceptAppointment(appt.id)}
                               className={styles.acceptBtn}
                               title="Confirmar/Aceptar cita"
-                              disabled={appt.status === 'scheduled'}
-                              style={appt.status === 'scheduled' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                             >
-                              ✓ {appt.status === 'scheduled' ? 'Confirmado' : 'Aceptar'}
+                              ✓ Aceptar
                             </button>
                             <button
                               onClick={() => handleRejectAppointment(appt.id)}
@@ -645,16 +643,8 @@ export default function AppointmentsPage() {
                             >
                               ✗ Rechazar
                             </button>
-                            <button
-                              onClick={() => handleWhatsAppReminder(appt)}
-                              className={styles.whatsappBtn}
-                              title="Recordar cita por WhatsApp"
-                            >
-                              <Icon name="whatsapp" size={18} color="#FFF" />
-                              WPP
-                            </button>
                           </>
-                        ) : (
+                        ) : appt.status === 'scheduled' ? (
                           <>
                             <select
                               value={appt.status}
@@ -672,15 +662,23 @@ export default function AppointmentsPage() {
                             >
                               ⏱️ Retraso
                             </button>
-                            <button
-                              onClick={() => handleWhatsAppReminder(appt)}
-                              className={styles.whatsappBtn}
-                              title="Recordar cita por WhatsApp"
-                            >
-                              <Icon name="whatsapp" size={18} color="#FFF" />
-                              WPP
-                            </button>
                           </>
+                        ) : (
+                          <div className={styles.statusOnly}>
+                            {getStatusBadge(appt.status)}
+                          </div>
+                        )}
+                        
+                        {/* WhatsApp siempre disponible si hay teléfono y no es estado final negativo */}
+                        {!['cancelled', 'rejected'].includes(appt.status) && (
+                          <button
+                            onClick={() => handleWhatsAppReminder(appt)}
+                            className={styles.whatsappBtn}
+                            title="Recordar cita por WhatsApp"
+                          >
+                            <Icon name="whatsapp" size={18} color="#FFF" />
+                            WPP
+                          </button>
                         )}
                         </div>
                         {appt.delay_minutes > 0 && (
