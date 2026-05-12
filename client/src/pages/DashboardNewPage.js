@@ -209,8 +209,6 @@ export default function DashboardNewPage() {
                 <StatItem label="Total clientes" value={stats.total_patients} iconName="users" color="purple" />
               </div>
             </div>
-
-            </div>
           </aside>
         </div>
       </div>
