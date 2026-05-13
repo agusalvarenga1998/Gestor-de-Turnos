@@ -152,11 +152,13 @@ export const getDashboard = async (req, res) => {
       [doctorId]
     );
 
-    // Total de pacientes asociados al doctor
+    // Total de pacientes (asociados directamente o con turnos)
     const patientsResult = await db.query(
-      `SELECT COUNT(*) as count
-       FROM patients
-       WHERE doctor_id = $1`,
+      `SELECT COUNT(DISTINCT p_id) as count FROM (
+        SELECT id as p_id FROM patients WHERE doctor_id = $1
+        UNION
+        SELECT patient_id as p_id FROM appointments WHERE doctor_id = $1
+      ) as combined_patients`,
       [doctorId]
     );
 
