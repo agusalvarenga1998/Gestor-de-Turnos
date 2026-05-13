@@ -335,7 +335,12 @@ export default function AppointmentsPage() {
     const d = new Date(dateStr + 'T12:00:00');
     const formattedDate = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
     
-    const message = `Hola ${appt.patient_name}, te recuerdo tu cita con ${user.name} el día ${formattedDate} a las ${appt.appointment_time}. ¡Te esperamos!`;
+    let message = `Hola ${appt.patient_name}, te recuerdo tu cita con ${user.name} el día ${formattedDate} a las ${appt.appointment_time}. ¡Te esperamos!`;
+    
+    if (appt.meet_link) {
+      message = `Hola ${appt.patient_name}, te recuerdo tu CONSULTA ONLINE con ${user.name} el día ${formattedDate} a las ${appt.appointment_time}.\n\n📹 Link de Videollamada: ${appt.meet_link}\n\n¡Te esperamos!`;
+    }
+
     const encodedMessage = encodeURIComponent(message);
     
     const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
