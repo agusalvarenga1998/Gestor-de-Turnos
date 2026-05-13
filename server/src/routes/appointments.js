@@ -391,23 +391,22 @@ router.post('/public/create', async (req, res) => {
         dashboardUrl: dashboardUrl
       }).catch(err => console.error("Error asíncrono enviando email al doctor:", err));
 
-      // Generar Google Meet link si el servicio es online
-      if (isOnlineService) {
-        try {
-          const { createCalendarEvent } = await import('../services/googleCalendarService.js');
-          const calResult = await createCalendarEvent(doctorId, {
-            ...appointment,
-            patient_id: patientId,
-            appointment_date: appointmentDate,
-            appointment_time: appointmentTime,
-            reason_for_visit: 'Consulta Online',
-            is_online: true
-          });
-          meetLink = calResult?.meetLink || null;
-          console.log('🎥 Meet link obtenido:', meetLink);
-        } catch (err) {
-          console.error('⚠️ Error generando Meet link:', err.message);
-        }
+      // Integración con Google Calendar
+      try {
+        const { createCalendarEvent } = await import('../services/googleCalendarService.js');
+        const calResult = await createCalendarEvent(doctorId, {
+          ...appointment,
+          patient_id: patientId,
+          appointment_date: appointmentDate,
+          appointment_time: appointmentTime,
+          reason_for_visit: isOnlineService ? '🎥 Consulta Online' : (serviceLabel || 'Consulta Presencial'),
+          is_online: isOnlineService
+        });
+        meetLink = calResult?.meetLink || null;
+        if (meetLink) console.log('🎥 Meet link obtenido:', meetLink);
+        else console.log('📅 Evento de calendario creado para turno presencial');
+      } catch (err) {
+        console.error('⚠️ Error en Google Calendar:', err.message);
       }
 
       // NOTIFICAR AL PACIENTE (Cobertura Total / Efectivo)
