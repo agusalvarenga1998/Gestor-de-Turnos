@@ -162,6 +162,8 @@ router.post('/public/create', async (req, res) => {
       paymentMethod = 'online' // 'online' o 'cash'
     } = req.body;
 
+    console.log('📝 Creating public appointment for Doctor ID:', doctorId);
+
     // ... (validaciones iguales)
     if (!doctorId || !appointmentDate || !appointmentTime) {
       return res.status(400).json({ success: false, message: 'Faltan datos de la cita' });
