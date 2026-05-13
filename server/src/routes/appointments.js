@@ -370,11 +370,17 @@ router.post('/public/create', async (req, res) => {
 
     // Si el pago es 0 (Cobertura Total), notificamos al médico de inmediato para que apruebe
     if (totalToPayNow === 0) {
-      wss.notifyDoctor(doctorId, {
-        type: 'NEW_APPOINTMENT',
-        message: 'Tienes una nueva solicitud de turno (Cobertura 100%)',
-        appointment: appointment
-      });
+      try {
+        notifyDoctor(doctorId, {
+          appointmentId: appointment.id,
+          patientName: `${patientName} ${patientLastName}`,
+          appointmentTime: appointmentTime,
+          appointmentDate: appointmentDate,
+          message: '¡Tienes una nueva solicitud de turno (Cobertura 100%)!'
+        });
+      } catch (wsErr) {
+        console.error('Error enviando notificación WS:', wsErr.message);
+      }
 
       // NOTIFICAR POR EMAIL (Cobertura Total) - SIN AWAIT para no bloquear al usuario
       const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointments`;
@@ -470,17 +476,19 @@ router.post('/public/create', async (req, res) => {
       }
     }
 
-    // Notificar al doctor via WebSocket
-    try {
-      notifyDoctor(doctorId, {
-        appointmentId: appointment.id,
-        patientName: `${patientName} ${patientLastName}`,
-        appointmentTime: appointmentTime,
-        appointmentDate: appointmentDate,
-        message: '¡Tienes una nueva solicitud de turno!'
-      });
-    } catch (wsError) {
-      console.error('⚠️ Error enviando notificación WS:', wsError.message);
+    // Notificar al doctor via WebSocket (para todos los casos que no fueron Cobertura 100%)
+    if (totalToPayNow > 0) {
+      try {
+        notifyDoctor(doctorId, {
+          appointmentId: appointment.id,
+          patientName: `${patientName} ${patientLastName}`,
+          appointmentTime: appointmentTime,
+          appointmentDate: appointmentDate,
+          message: '¡Tienes una nueva solicitud de turno!'
+        });
+      } catch (wsError) {
+        console.error('⚠️ Error enviando notificación WS:', wsError.message);
+      }
     }
 
     res.json({
