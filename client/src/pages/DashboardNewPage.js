@@ -282,6 +282,84 @@ export default function DashboardNewPage() {
               </div>
             </div>
           </div>
+      {/* Appointment Detail Modal */}
+      {selectedAppointment && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Detalles del Turno</h2>
+              <button
+                onClick={() => setSelectedAppointment(null)}
+                className={styles.closeBtn}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.appointmentDetailBody}>
+              <div className={styles.detailSection}>
+                <div className={styles.patientProfile}>
+                  <div className={styles.avatarLarge}>
+                    {selectedAppointment.patient_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className={styles.patientInfo}>
+                    <h3>{selectedAppointment.patient_name}</h3>
+                    <p className={styles.patientMeta}>
+                      <Icon name="phone" size={14} /> {selectedAppointment.patient_phone || 'Sin teléfono'}
+                    </p>
+                    <p className={styles.patientMeta}>
+                      <Icon name="mail" size={14} /> {selectedAppointment.patient_email || 'Sin email'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.detailGrid}>
+                <div className={styles.detailCard}>
+                  <label>📅 Fecha y Hora</label>
+                  <p>{new Date(selectedAppointment.appointment_date).toLocaleDateString('es-ES')} - {selectedAppointment.appointment_time} hs</p>
+                </div>
+                <div className={styles.detailCard}>
+                  <label>📝 Motivo / Servicio</label>
+                  <p>{selectedAppointment.reason_for_visit || 'Consulta General'}</p>
+                </div>
+                <div className={styles.detailCard}>
+                  <label>💳 Estado de Pago</label>
+                  <p>{selectedAppointment.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}</p>
+                </div>
+                <div className={styles.detailCard}>
+                  <label>⚡ Estado Turno</label>
+                  <p>{selectedAppointment.status.toUpperCase()}</p>
+                </div>
+              </div>
+
+              {selectedAppointment.meet_link && (
+                <div className={styles.meetSection}>
+                  <label>🎥 Videollamada</label>
+                  <a href={selectedAppointment.meet_link} target="_blank" rel="noopener noreferrer" className={styles.meetBtnLarge}>
+                    <Icon name="video" size={20} />
+                    Unirte a la reunión (Google Meet)
+                  </a>
+                </div>
+              )}
+
+              <div className={styles.modalActionsDetail}>
+                <button 
+                  onClick={() => navigate(`/patient-history/${selectedAppointment.patient_id}`)}
+                  className={styles.historyBtn}
+                >
+                  <Icon name="folder-open" size={20} />
+                  Ver Historial Médico
+                </button>
+                <button 
+                  onClick={() => setSelectedAppointment(null)}
+                  className={styles.closeBtnSecondary}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </DoctorLayout>
