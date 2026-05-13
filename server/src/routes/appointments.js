@@ -166,6 +166,20 @@ router.post('/public/create', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Faltan datos de la cita' });
     }
 
+    // Verificar si ya existe una cita en ese horario
+    const duplicateCheck = await query(
+      `SELECT id FROM appointments 
+       WHERE doctor_id = $1 AND appointment_date = $2 AND appointment_time = $3 AND status != 'cancelled'`,
+      [doctorId, appointmentDate, appointmentTime]
+    );
+
+    if (duplicateCheck.rows.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'El horario seleccionado ya no está disponible. Por favor elige otro.' 
+      });
+    }
+
     // Obtener información del servicio
     let serviceDuration = 30;
     let fullPrice = 0;
