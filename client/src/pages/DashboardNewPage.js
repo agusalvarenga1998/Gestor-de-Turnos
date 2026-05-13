@@ -73,6 +73,29 @@ export default function DashboardNewPage() {
     fetchDashboardData();
   }, []);
 
+  const handleComplete = async (appointmentId) => {
+    if (!window.confirm('¿Deseas marcar este turno como completado?')) return;
+
+    try {
+      const response = await appointmentAPI.updateAppointment(appointmentId, {
+        status: 'completed'
+      });
+
+      if (response.success) {
+        setTodayAppointments(prev =>
+          prev.map(a => a.id === appointmentId
+            ? { ...a, status: 'completed' }
+            : a)
+        );
+        setSelectedAppointment(null);
+        alert('✓ Turno marcado como completado');
+      }
+    } catch (err) {
+      console.error('Error al completar turno:', err);
+      alert('Error al marcar como completado');
+    }
+  };
+
   const handleDelay = async () => {
     if (!delayMinutes || delayMinutes <= 0) {
       alert('Por favor ingresa minutos válidos');
@@ -353,6 +376,17 @@ export default function DashboardNewPage() {
                   <Icon name="folder-open" size={20} />
                   Ver Historial Médico
                 </button>
+                
+                {selectedAppointment.status !== 'completed' && (
+                  <button 
+                    onClick={() => handleComplete(selectedAppointment.id)}
+                    className={styles.completeBtn}
+                  >
+                    <Icon name="check-circle" size={20} />
+                    Marcar como Completado
+                  </button>
+                )}
+
                 <button 
                   onClick={() => setSelectedAppointment(null)}
                   className={styles.closeBtnSecondary}

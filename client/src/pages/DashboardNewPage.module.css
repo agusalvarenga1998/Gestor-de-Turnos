@@ -706,3 +706,24 @@
   background: #f8fafc;
   color: #1e293b;
 }
+
+.completeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.completeBtn:hover {
+  background: #059669;
+}
