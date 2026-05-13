@@ -157,9 +157,11 @@ export const getAppointmentsByDoctor = async (doctorId, filters = {}) => {
       p.phone as patient_phone,
       p.email as patient_email,
       ic.name as insurance_name,
-      ic.additional_fee as insurance_fee
+      ic.additional_fee as insurance_fee,
+      s.name as service_name
     FROM appointments a
     JOIN patients p ON a.patient_id = p.id
+    LEFT JOIN services s ON a.service_id = s.id
     LEFT JOIN insurance_companies ic ON a.insurance_company_id = ic.id
     WHERE a.doctor_id = $1 AND a.status != 'pending_payment'
   `;

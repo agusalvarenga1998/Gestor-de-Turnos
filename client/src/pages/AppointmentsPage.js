@@ -579,6 +579,7 @@ export default function AppointmentsPage() {
                 <tr>
                   <th>Turno</th>
                   <th>Cliente</th>
+                  <th>Servicio</th>
                   <th>Motivo / Obra Social</th>
                   <th>Costo Total</th>
                   <th>Seña Pagada</th>
@@ -608,6 +609,11 @@ export default function AppointmentsPage() {
                       <td className={styles.patientInfo} data-label="Cliente">
                         <div className={styles.pName}>{appt.patient_name}</div>
                         <div className={styles.pPhone}>{appt.patient_phone}</div>
+                      </td>
+                      <td data-label="Servicio">
+                        <span className={styles.serviceNameBadge}>
+                          {appt.service_name || 'Consulta General'}
+                        </span>
                       </td>
                       <td className={styles.reasonCol} data-label="Motivo / OS">
                         <div className={styles.reasonText}>{appt.reason_for_visit || 'Visita general'}</div>
