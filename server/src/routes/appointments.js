@@ -391,18 +391,6 @@ router.post('/public/create', async (req, res) => {
         dashboardUrl: dashboardUrl
       }).catch(err => console.error("Error asíncrono enviando email al doctor:", err));
 
-      // NOTIFICAR AL PACIENTE (Cobertura Total / Efectivo)
-      sendAppointmentConfirmation({
-        to: patientEmail,
-        patientName: `${patientName} ${patientLastName}`,
-        doctorName: doctor.name,
-        doctorSpecialty: doctor.specialization,
-        appointmentDate: appointmentDate,
-        appointmentTime: appointmentTime,
-        appointmentCode: appointment.appointment_code,
-        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointment.id}`
-      }).catch(err => console.error("Error asíncrono enviando email al paciente:", err));
-
       // Generar Google Meet link si el servicio es online
       if (isOnlineService) {
         try {
@@ -421,6 +409,19 @@ router.post('/public/create', async (req, res) => {
           console.error('⚠️ Error generando Meet link:', err.message);
         }
       }
+
+      // NOTIFICAR AL PACIENTE (Cobertura Total / Efectivo)
+      sendAppointmentConfirmation({
+        to: patientEmail,
+        patientName: `${patientName} ${patientLastName}`,
+        doctorName: doctor.name,
+        doctorSpecialty: doctor.specialization,
+        appointmentDate: appointmentDate,
+        appointmentTime: appointmentTime,
+        appointmentCode: appointment.appointment_code,
+        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointment.id}`,
+        meetLink: meetLink
+      }).catch(err => console.error("Error asíncrono enviando email al paciente:", err));
 
       console.log('✅ Cobertura total/Efectivo detectada: Turno notificado a ambos por mail.');
     } else {

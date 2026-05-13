@@ -42,15 +42,17 @@ router.post('/mercadopago', async (req, res) => {
       if (status === 'approved') {
         // 1. Obtener la comisión del turno y el plan del doctor
         const feeQuery = await query(
-          `SELECT a.system_fee, a.doctor_id, d.plan_type 
+          `SELECT a.system_fee, a.doctor_id, d.plan_type, s.is_online, a.patient_id, a.appointment_date, a.appointment_time
            FROM appointments a
            JOIN doctors d ON a.doctor_id = d.id
+           LEFT JOIN services s ON a.service_id = s.id
            WHERE a.id = $1`,
           [appointmentId]
         );
         
         if (feeQuery.rows.length > 0) {
-          const { system_fee, doctor_id, plan_type } = feeQuery.rows[0];
+          const { system_fee, doctor_id, plan_type, is_online, patient_id, appointment_date, appointment_time } = feeQuery.rows[0];
+          let meetLink = null;
 
           // 2. Actualizar turno en la base de datos
           const updateResult = await query(
@@ -76,6 +78,28 @@ router.post('/mercadopago', async (req, res) => {
             console.log(`✅ Turno ${appointmentId} confirmado y deuda de $${system_fee} cargada al doctor.`);
           } else {
             console.log(`✅ Turno ${appointmentId} confirmado. Sin deuda por plan: ${plan_type}`);
+          }
+
+          // Generar Google Meet link si el servicio es online
+          if (is_online) {
+            try {
+              const { createCalendarEvent } = await import('../services/googleCalendarService.js');
+              const calResult = await createCalendarEvent(doctor_id, {
+                id: appointment.id,
+                patient_id: patient_id,
+                appointment_date: appointment_date,
+                appointment_time: appointment_time,
+                reason_for_visit: 'Consulta Online',
+                is_online: true
+              });
+              meetLink = calResult?.meetLink || null;
+              if (meetLink) {
+                await query('UPDATE appointments SET meet_link = $1 WHERE id = $2', [meetLink, appointment.id]);
+                console.log('🎥 Meet link generado en webhook:', meetLink);
+              }
+            } catch (err) {
+              console.error('⚠️ Error generando Meet link en webhook:', err.message);
+            }
           }
 
           // 4. NOTIFICAR AL DOCTOR MEDIANTE WEBSOCKET
@@ -123,7 +147,8 @@ router.post('/mercadopago', async (req, res) => {
               appointmentDate: appointment.appointment_date,
               appointmentTime: appointment.appointment_time,
               appointmentCode: appointment.appointment_code,
-              confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`
+              confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`,
+              meetLink: meetLink
             }).catch(err => console.error("Error asíncrono email paciente webhook:", err));
           }
 

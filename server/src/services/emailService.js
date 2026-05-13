@@ -31,7 +31,8 @@ export async function sendAppointmentConfirmation({
   appointmentTime,
   reason,
   appointmentCode,
-  confirmUrl
+  confirmUrl,
+  meetLink
 }) {
   try {
     // Si no hay email del paciente, omitir sin error
@@ -197,6 +198,17 @@ export async function sendAppointmentConfirmation({
             <p style="text-align: center;">
               <a href="${confirmUrl}" class="button">Ver Mi Cita Ahora</a>
             </p>
+
+            ${meetLink ? `
+            <div class="access-info" style="background-color: #f0fdf4; border-left-color: #16a34a;">
+              <h3 style="color: #16a34a;">📹 Link de Videollamada</h3>
+              <p>Esta es una consulta online. Podrás unirte a la videollamada haciendo clic en el siguiente botón:</p>
+              <p style="text-align: center;">
+                <a href="${meetLink}" class="button" style="background-color: #16a34a;">Unirme a Google Meet</a>
+              </p>
+              <p style="font-size: 12px; color: #666; margin-top: 10px;">El link también estará disponible en tu panel de paciente.</p>
+            </div>
+            ` : ''}
 
             <p style="margin-top: 30px;">Si tienes preguntas o necesitas reprogramar tu cita, por favor contacta con la clínica.</p>
           </div>
