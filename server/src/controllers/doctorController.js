@@ -159,7 +159,6 @@ export const getDashboard = async (req, res) => {
       [doctorId]
     );
 
-    // Citas completadas este mes
     const completedResult = await db.query(
       `SELECT COUNT(*) as count
        FROM appointments
@@ -196,15 +195,19 @@ export const getDashboard = async (req, res) => {
       [doctorId]
     );
 
+    const dashboardData = {
+      appointmentsToday: parseInt(appointmentsResult.rows[0].count),
+      totalPatients: parseInt(patientsResult.rows[0].count),
+      completedThisMonth: parseInt(completedResult.rows[0].count),
+      pendingAppointments: parseInt(pendingResult.rows[0].count),
+      upcomingBirthdays: birthdaysResult.rows
+    };
+
+    console.log('📊 Dashboard data generated:', dashboardData);
+
     res.json({
       success: true,
-      dashboard: {
-        appointmentsToday: parseInt(appointmentsResult.rows[0].count),
-        totalPatients: parseInt(patientsResult.rows[0].count),
-        completedThisMonth: parseInt(completedResult.rows[0].count),
-        pendingAppointments: parseInt(pendingResult.rows[0].count),
-        upcomingBirthdays: birthdaysResult.rows
-      }
+      dashboard: dashboardData
     });
   } catch (error) {
     console.error('Error obteniendo dashboard:', error);

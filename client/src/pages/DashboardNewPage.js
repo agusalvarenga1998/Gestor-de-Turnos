@@ -14,12 +14,10 @@ export default function DashboardNewPage() {
   const { isConnected } = useWebSocketContext();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    total_appointments: 0,
-    total_patients: 0,
-    appointments_today: 0,
-    pending_appointments: 0,
-    completed_appointments: 0,
-    cancelled_appointments: 0
+    appointmentsToday: 0,
+    totalPatients: 0,
+    completedThisMonth: 0,
+    pendingAppointments: 0
   });
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [error, setError] = useState(null);
@@ -55,7 +53,7 @@ export default function DashboardNewPage() {
         setLoading(true);
 
         const dashboardRes = await doctorAPI.getDashboard();
-        if (dashboardRes.success) {
+        if (dashboardRes.success && dashboardRes.dashboard) {
           setStats(dashboardRes.dashboard);
           setUpcomingBirthdays(dashboardRes.dashboard.upcomingBirthdays || []);
         }
@@ -257,10 +255,10 @@ export default function DashboardNewPage() {
               <h2 className={styles.summaryTitle}>Resumen General</h2>
               
               <div className={styles.statsList}>
-                <StatItem label="Turnos hoy" value={stats.appointmentsToday || 0} iconName="calendar" color="blue" />
-                <StatItem label="Pendientes" value={stats.pendingAppointments || 0} iconName="clock" color="orange" />
-                <StatItem label="Completados" value={stats.completedThisMonth || 0} iconName="check-circle" color="green" />
-                <StatItem label="Total clientes" value={stats.totalPatients} iconName="users" color="purple" />
+                <StatItem label="Turnos hoy" value={stats?.appointmentsToday || 0} iconName="calendar" color="blue" />
+                <StatItem label="Pendientes" value={stats?.pendingAppointments || 0} iconName="clock" color="orange" />
+                <StatItem label="Completados" value={stats?.completedThisMonth || 0} iconName="check-circle" color="green" />
+                <StatItem label="Total clientes" value={stats?.totalPatients || 0} iconName="users" color="purple" />
               </div>
             </div>
 
