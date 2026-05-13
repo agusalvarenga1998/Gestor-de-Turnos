@@ -277,3 +277,26 @@
     border: none;
   }
 }
+
+.insuranceList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.insuranceBadge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  background: #eff6ff;
+  color: #1e40af;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid #dbeafe;
+}
+
+.noInsurance {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}

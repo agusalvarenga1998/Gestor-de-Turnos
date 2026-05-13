@@ -169,12 +169,41 @@ export const getDashboard = async (req, res) => {
       [doctorId]
     );
 
+    // Próximos cumpleaños (próximos 7 días)
+    const birthdaysResult = await db.query(
+      `SELECT DISTINCT p.id, p.name, p.date_of_birth
+       FROM patients p
+       JOIN appointments a ON p.id = a.patient_id
+       WHERE a.doctor_id = $1
+         AND p.date_of_birth IS NOT NULL
+         AND (
+           EXTRACT(MONTH FROM p.date_of_birth) = EXTRACT(MONTH FROM CURRENT_DATE)
+           AND EXTRACT(DAY FROM p.date_of_birth) BETWEEN EXTRACT(DAY FROM CURRENT_DATE) AND EXTRACT(DAY FROM (CURRENT_DATE + INTERVAL '7 days'))
+         OR
+           EXTRACT(MONTH FROM p.date_of_birth) = EXTRACT(MONTH FROM (CURRENT_DATE + INTERVAL '7 days'))
+           AND EXTRACT(DAY FROM p.date_of_birth) <= EXTRACT(DAY FROM (CURRENT_DATE + INTERVAL '7 days'))
+           AND EXTRACT(MONTH FROM CURRENT_DATE) != EXTRACT(MONTH FROM (CURRENT_DATE + INTERVAL '7 days'))
+         )
+       ORDER BY EXTRACT(MONTH FROM p.date_of_birth), EXTRACT(DAY FROM p.date_of_birth)`,
+      [doctorId]
+    );
+
+    // Citas pendientes (esperando aprobación)
+    const pendingResult = await db.query(
+      `SELECT COUNT(*) as count
+       FROM appointments
+       WHERE doctor_id = $1 AND status = 'pending'`,
+      [doctorId]
+    );
+
     res.json({
       success: true,
       dashboard: {
         appointmentsToday: parseInt(appointmentsResult.rows[0].count),
         totalPatients: parseInt(patientsResult.rows[0].count),
-        completedThisMonth: parseInt(completedResult.rows[0].count)
+        completedThisMonth: parseInt(completedResult.rows[0].count),
+        pendingAppointments: parseInt(pendingResult.rows[0].count),
+        upcomingBirthdays: birthdaysResult.rows
       }
     });
   } catch (error) {

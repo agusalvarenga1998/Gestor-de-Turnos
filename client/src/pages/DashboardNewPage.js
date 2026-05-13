@@ -25,6 +25,7 @@ export default function DashboardNewPage() {
   const [error, setError] = useState(null);
   const [delayModal, setDelayModal] = useState({ show: false, appointmentId: null });
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
   const [delayMinutes, setDelayMinutes] = useState(15);
 
   useEffect(() => {
@@ -34,7 +35,8 @@ export default function DashboardNewPage() {
 
         const dashboardRes = await doctorAPI.getDashboard();
         if (dashboardRes.success) {
-          setStats(dashboardRes.stats);
+          setStats(dashboardRes.dashboard);
+          setUpcomingBirthdays(dashboardRes.dashboard.upcomingBirthdays || []);
         }
 
         const appointmentsRes = await appointmentAPI.getAppointments();
@@ -234,12 +236,31 @@ export default function DashboardNewPage() {
               <h2 className={styles.summaryTitle}>Resumen General</h2>
               
               <div className={styles.statsList}>
-                <StatItem label="Turnos hoy" value={stats.appointments_today || 0} iconName="calendar" color="blue" />
-                <StatItem label="Pendientes" value={stats.pending_appointments} iconName="clock" color="orange" />
-                <StatItem label="Completados" value={stats.completed_appointments} iconName="check-circle" color="green" />
-                <StatItem label="Total clientes" value={stats.total_patients} iconName="users" color="purple" />
+                <StatItem label="Turnos hoy" value={stats.appointmentsToday || 0} iconName="calendar" color="blue" />
+                <StatItem label="Pendientes" value={stats.pendingAppointments || 0} iconName="clock" color="orange" />
+                <StatItem label="Completados" value={stats.completedThisMonth || 0} iconName="check-circle" color="green" />
+                <StatItem label="Total clientes" value={stats.totalPatients} iconName="users" color="purple" />
               </div>
             </div>
+
+            {upcomingBirthdays.length > 0 && (
+              <div className={styles.birthdaysCard}>
+                <div className={styles.cardHeaderSmall}>
+                  <Icon name="gift" size={18} color="#e11d48" />
+                  <h3>Cumpleaños de la semana</h3>
+                </div>
+                <div className={styles.birthdayList}>
+                  {upcomingBirthdays.map(p => (
+                    <div key={p.id} className={styles.birthdayItem}>
+                      <span className={styles.birthdayName}>{p.name}</span>
+                      <span className={styles.birthdayDate}>
+                        {new Date(p.date_of_birth).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </aside>
         </div>
       </div>

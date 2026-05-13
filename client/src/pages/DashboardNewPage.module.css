@@ -727,3 +727,58 @@
 .completeBtn:hover {
   background: #059669;
 }
+
+.birthdaysCard {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  margin-top: 1.5rem;
+}
+
+.cardHeaderSmall {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.cardHeaderSmall h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.birthdayList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.birthdayItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #fff1f2;
+  border-radius: 10px;
+  border: 1px solid #ffe4e6;
+}
+
+.birthdayName {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #9f1239;
+}
+
+.birthdayDate {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e11d48;
+  background: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  text-transform: capitalize;
+}

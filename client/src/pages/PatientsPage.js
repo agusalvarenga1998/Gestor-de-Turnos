@@ -406,6 +406,7 @@ export default function PatientsPage() {
                 <thead>
                   <tr>
                     <th>CLIENTE</th>
+                    <th>OBRA SOCIAL</th>
                     <th>CONTACTO</th>
                     <th>VISITAS</th>
                     <th>ÚLTIMA CITA</th>
@@ -433,6 +434,19 @@ export default function PatientsPage() {
                                 {patient.date_of_birth && ` • ${new Date(patient.date_of_birth).toLocaleDateString('es-ES')}`}
                               </div>
                             </div>
+                          </div>
+                        </td>
+                        <td data-label="Obra Social">
+                          <div className={styles.insuranceList}>
+                            {patientInsurances[patient.id]?.length > 0 ? (
+                              patientInsurances[patient.id].map(ins => (
+                                <span key={ins.id} className={styles.insuranceBadge}>
+                                  {ins.name}
+                                </span>
+                              ))
+                            ) : (
+                              <span className={styles.noInsurance}>Sin Obra Social</span>
+                            )}
                           </div>
                         </td>
                         <td className={styles.contactCell} data-label="Contacto">
