@@ -456,7 +456,7 @@ export default function PatientsPage() {
                         <td className={styles.actionsCell} data-label="Acciones">
                           <div className={styles.actionButtons}>
                             <Link
-                              to={`/patients/${patient.id}/history`}
+                              to={`/patient-history/${patient.id}`}
                               className={styles.historyBtn}
                               title="Historial"
                             >
