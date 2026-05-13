@@ -177,6 +177,20 @@ export default function PatientPortalHomePage() {
     }
   };
 
+  const handleReset = () => {
+    setActiveTab(null);
+    setBookingSuccess(null);
+    setSelectedSpecialization('');
+    setSelectedDoctor('');
+    setSelectedService(null);
+    setAppointmentDate('');
+    setAvailableSlots([]);
+    setSelectedSlot('');
+    setPatientData({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
+    setError('');
+    setBookingError('');
+  };
+
   const handleSubmitSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -348,7 +362,7 @@ export default function PatientPortalHomePage() {
                             <p className={styles.meetPending}>⏳ El link de videollamada llegará por email una vez que el profesional lo confirme.</p>
                           )}
                           
-                          <button className={styles.doneBtn} onClick={() => { setBookingSuccess(null); setActiveTab(null); }}>
+                          <button className={styles.doneBtn} onClick={handleReset}>
                             Volver al Inicio
                           </button>
                         </div>
