@@ -178,6 +178,11 @@ class WebSocketClient {
         // Heartbeat response
         break;
 
+      case 'new_appointment':
+        console.log('🔔 Nueva cita recibida:', message.appointmentId);
+        this.emit('new_appointment', message);
+        break;
+
       case 'error':
         console.error('❌ Error del servidor:', message.message);
         this.emit('error', message);
