@@ -305,7 +305,17 @@ export default function PatientPortalHomePage() {
                           
                           <div className={styles.successDetails}>
                             <div className={styles.detailItem}>
-                              <strong>Fecha:</strong> {new Date(bookingSuccess.appointmentDate + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                              <strong>Fecha:</strong> {(() => {
+                                try {
+                                  const dateVal = bookingSuccess.appointmentDate;
+                                  const dateStr = (typeof dateVal === 'string' && dateVal.includes('T')) 
+                                    ? dateVal.split('T')[0] 
+                                    : (dateVal instanceof Date ? dateVal.toISOString().split('T')[0] : dateVal);
+                                  return new Date(dateStr + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                                } catch (e) {
+                                  return 'Fecha no disponible';
+                                }
+                              })()}
                             </div>
                             <div className={styles.detailItem}>
                               <strong>Hora:</strong> {bookingSuccess.appointmentTime} hs
