@@ -120,7 +120,7 @@ const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Iniciar servidor
-httpServer.listen(PORT, HOST, () => {
+httpServer.listen(PORT, HOST, async () => {
   // Asegurar que existe la carpeta de subidas
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
