@@ -282,6 +282,8 @@ export default function DashboardNewPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
       {/* Appointment Detail Modal */}
       {selectedAppointment && (
         <div className={styles.modal}>
