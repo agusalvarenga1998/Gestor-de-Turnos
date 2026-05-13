@@ -313,10 +313,30 @@ export default function PatientPortalHomePage() {
                             <div className={styles.detailItem}>
                               <strong>Profesional:</strong> {bookingSuccess.doctorName}
                             </div>
-                            <div className={styles.detailItem}>
-                              <strong>Dirección:</strong> {bookingSuccess.address || 'Consultorio del profesional'}
-                            </div>
+                            {bookingSuccess.isOnline ? (
+                              <div className={styles.detailItem}>
+                                <strong>Modalidad:</strong> 🎥 Consulta Online
+                              </div>
+                            ) : (
+                              <div className={styles.detailItem}>
+                                <strong>Dirección:</strong> {bookingSuccess.address || 'Consultorio del profesional'}
+                              </div>
+                            )}
                           </div>
+
+                          {bookingSuccess.isOnline && bookingSuccess.meetLink && (
+                            <a
+                              href={bookingSuccess.meetLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.meetBtn}
+                            >
+                              🎥 Unirte a la videollamada (Google Meet)
+                            </a>
+                          )}
+                          {bookingSuccess.isOnline && !bookingSuccess.meetLink && (
+                            <p className={styles.meetPending}>⏳ El link de videollamada llegará por email una vez que el profesional lo confirme.</p>
+                          )}
                           
                           <button className={styles.doneBtn} onClick={() => { setBookingSuccess(null); setActiveTab(null); }}>
                             Volver al Inicio

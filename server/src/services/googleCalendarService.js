@@ -158,24 +158,38 @@ export async function createCalendarEvent(doctorId, appointment) {
     const startDateTime = getEventDateTime(appointment.appointment_date, appointment.appointment_time);
     const endDateTime = getEventDateTime(appointment.appointment_date, appointment.end_time || appointment.appointment_time);
 
+    const isOnline = appointment.is_online === true;
+
     const event = {
-      summary: `Cita: ${patientName}`,
-      description: `Doctor: ${doctorName}\nMotivo: ${appointment.reason_for_visit || 'N/A'}`,
+      summary: `${isOnline ? '🎥 [Online] ' : ''}Cita: ${patientName}`,
+      description: `Doctor: ${doctorName}\nMotivo: ${appointment.reason_for_visit || 'N/A'}${isOnline ? '\n\n📹 Esta es una consulta online. El link de Google Meet se generará automáticamente.' : ''}`,
       start: { dateTime: startDateTime, timeZone: 'America/Argentina/Buenos_Aires' },
-      end: { dateTime: endDateTime, timeZone: 'America/Argentina/Buenos_Aires' }
+      end: { dateTime: endDateTime, timeZone: 'America/Argentina/Buenos_Aires' },
+      ...(isOnline && {
+        conferenceData: {
+          createRequest: {
+            requestId: `turno-${appointment.id}-${Date.now()}`,
+            conferenceSolutionKey: { type: 'hangoutsMeet' }
+          }
+        }
+      })
     };
 
     const result = await calendar.events.insert({
       calendarId: 'primary',
+      conferenceDataVersion: isOnline ? 1 : 0,
       resource: event
     });
 
+    const meetLink = result.data.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video')?.uri || result.data.hangoutLink || null;
+
     await db.query(
-      'UPDATE appointments SET google_event_id = $1 WHERE id = $2',
-      [result.data.id, appointment.id]
+      'UPDATE appointments SET google_event_id = $1, meet_link = $2 WHERE id = $3',
+      [result.data.id, meetLink, appointment.id]
     );
 
-    return result.data.id;
+    console.log(isOnline ? `🎥 Meet link generado: ${meetLink}` : `📅 Evento calendario creado: ${result.data.id}`);
+    return { eventId: result.data.id, meetLink };
   } catch (error) {
     console.error('Error creando evento en Google Calendar:', error.message);
     return null;

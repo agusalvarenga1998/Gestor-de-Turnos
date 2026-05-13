@@ -23,7 +23,8 @@ export default function ServicesPage() {
     price: '',
     booking_fee: '',
     duration_minutes: 30,
-    code: ''
+    code: '',
+    is_online: false
   });
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function ServicesPage() {
       }
       setIsModalOpen(false);
       setEditingService(null);
-      setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30, code: '' });
+      setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30, code: '', is_online: false });
       fetchServices();
     } catch (err) {
       alert('Error al guardar el servicio');
@@ -76,7 +77,8 @@ export default function ServicesPage() {
       price: service.price,
       booking_fee: service.booking_fee || '',
       duration_minutes: service.duration_minutes,
-      code: service.code || ''
+      code: service.code || '',
+      is_online: service.is_online || false
     });
     setIsModalOpen(true);
   };
@@ -151,7 +153,7 @@ export default function ServicesPage() {
                 style={{ display: 'none' }} 
               />
             </label>
-            <button className={styles.addBtn} onClick={() => { setEditingService(null); setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30, code: '' }); setIsModalOpen(true); }}>
+            <button className={styles.addBtn} onClick={() => { setEditingService(null); setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30, code: '', is_online: false }); setIsModalOpen(true); }}>
               <Icon name="plus" size={18} /> Nuevo Servicio
             </button>
           </div>
@@ -167,6 +169,7 @@ export default function ServicesPage() {
                   <div className={styles.titleInfo}>
                     <h3>{service.name}</h3>
                     {service.code && <span className={styles.serviceCode}>{service.code}</span>}
+                    {service.is_online && <span className={styles.onlineBadge}>🎥 Online</span>}
                   </div>
                   <div className={styles.badge}>{service.duration_minutes} min</div>
                 </div>
@@ -263,6 +266,22 @@ export default function ServicesPage() {
                     placeholder="Monto de la seña que te queda a ti"
                   />
                   <p className={styles.helpText}>Al cliente se le sumará el 3% de comisión del sistema sobre el precio total.</p>
+                </div>
+                <div className={styles.onlineToggle}>
+                  <label className={styles.toggleLabel}>
+                    <span>🎥 Servicio Online (videollamada)</span>
+                    <div className={styles.toggleSwitch}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.is_online}
+                        onChange={e => setFormData({...formData, is_online: e.target.checked})}
+                      />
+                      <span className={styles.toggleSlider}></span>
+                    </div>
+                  </label>
+                  {formData.is_online && (
+                    <p className={styles.onlineHint}>⚡ Al confirmar el turno se generará un link de Google Meet automáticamente (requiere Google Calendar conectado).</p>
+                  )}
                 </div>
                 <div className={styles.modalActions}>
                   <button type="button" onClick={() => setIsModalOpen(false)} className={styles.cancelLink}>Cancelar</button>

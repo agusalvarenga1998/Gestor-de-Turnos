@@ -20,6 +20,7 @@ import serviceRoutes from './routes/services.js';
 import patientRecordRoutes from './routes/patientRecords.js';
 import path from 'path';
 import { uploadsDir } from './utils/paths.js';
+import { query } from './db/config.js';
 
 // Imports de middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -134,6 +135,15 @@ httpServer.listen(PORT, HOST, () => {
   
   // Iniciar tareas programadas
   initReminderCron();
+
+  // Auto-migración: agregar columnas nuevas si no existen
+  try {
+    await query(`ALTER TABLE services ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE`);
+    await query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS meet_link TEXT`);
+    console.log('✓ Migraciones de is_online y meet_link aplicadas');
+  } catch (err) {
+    console.error('⚠️ Error en auto-migración:', err.message);
+  }
 });
 
 // Manejo de errores no capturados

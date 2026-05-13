@@ -170,16 +170,18 @@ router.post('/public/create', async (req, res) => {
     let serviceDuration = 30;
     let fullPrice = 0;
     let serviceBookingFee = null;
+    let isOnlineService = false;
 
     if (serviceId) {
       const serviceResult = await query(
-        'SELECT duration_minutes, price, booking_fee FROM services WHERE id = $1 AND doctor_id = $2',
+        'SELECT duration_minutes, price, booking_fee, is_online FROM services WHERE id = $1 AND doctor_id = $2',
         [serviceId, doctorId]
       );
       if (serviceResult.rows.length > 0) {
         serviceDuration = serviceResult.rows[0].duration_minutes;
         fullPrice = parseFloat(serviceResult.rows[0].price);
         serviceBookingFee = serviceResult.rows[0].booking_fee !== null ? parseFloat(serviceResult.rows[0].booking_fee) : null;
+        isOnlineService = serviceResult.rows[0].is_online || false;
       }
     }
 
@@ -385,9 +387,34 @@ router.post('/public/create', async (req, res) => {
         confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointment.id}`
       }).catch(err => console.error("Error asíncrono enviando email al paciente:", err));
 
+      // Generar Google Meet link si el servicio es online
+      let meetLink = null;
+      if (isOnlineService) {
+        try {
+          const { createCalendarEvent } = await import('../services/googleCalendarService.js');
+          const calResult = await createCalendarEvent(doctorId, {
+            ...appointment,
+            patient_id: patientId,
+            appointment_date: appointmentDate,
+            appointment_time: appointmentTime,
+            reason_for_visit: 'Consulta Online',
+            is_online: true
+          });
+          meetLink = calResult?.meetLink || null;
+          console.log('🎥 Meet link obtenido:', meetLink);
+        } catch (err) {
+          console.error('⚠️ Error generando Meet link:', err.message);
+        }
+      }
+
       console.log('✅ Cobertura total/Efectivo detectada: Turno notificado a ambos por mail.');
     } else {
       console.log('⏳ Cita en espera de pago. No se notifica al doctor todavía.');
+    }
+
+    // Guardar meetLink en DB si existe
+    if (typeof meetLink !== 'undefined' && meetLink) {
+      await query('UPDATE appointments SET meet_link = $1 WHERE id = $2', [meetLink, appointment.id]);
     }
 
     // Generar Preferencia de Mercado Pago si hay montos a cobrar
@@ -436,7 +463,9 @@ router.post('/public/create', async (req, res) => {
         status: totalToPayNow > 0 ? 'pending_payment' : 'pending',
         doctorName: doctor.name,
         clinicName: doctor.clinic_name,
-        address: doctor.address
+        address: doctor.address,
+        isOnline: isOnlineService,
+        meetLink: meetLink || null
       },
       paymentRequired: !!initPoint,
       initPoint: initPoint
