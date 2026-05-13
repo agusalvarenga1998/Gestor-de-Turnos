@@ -86,7 +86,7 @@ export async function handleCallback(code, doctorId) {
 }
 
 // ... (Resto de funciones como createCalendarEvent, etc. se mantienen igual)
-// Función auxiliar para convertir fecha y hora a ISO
+// Función auxiliar para convertir fecha y hora a ISO (Ajustado a Argentina UTC-3)
 function getEventDateTime(appointmentDate, appointmentTime) {
   let dateStr = appointmentDate;
   if (dateStr instanceof Date) {
@@ -94,8 +94,12 @@ function getEventDateTime(appointmentDate, appointmentTime) {
   } else if (typeof dateStr === 'string' && dateStr.includes('T')) {
     dateStr = dateStr.split('T')[0];
   }
-  const isoString = `${dateStr}T${appointmentTime}`;
-  return new Date(isoString).toISOString();
+  
+  // Si appointmentTime ya tiene segundos, lo dejamos; si no, agregamos :00
+  const timeWithSeconds = appointmentTime.split(':').length === 2 ? `${appointmentTime}:00` : appointmentTime;
+  
+  // Forzamos el offset de Argentina (-03:00) para que Google lo interprete correctamente
+  return `${dateStr}T${timeWithSeconds}-03:00`;
 }
 
 // Desconectar Google Calendar
