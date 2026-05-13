@@ -142,6 +142,7 @@ export const updateProfile = async (req, res) => {
 export const getDashboard = async (req, res) => {
   try {
     const doctorId = req.user.id;
+    console.log('🔍 Fetching dashboard for Doctor ID:', doctorId);
 
     // Citas de hoy
     const appointmentsResult = await db.query(
@@ -151,10 +152,10 @@ export const getDashboard = async (req, res) => {
       [doctorId]
     );
 
-    // Total de pacientes
+    // Total de pacientes asociados al doctor
     const patientsResult = await db.query(
-      `SELECT COUNT(DISTINCT patient_id) as count
-       FROM appointments
+      `SELECT COUNT(*) as count
+       FROM patients
        WHERE doctor_id = $1`,
       [doctorId]
     );
@@ -187,11 +188,11 @@ export const getDashboard = async (req, res) => {
       [doctorId]
     );
 
-    // Citas pendientes (esperando aprobación)
+    // Citas pendientes (esperando aprobación o pago)
     const pendingResult = await db.query(
       `SELECT COUNT(*) as count
        FROM appointments
-       WHERE doctor_id = $1 AND status = 'pending'`,
+       WHERE doctor_id = $1 AND status IN ('pending', 'pending_payment')`,
       [doctorId]
     );
 
