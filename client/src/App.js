@@ -102,7 +102,7 @@ function AppContent() {
           <Route path="/dashboard" element={<DashboardNewPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/patients" element={<PatientsPage />} />
-          <Route path="/patients/:patientId/history" element={<PatientHistoryPage />} />
+          <Route path="/patient-history/:patientId" element={<PatientHistoryPage />} />
           <Route path="/insurance" element={<InsurancePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/working-hours" element={<WorkingHoursPage />} />

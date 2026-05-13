@@ -370,7 +370,7 @@ export default function DashboardNewPage() {
 
               <div className={styles.modalActionsDetail}>
                 <button 
-                  onClick={() => navigate(`/patients/${selectedAppointment.patient_id}/history`)}
+                  onClick={() => navigate(`/patient-history/${selectedAppointment.patient_id}`)}
                   className={styles.historyBtn}
                 >
                   <Icon name="folder-open" size={20} />
