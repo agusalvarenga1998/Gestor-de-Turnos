@@ -166,6 +166,8 @@ router.post('/public/create', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Faltan datos de la cita' });
     }
 
+    let meetLink = null;
+
     // Verificar si ya existe una cita en ese horario
     const duplicateCheck = await query(
       `SELECT id FROM appointments 
@@ -402,7 +404,6 @@ router.post('/public/create', async (req, res) => {
       }).catch(err => console.error("Error asíncrono enviando email al paciente:", err));
 
       // Generar Google Meet link si el servicio es online
-      let meetLink = null;
       if (isOnlineService) {
         try {
           const { createCalendarEvent } = await import('../services/googleCalendarService.js');
