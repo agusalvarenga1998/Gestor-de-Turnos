@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DoctorLayout from '../components/DoctorLayout';
 import { useAuth } from '../hooks/useAuth';
 import { useWebSocketContext } from '../hooks/useWebSocketContext';
@@ -8,6 +9,7 @@ import Loading from '../components/Loading';
 import styles from './DashboardNewPage.module.css';
 
 export default function DashboardNewPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isConnected } = useWebSocketContext();
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,7 @@ export default function DashboardNewPage() {
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [error, setError] = useState(null);
   const [delayModal, setDelayModal] = useState({ show: false, appointmentId: null });
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [delayMinutes, setDelayMinutes] = useState(15);
 
   useEffect(() => {
@@ -177,7 +180,12 @@ export default function DashboardNewPage() {
                       {getStatusBadge(appt.status)}
                     </div>
                     <div className={styles.apptAction}>
-                      <button className={styles.viewBtn}>Ver</button>
+                      <button 
+                        className={styles.viewBtn}
+                        onClick={() => setSelectedAppointment(appt)}
+                      >
+                        Ver
+                      </button>
                       {appt.status === 'scheduled' && (
                         <button 
                           className={styles.delayBtn}
