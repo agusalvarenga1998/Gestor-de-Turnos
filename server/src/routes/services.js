@@ -57,7 +57,7 @@ router.use(checkSubscription);
 // Crear un nuevo servicio
 router.post('/', async (req, res) => {
   try {
-    const { name, description, price, duration_minutes, booking_fee, code } = req.body;
+    const { name, description, price, duration_minutes, booking_fee, code, is_online } = req.body;
     const doctorId = req.user.id;
 
     if (!name || !duration_minutes) {
@@ -65,10 +65,10 @@ router.post('/', async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO services (doctor_id, name, description, price, duration_minutes, booking_fee, code)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO services (doctor_id, name, description, price, duration_minutes, booking_fee, code, is_online)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [doctorId, name, description, price || 0, duration_minutes, booking_fee || 0, code || null]
+      [doctorId, name, description, price || 0, duration_minutes, booking_fee || 0, code || null, is_online || false]
     );
 
     res.status(201).json({ success: true, service: result.rows[0] });
@@ -82,15 +82,15 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, duration_minutes, is_active, booking_fee, code } = req.body;
+    const { name, description, price, duration_minutes, is_active, booking_fee, code, is_online } = req.body;
     const doctorId = req.user.id;
 
     const result = await query(
       `UPDATE services 
-       SET name = $1, description = $2, price = $3, duration_minutes = $4, is_active = $5, booking_fee = $6, code = $7, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $8 AND doctor_id = $9
+       SET name = $1, description = $2, price = $3, duration_minutes = $4, is_active = $5, booking_fee = $6, code = $7, is_online = $8, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $9 AND doctor_id = $10
        RETURNING *`,
-      [name, description, price, duration_minutes, is_active, booking_fee, code || null, id, doctorId]
+      [name, description, price, duration_minutes, is_active !== undefined ? is_active : true, booking_fee, code || null, is_online || false, id, doctorId]
     );
 
     if (result.rows.length === 0) {
@@ -155,6 +155,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
         const duration = parseInt(row.duracion || row.duration || row.Duración || row.Duration || 30);
         const bookingFee = parseFloat(row.seña || row.booking_fee || row.Seña || 0);
         const code = row.codigo || row.code || row.Código || row.Code || null;
+        const isOnline = row.online || row.is_online || row.Online || false;
 
         if (!name) {
           errors.push(`Fila con código ${code || 'sin código'} omitida: Falta nombre`);
@@ -162,9 +163,9 @@ router.post('/import', upload.single('file'), async (req, res) => {
         }
 
         await query(
-          `INSERT INTO services (doctor_id, name, description, price, duration_minutes, booking_fee, code)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [doctorId, name, description, price, duration, bookingFee, code]
+          `INSERT INTO services (doctor_id, name, description, price, duration_minutes, booking_fee, code, is_online)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [doctorId, name, description, price, duration, bookingFee, code, isOnline]
         );
         importedCount++;
       } catch (err) {
