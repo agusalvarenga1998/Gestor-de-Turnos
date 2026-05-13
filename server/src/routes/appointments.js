@@ -2,6 +2,7 @@ import express from 'express';
 import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
 import * as appointmentController from '../controllers/appointmentController.js';
 import { query } from '../db/config.js';
+import { notifyDoctor } from '../websocket/server.js';
 import { sendDelayNotification, sendAppointmentConfirmation, sendAppointmentRejectionEmail, sendNewAppointmentNotificationToDoctor } from '../services/emailService.js';
 import * as availabilityService from '../services/availabilityService.js';
 import * as mpService from '../services/mercadopagoService.js';
@@ -465,6 +466,19 @@ router.post('/public/create', async (req, res) => {
           });
         }
       }
+    }
+
+    // Notificar al doctor via WebSocket
+    try {
+      notifyDoctor(doctorId, {
+        appointmentId: appointment.id,
+        patientName: `${patientName} ${patientLastName}`,
+        appointmentTime: appointmentTime,
+        appointmentDate: appointmentDate,
+        message: '¡Tienes una nueva solicitud de turno!'
+      });
+    } catch (wsError) {
+      console.error('⚠️ Error enviando notificación WS:', wsError.message);
     }
 
     res.json({

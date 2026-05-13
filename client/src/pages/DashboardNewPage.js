@@ -27,6 +27,27 @@ export default function DashboardNewPage() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
   const [delayMinutes, setDelayMinutes] = useState(15);
+  const { on, off } = useWebSocketContext();
+
+  useEffect(() => {
+    const handleNewAppointment = (data) => {
+      console.log('🔔 Nueva cita recibida via WS:', data);
+      
+      // Mostrar alerta/toast
+      alert(`🔔 NUEVO TURNO: ${data.patientName} ha solicitado un turno para el ${new Date(data.appointmentDate).toLocaleDateString()} a las ${data.appointmentTime}`);
+      
+      // Recargar datos
+      window.location.reload(); // Forma más simple de asegurar que todo se refresque
+    };
+
+    if (isConnected) {
+      on('new_appointment', handleNewAppointment);
+    }
+
+    return () => {
+      off('new_appointment', handleNewAppointment);
+    };
+  }, [isConnected, on, off]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
