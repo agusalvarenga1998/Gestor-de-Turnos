@@ -352,9 +352,10 @@ export const notifyDoctor = (doctorId, data) => {
     timestamp: new Date().toISOString()
   });
 
-  wssInstance.clients.forEach((client) => {
-    if (client.readyState === 1) { // OPEN
-      client.send(message);
+  // Solo enviar a los clientes que pertenecen a este doctor
+  connectedClients.forEach((client) => {
+    if (client.userId === doctorId && client.role === 'doctor' && client.ws.readyState === 1) {
+      client.ws.send(message);
     }
   });
   
