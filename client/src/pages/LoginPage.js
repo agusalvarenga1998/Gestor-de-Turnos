@@ -106,7 +106,7 @@ export default function LoginPage() {
         {/* Left Panel */}
         <div 
           className={styles.leftPanel}
-          style={{ backgroundImage: `url(${carouselData[currentBg].image})`, transition: 'background-image 1s ease-in-out' }}
+          style={{ backgroundImage: `url('${carouselData[currentBg].image}')`, transition: 'background-image 1s ease-in-out' }}
         >
           <div className={styles.overlay}></div>
           <div className={styles.leftContent}>
