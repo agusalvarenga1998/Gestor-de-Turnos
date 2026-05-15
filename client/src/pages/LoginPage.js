@@ -5,10 +5,22 @@ import Icon from '../components/Icon';
 import SplashLoader from '../components/SplashLoader';
 import styles from './LoginPage.module.css';
 
-const backgroundImages = [
-  'https://images.unsplash.com/photo-1576091160550-2173ff9e5ee5?q=80&w=2069&auto=format&fit=crop', // Doctor
-  'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?q=80&w=2070&auto=format&fit=crop', // Aesthetics/Spa
-  'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=2070&auto=format&fit=crop'  // Dentist/Clinic
+const carouselData = [
+  {
+    image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop',
+    title: 'Bienvenido a TurnoHub',
+    description: 'La plataforma moderna para gestionar tus turnos con eficiencia y seguridad.'
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=2070&auto=format&fit=crop',
+    title: 'Estética y Dermatología',
+    description: 'Centraliza historiales clínicos, tratamientos y consentimientos en un solo lugar.'
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=2070&auto=format&fit=crop',
+    title: 'Gestión Integral',
+    description: 'Accedé a los estudios y archivos de tus pacientes desde cualquier dispositivo, 24/7.'
+  }
 ];
 
 export default function LoginPage() {
@@ -27,13 +39,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Preload images to avoid empty background during transitions
-    backgroundImages.forEach((src) => {
+    carouselData.forEach((item) => {
       const img = new Image();
-      img.src = src;
+      img.src = item.image;
     });
 
     const interval = setInterval(() => {
-      setCurrentBg(prev => (prev + 1) % backgroundImages.length);
+      setCurrentBg(prev => (prev + 1) % carouselData.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -94,7 +106,7 @@ export default function LoginPage() {
         {/* Left Panel */}
         <div 
           className={styles.leftPanel}
-          style={{ backgroundImage: `url(${backgroundImages[currentBg]})`, transition: 'background-image 1s ease-in-out' }}
+          style={{ backgroundImage: `url(${carouselData[currentBg].image})`, transition: 'background-image 1s ease-in-out' }}
         >
           <div className={styles.overlay}></div>
           <div className={styles.leftContent}>
@@ -104,11 +116,11 @@ export default function LoginPage() {
             </div>
             
             <h1 className={styles.mainTitle}>
-              Bienvenido a TurnoHub
+              {carouselData[currentBg].title}
             </h1>
             
             <p className={styles.description}>
-              La plataforma moderna para gestionar tus turnos con eficiencia y seguridad.
+              {carouselData[currentBg].description}
             </p>
             
             <button className={styles.knowMoreBtn}>
@@ -116,7 +128,7 @@ export default function LoginPage() {
             </button>
             
             <div className={styles.carouselIndicators}>
-              {backgroundImages.map((_, index) => (
+              {carouselData.map((_, index) => (
                 <span 
                   key={index}
                   className={`${styles.dot} ${index === currentBg ? styles.activeDot : ''}`}
