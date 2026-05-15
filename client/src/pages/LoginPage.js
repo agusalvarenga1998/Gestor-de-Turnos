@@ -10,7 +10,6 @@ export default function LoginPage() {
   const { login, loading, error, setError, isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
-    usernameBilog: '',
     email: '',
     password: ''
   });
@@ -77,20 +76,20 @@ export default function LoginPage() {
           <div className={styles.overlay}></div>
           <div className={styles.leftContent}>
             <div className={styles.logoContainer}>
-              <span className={styles.plusSign}>+</span>
-              <span className={styles.logoText}>bilog</span>
+              <img src="/logo_turnohub.png" alt="TurnoHub" className={styles.logoImage} />
+              <span className={styles.logoText}>TurnoHub</span>
             </div>
             
             <h1 className={styles.mainTitle}>
-              Accedé a estudios y<br />archivos de tus pacientes
+              Bienvenido a TurnoHub
             </h1>
             
             <p className={styles.description}>
-              Visualizá y organizá todos los estudios en un solo lugar. Subí imágenes, informes o resultados y consultalos cuando los necesites, desde cualquier dispositivo.
+              La plataforma moderna para gestionar tus turnos con eficiencia y seguridad.
             </p>
             
             <button className={styles.knowMoreBtn}>
-              Conoce mas <Icon name="chevron-right" size={14} />
+              Conoce más <Icon name="chevron-right" size={14} />
             </button>
             
             <div className={styles.carouselIndicators}>
@@ -122,7 +121,7 @@ export default function LoginPage() {
 
             <div className={styles.formHeader}>
               <h2>¡Hola de vuelta!</h2>
-              <p>Ingresá tu usuario y contraseña para iniciar sesión.</p>
+              <p>Ingresá tu correo electrónico y contraseña para iniciar sesión.</p>
             </div>
 
             {(localError || error) && (
@@ -134,31 +133,19 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className={styles.loginForm}>
               
               <div className={styles.formGroup}>
-                <label>Usuario bilog</label>
-                <input
-                  type="text"
-                  name="usernameBilog"
-                  value={formData.usernameBilog}
-                  onChange={handleChange}
-                  placeholder="alva5332"
-                  disabled={loading}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Usuario</label>
+                <label>CORREO ELECTRÓNICO</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="Ingresá tu correo electrónico o usuario asignado"
+                  placeholder="profesional@ejemplo.com"
                   disabled={loading}
                 />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Contraseña</label>
+                <label>CONTRASEÑA</label>
                 <div className={styles.passwordWrapper}>
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -190,10 +177,28 @@ export default function LoginPage() {
               </div>
 
               <button type="submit" className={styles.submitBtn} disabled={loading}>
-                {loading ? 'Continuando...' : 'Continuar'}
+                {loading ? 'INGRESANDO...' : 'INGRESAR'}
               </button>
               
+              <div className={styles.loginDivider}>
+                <span>O CONTINÚA CON</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => window.location.href = `${process.env.REACT_APP_API_BASE_URL || ''}/api/auth/google`}
+                className={styles.googleAuthBtn}
+                disabled={loading}
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" />
+                Continuar con Google
+              </button>
             </form>
+
+            <div className={styles.adminAccess}>
+              <Icon name="lock" size={14} /> 
+              ¿Eres administrador? <Link to="/admin/login">Ingresa aquí</Link>
+            </div>
           </div>
         </div>
         
