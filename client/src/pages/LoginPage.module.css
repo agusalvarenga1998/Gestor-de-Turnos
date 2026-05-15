@@ -26,7 +26,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(81, 114, 184, 0.85); /* Blue overlay mimicking the image */
+  background: rgba(30, 58, 138, 0.85); /* Dark blue overlay */
   z-index: 1;
 }
 

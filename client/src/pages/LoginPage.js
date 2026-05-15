@@ -26,6 +26,12 @@ export default function LoginPage() {
   const [currentBg, setCurrentBg] = useState(0);
 
   useEffect(() => {
+    // Preload images to avoid empty background during transitions
+    backgroundImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+
     const interval = setInterval(() => {
       setCurrentBg(prev => (prev + 1) % backgroundImages.length);
     }, 5000);
