@@ -5,6 +5,12 @@ import Icon from '../components/Icon';
 import SplashLoader from '../components/SplashLoader';
 import styles from './LoginPage.module.css';
 
+const backgroundImages = [
+  'https://images.unsplash.com/photo-1576091160550-2173ff9e5ee5?q=80&w=2069&auto=format&fit=crop', // Doctor
+  'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?q=80&w=2070&auto=format&fit=crop', // Aesthetics/Spa
+  'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=2070&auto=format&fit=crop'  // Dentist/Clinic
+];
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, loading, error, setError, isAuthenticated } = useAuth();
@@ -17,6 +23,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('login');
+  const [currentBg, setCurrentBg] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBg(prev => (prev + 1) % backgroundImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -72,7 +86,10 @@ export default function LoginPage() {
       <div className={styles.pageContainer}>
         
         {/* Left Panel */}
-        <div className={styles.leftPanel}>
+        <div 
+          className={styles.leftPanel}
+          style={{ backgroundImage: `url(${backgroundImages[currentBg]})`, transition: 'background-image 1s ease-in-out' }}
+        >
           <div className={styles.overlay}></div>
           <div className={styles.leftContent}>
             <div className={styles.logoContainer}>
@@ -93,9 +110,14 @@ export default function LoginPage() {
             </button>
             
             <div className={styles.carouselIndicators}>
-              <span className={`${styles.dot} ${styles.activeDot}`}></span>
-              <span className={styles.dot}></span>
-              <span className={styles.dot}></span>
+              {backgroundImages.map((_, index) => (
+                <span 
+                  key={index}
+                  className={`${styles.dot} ${index === currentBg ? styles.activeDot : ''}`}
+                  onClick={() => setCurrentBg(index)}
+                  style={{ cursor: 'pointer' }}
+                ></span>
+              ))}
             </div>
           </div>
         </div>
