@@ -5,52 +5,25 @@ import Icon from '../components/Icon';
 import SplashLoader from '../components/SplashLoader';
 import styles from './LoginPage.module.css';
 
-// Componente para animar los números que suben
-const AnimatedNumber = ({ value, duration = 2000, suffix = '' }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    let startTimestamp = null;
-    // Extraer el número base si hay letras (ej: 10 de "10K")
-    const numericValue = parseFloat(value);
-    
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      
-      const current = progress * numericValue;
-      // Si el valor original tiene decimales, mantenerlos
-      setDisplayValue(value.toString().includes('.') ? current.toFixed(1) : Math.floor(current));
-      
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
-    };
-    
-    window.requestAnimationFrame(step);
-  }, [value, duration]);
-
-  return <>{displayValue}{suffix}</>;
-};
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, loading, error, setError, isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
+    usernameBilog: '',
     email: '',
     password: ''
   });
   const [localError, setLocalError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  const [activeTab, setActiveTab] = useState('login');
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard', { replace: true });
     }
 
-    // Mostrar error de Google si viene en query params
     const googleError = searchParams.get('error');
     if (googleError) {
       setLocalError(`Error de Google: ${googleError}`);
@@ -71,32 +44,25 @@ export default function LoginPage() {
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
-      setLocalError('Por favor completa todos los campos');
+      setLocalError('Por favor completa todos los campos requeridos');
       return;
     }
 
     const result = await login(formData.email, formData.password);
 
     if (!result.success) {
-      // Redirigir a pantalla de cuenta pendiente
       if (result.pending) {
         navigate('/account-pending', { replace: true });
         return;
       }
-
-      // Redirigir a pantalla de suscripción expirada
       if (result.subscriptionExpired) {
         navigate('/subscription-expired', { replace: true });
         return;
       }
-
-      // Redirigir a pantalla de cuenta suspendida
       if (result.suspended) {
         navigate('/account-suspended', { replace: true });
         return;
       }
-
-      // Mostrar error genérico
       setLocalError(result.error);
     }
   };
@@ -104,137 +70,134 @@ export default function LoginPage() {
   return (
     <>
       {showSplash && <SplashLoader onComplete={() => setShowSplash(false)} />}
-      <div className={styles.pageWrapper}>
-      {/* Navbar Superior con Link Admin */}
-      <nav className={styles.navbar}>
-        <div className={styles.navContent}>
-          <div className={styles.navLogo}>
-            <img src="/logo_turnohub.png" alt="T" className={styles.smallLogo} />
-            <span>TurnoHub</span>
-          </div>
-          <div className={styles.navLinks}>
-            <Link to="/why-turnohub">¿Por qué TurnoHub?</Link>
-            <Link to="/support">Soporte</Link>
-            <Link to="/help-center">Centro de ayuda</Link>
-            <Link to="/admin/login" className={styles.navAdminLink}>Panel Administrativo</Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section con Estadísticas Animadas */}
-      <section className={styles.heroSection}>
-        <div className={styles.heroContent}>
-          <h1 className={styles.heroTitle}>Bienvenido a TurnoHub</h1>
-          <p className={styles.heroSubtitle}>
-            La plataforma moderna para gestionar tus turnos con eficiencia y seguridad.
-          </p>
-
-          <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>
-                <AnimatedNumber value="500" suffix="+" />
-              </div>
-              <div className={styles.statLabel}>PROFESIONALES ACTIVOS</div>
+      <div className={styles.pageContainer}>
+        
+        {/* Left Panel */}
+        <div className={styles.leftPanel}>
+          <div className={styles.overlay}></div>
+          <div className={styles.leftContent}>
+            <div className={styles.logoContainer}>
+              <span className={styles.plusSign}>+</span>
+              <span className={styles.logoText}>bilog</span>
             </div>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>
-                <AnimatedNumber value="10" suffix="K+" />
-              </div>
-              <div className={styles.statLabel}>TURNOS POR DÍA</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>
-                <AnimatedNumber value="99.5" suffix="%" />
-              </div>
-              <div className={styles.statLabel}>DISPONIBILIDAD</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>
-                <AnimatedNumber value="24" suffix="/7" />
-              </div>
-              <div className={styles.statLabel}>SOPORTE TÉCNICO</div>
+            
+            <h1 className={styles.mainTitle}>
+              Accedé a estudios y<br />archivos de tus pacientes
+            </h1>
+            
+            <p className={styles.description}>
+              Visualizá y organizá todos los estudios en un solo lugar. Subí imágenes, informes o resultados y consultalos cuando los necesites, desde cualquier dispositivo.
+            </p>
+            
+            <button className={styles.knowMoreBtn}>
+              Conoce mas <Icon name="chevron-right" size={14} />
+            </button>
+            
+            <div className={styles.carouselIndicators}>
+              <span className={`${styles.dot} ${styles.activeDot}`}></span>
+              <span className={styles.dot}></span>
+              <span className={styles.dot}></span>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Sección de Login en la parte inferior blanca */}
-      <main className={styles.loginMain}>
-        <div className={styles.loginCard}>
-          <h2 className={styles.cardTitle}>Inicia Sesión</h2>
-          <p className={styles.cardSubtitle}>Accede a tu panel profesional</p>
-
-          {(localError || error) && (
-            <div className={styles.errorMessage}>
-              {localError || error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className={styles.loginForm}>
-            <div className={styles.formGroup}>
-              <label>CORREO ELECTRÓNICO</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="profesional@example.com"
-                disabled={loading}
-              />
+        {/* Right Panel */}
+        <div className={styles.rightPanel}>
+          <div className={styles.loginCard}>
+            
+            <div className={styles.tabsContainer}>
+              <button 
+                className={`${styles.tab} ${activeTab === 'login' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('login')}
+              >
+                Iniciar sesión
+              </button>
+              <button 
+                className={`${styles.tab} ${activeTab === 'register' ? styles.activeTab : ''}`}
+                onClick={() => navigate('/register')}
+              >
+                Registrarse
+              </button>
             </div>
 
-            <div className={styles.formGroup}>
-              <label>CONTRASEÑA</label>
-              <div className={styles.passwordWrapper}>
+            <div className={styles.formHeader}>
+              <h2>¡Hola de vuelta!</h2>
+              <p>Ingresá tu usuario y contraseña para iniciar sesión.</p>
+            </div>
+
+            {(localError || error) && (
+              <div className={styles.errorMessage}>
+                {localError || error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className={styles.loginForm}>
+              
+              <div className={styles.formGroup}>
+                <label>Usuario bilog</label>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
+                  type="text"
+                  name="usernameBilog"
+                  value={formData.usernameBilog}
                   onChange={handleChange}
-                  placeholder="••••••••"
+                  placeholder="alva5332"
                   disabled={loading}
                 />
               </div>
-            </div>
 
-            <div className={styles.formOptions}>
-              <label className={styles.checkboxLabel}>
-                <input type="checkbox" /> Recuérdame
-              </label>
-              <Link to="/help-center" className={styles.forgotPass}>Olvidé contraseña</Link>
-            </div>
+              <div className={styles.formGroup}>
+                <label>Usuario</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Ingresá tu correo electrónico o usuario asignado"
+                  disabled={loading}
+                />
+              </div>
 
-            <button type="submit" className={styles.ingresarBtn} disabled={loading}>
-              {loading ? 'INGRESANDO...' : 'INGRESAR'}
-            </button>
+              <div className={styles.formGroup}>
+                <label>Contraseña</label>
+                <div className={styles.passwordWrapper}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    disabled={loading}
+                  />
+                  <button 
+                    type="button" 
+                    className={styles.eyeBtn}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <Icon name={showPassword ? 'eye-off' : 'eye'} size={18} />
+                  </button>
+                </div>
+              </div>
 
-            <div className={styles.loginDivider}>
-              <span>O CONTINÚA CON</span>
-            </div>
+              <div className={styles.rememberRow}>
+                <label className={styles.checkboxLabel}>
+                  <input type="checkbox" /> Recordar contraseña
+                </label>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => window.location.href = `${process.env.REACT_APP_API_BASE_URL || ''}/api/auth/google`}
-              className={styles.googleAuthBtn}
-              disabled={loading}
-            >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" />
-              Continuar con Google
-            </button>
-          </form>
+              <div className={styles.helpLinks}>
+                <Link to="/help-center" className={styles.link}>Olvidé mi contraseña</Link>
+                <Link to="/support" className={styles.link}>Necesito ayuda</Link>
+              </div>
 
-          <div className={styles.registerPrompt}>
-            ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
+              <button type="submit" className={styles.submitBtn} disabled={loading}>
+                {loading ? 'Continuando...' : 'Continuar'}
+              </button>
+              
+            </form>
           </div>
-
-          <div className={styles.adminAccess}>
-            <Icon name="lock" size={14} /> 
-            ¿Eres administrador? <Link to="/admin/login">Ingresa aquí</Link>
-          </div>
-
         </div>
-      </main>
-    </div>
+        
+      </div>
     </>
   );
 }
