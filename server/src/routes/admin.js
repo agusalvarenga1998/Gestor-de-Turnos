@@ -115,7 +115,7 @@ router.patch('/doctors/:id/approve', verifyAdmin, async (req, res) => {
     const { id } = req.params;
     const { amount = 0 } = req.body; // Accept amount from request
     const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 15); // 15 days trial
+    trialEndsAt.setDate(trialEndsAt.getDate() + 30); // 30 days trial
 
     const result = await query(
       `UPDATE doctors
@@ -220,29 +220,42 @@ router.patch('/doctors/:id/suspend', verifyAdmin, async (req, res) => {
   }
 });
 
-// Reactivate suspended doctor account
+// Reactivate suspended/expired doctor account
 router.patch('/doctors/:id/reactivate', verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
     const result = await query(
       `UPDATE doctors
-       SET status = 'approved'
-       WHERE id = $1 AND status = 'suspended'
+       SET status = 'approved',
+           subscription_status = 'active',
+           subscription_expires_at = $1
+       WHERE id = $2 AND (status = 'suspended' OR subscription_status = 'expired')
        RETURNING id, email, name, status, subscription_status, trial_ends_at, subscription_expires_at`,
-      [id]
+      [expiresAt, id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({
-        error: 'Doctor not found or not suspended'
+        error: 'Doctor not found or not suspended/expired'
       });
     }
 
+    // Crear registro de suscripción
+    const doctor = result.rows[0];
+    await query(
+      `INSERT INTO subscriptions (doctor_id, amount, status, period_start, period_end)
+       VALUES ($1, 0, 'approved', CURRENT_TIMESTAMP, $2)`,
+      [id, expiresAt]
+    );
+
     res.json({
       success: true,
-      message: 'Doctor account reactivated',
-      doctor: result.rows[0]
+      message: 'Cuenta reactivada con 30 días de suscripción',
+      doctor
     });
   } catch (error) {
     console.error('Reactivate doctor error:', error);

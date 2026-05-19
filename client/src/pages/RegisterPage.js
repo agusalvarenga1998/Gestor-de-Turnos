@@ -75,13 +75,8 @@ export default function RegisterPage() {
     });
 
     if (result.success) {
-      if (result.pending) {
-        // Redirigir a pantalla de cuenta pendiente
-        navigate('/account-pending', { replace: true });
-      } else {
-        // Caso normal - ir al dashboard
-        navigate('/dashboard');
-      }
+      // El usuario está auto-aprobado con 30 días de prueba, ir al dashboard
+      navigate('/dashboard', { replace: true });
     } else {
       setLocalError(result.error);
     }

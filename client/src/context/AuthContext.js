@@ -86,16 +86,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.register(data);
       if (response.success) {
-        // Si la respuesta es pending, no hay token
-        if (response.pending) {
-          return { success: true, pending: true, message: response.message };
-        }
-        // Caso normal con token (después cuando MercadoPago esté implementado)
+        // El registro ahora siempre devuelve token (auto-aprobado con trial de 30 días)
         const { token, doctor } = response;
         localStorage.setItem('token', token);
         setToken(token);
         setUser(doctor);
-        return { success: true };
+        return { success: true, message: response.message };
       } else {
         setError(response.message);
         return { success: false, error: response.message };

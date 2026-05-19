@@ -19,15 +19,15 @@ export default function SubscriptionExpiredPage() {
           <div className={styles.icon}>💎</div>
         </div>
 
-        <h1 className={styles.title}>Acceso Restringido</h1>
+        <h1 className={styles.title}>Tu Prueba Gratuita Finalizó</h1>
         
         <div className={styles.message}>
           <p className={styles.highlight}>
-            Debes pagar para seguir usando la app.
+            Tu período de prueba gratuita de 30 días ha terminado.
           </p>
           
           <p>
-            Tu periodo de acceso ha llegado a su fin. Para continuar utilizando todas las funcionalidades de <strong>TurnoHub</strong>, contacta al administrador para habilitar tu cuenta.
+            Para continuar utilizando todas las funcionalidades de <strong>TurnoHub</strong>, contactá al administrador para que habilite nuevamente tu cuenta.
           </p>
         </div>
 
@@ -45,6 +45,13 @@ export default function SubscriptionExpiredPage() {
           </div>
         )}
 
+        <div className={styles.infoBox}>
+          <h3>¿Cómo rehabilitar tu cuenta?</h3>
+          <p style={{ margin: '8px 0', fontSize: '14px', color: '#666' }}>
+            Comunicáte con el administrador del sistema para que active tu suscripción y puedas seguir usando TurnoHub.
+          </p>
+        </div>
+
         <button
           className={styles.logoutBtn}
           onClick={handleLogout}
@@ -53,7 +60,7 @@ export default function SubscriptionExpiredPage() {
         </button>
 
         <p className={styles.supportText}>
-          Contacta al soporte para planes y renovaciones
+          Contactá al administrador para rehabilitar tu cuenta
         </p>
       </div>
     </div>

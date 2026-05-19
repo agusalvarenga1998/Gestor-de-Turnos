@@ -11,7 +11,7 @@ const router = express.Router();
 // URL del frontend (puede ser localhost o ngrok)
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-// Registro de doctor
+// Registro de doctor (auto-aprobado con 30 días de prueba gratis)
 router.post('/register', async (req, res) => {
   try {
     const { email, password, name, specialization, clinic_name } = req.body;
@@ -40,21 +40,45 @@ router.post('/register', async (req, res) => {
     // Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear doctor con status='pending' (requiere aprobación del admin)
+    // Calcular fecha de fin de prueba (30 días)
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+
+    // Crear doctor auto-aprobado con 30 días de prueba gratis
     const result = await query(
-      `INSERT INTO doctors (email, password_hash, name, specialization, clinic_name, status, subscription_status)
-       VALUES ($1, $2, $3, $4, $5, 'pending', 'pending')
-       RETURNING id, email, name, specialization, clinic_name, status`,
-      [email, hashedPassword, name, specialization, clinic_name]
+      `INSERT INTO doctors (email, password_hash, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at)
+       VALUES ($1, $2, $3, $4, $5, 'approved', 'trial', $6, $6, CURRENT_TIMESTAMP)
+       RETURNING id, email, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at`,
+      [email, hashedPassword, name, specialization, clinic_name, trialEndsAt]
     );
 
     const doctor = result.rows[0];
 
-    // No generar token - el doctor debe esperar aprobación del admin
+    // Crear registro de suscripción para el trial
+    await query(
+      `INSERT INTO subscriptions (doctor_id, amount, status, period_start, period_end)
+       VALUES ($1, 0, 'approved', CURRENT_TIMESTAMP, $2)`,
+      [doctor.id, trialEndsAt]
+    );
+
+    // Generar token - el usuario puede usar la app inmediatamente
+    const token = generateToken(doctor);
+
     res.status(201).json({
       success: true,
-      pending: true,
-      message: 'Tu cuenta fue creada. El administrador revisará tu solicitud y recibirás acceso una vez aprobada.'
+      message: '¡Cuenta creada! Tienes 30 días de prueba gratis.',
+      token,
+      doctor: {
+        id: doctor.id,
+        email: doctor.email,
+        name: doctor.name,
+        specialization: doctor.specialization,
+        clinic_name: doctor.clinic_name,
+        status: doctor.status,
+        subscription_status: doctor.subscription_status,
+        trial_ends_at: doctor.trial_ends_at,
+        subscription_expires_at: doctor.subscription_expires_at
+      }
     });
   } catch (error) {
     console.error('Error en registro:', error);
@@ -143,7 +167,7 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({
         success: false,
         subscriptionExpired: true,
-        message: 'Debes pagar para seguir usando la app'
+        message: 'Tu período de prueba gratuita ha finalizado. Contactá al administrador para rehabilitar tu cuenta.'
       });
     }
 
@@ -401,20 +425,29 @@ router.get('/google/callback', async (req, res) => {
         doctor = updateResult.rows[0];
       }
     } else {
-      // Crear nuevo doctor con status='pending'
-      console.log('➕ Creando nuevo doctor con Google...');
+      // Crear nuevo doctor auto-aprobado con 30 días de prueba
+      console.log('➕ Creando nuevo doctor con Google (auto-aprobado)...');
       const newDoctorId = uuidv4();
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 30);
       const insertResult = await query(
-        `INSERT INTO doctors (id, google_id, email, name, google_access_token, google_refresh_token, google_calendar_connected, status, subscription_status)
-         VALUES ($1, $2, $3, $4, $5, $6, true, 'pending', 'pending')
-         RETURNING id, email, name, specialization, clinic_name, google_id, status, subscription_status`,
-        [newDoctorId, userInfo.id, userInfo.email, userInfo.name, userInfo.tokens.access_token, userInfo.tokens.refresh_token]
+        `INSERT INTO doctors (id, google_id, email, name, google_access_token, google_refresh_token, google_calendar_connected, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at)
+         VALUES ($1, $2, $3, $4, $5, $6, true, 'approved', 'trial', $7, $7, CURRENT_TIMESTAMP)
+         RETURNING *`,
+        [newDoctorId, userInfo.id, userInfo.email, userInfo.name, userInfo.tokens.access_token, userInfo.tokens.refresh_token, trialEndsAt]
       );
       doctor = insertResult.rows[0];
-      console.log('✓ Doctor creado (pendiente de aprobación)');
+
+      // Crear registro de suscripción para el trial
+      await query(
+        `INSERT INTO subscriptions (doctor_id, amount, status, period_start, period_end)
+         VALUES ($1, 0, 'approved', CURRENT_TIMESTAMP, $2)`,
+        [doctor.id, trialEndsAt]
+      );
+      console.log('✓ Doctor creado con 30 días de prueba gratis');
     }
 
-    // Verificar estado del doctor
+    // Verificar estado del doctor (solo aplica a cuentas existentes)
     if (doctor.status === 'pending') {
       console.log('⏳ Doctor pendiente de aprobación, redirigiendo a página de estado...');
       const redirectUrl = `${FRONTEND_URL}/account-pending`;
