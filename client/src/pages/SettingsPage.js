@@ -435,38 +435,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="appointment_price">Costo Total de Consulta ($)</label>
-                  <input
-                    type="number"
-                    id="appointment_price"
-                    name="appointment_price"
-                    step="0.01"
-                    min="0"
-                    value={profileData.appointment_price}
-                    onChange={handleProfileChange}
-                    placeholder="Ej: 15000"
-                    disabled={savingProfile}
-                  />
-                  <small>Este es el valor total que cobras por la atención.</small>
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="booking_fee">Monto de Reserva online ($)</label>
-                  <input
-                    type="number"
-                    id="booking_fee"
-                    name="booking_fee"
-                    step="0.01"
-                    min="0"
-                    value={profileData.booking_fee}
-                    onChange={handleProfileChange}
-                    placeholder="Ej: 3000"
-                    disabled={savingProfile}
-                  />
-                  <small>Lo que el paciente paga para señar el turno.</small>
-                </div>
-              </div>
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>

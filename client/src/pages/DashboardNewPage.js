@@ -195,10 +195,7 @@ export default function DashboardNewPage() {
           </div>
         </header>
 
-        {/* Debug Info (Temporal) */}
-        <div style={{ fontSize: '10px', color: '#ccc', marginBottom: '10px' }}>
-          ID: {user?.id} | Conectado: {isConnected ? 'SÍ' : 'NO'} | Stats: {JSON.stringify(stats)}
-        </div>
+
 
         <div className={styles.dashboardGrid}>
           {/* Main Column: Agenda */}
