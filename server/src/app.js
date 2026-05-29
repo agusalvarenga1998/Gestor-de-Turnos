@@ -39,6 +39,8 @@ const httpServer = createServer(app);
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.CORS_ORIGIN,
+  'https://turnohub.com.ar',
+  'https://www.turnohub.com.ar',
   'http://localhost:3000',
   'http://127.0.0.1:3000'
 ].filter(Boolean);
@@ -58,7 +60,12 @@ app.use(cors({
   origin: function (origin, callback) {
     // Permitir peticiones sin origen (como mobile apps o curl)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    if (
+      allowedOrigins.indexOf(origin) !== -1 || 
+      origin.includes('localhost') || 
+      origin.includes('127.0.0.1') ||
+      origin.includes('turnohub.com.ar')
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

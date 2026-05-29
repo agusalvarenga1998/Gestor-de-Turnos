@@ -33,9 +33,9 @@ export default function PatientHistoryPage() {
     if (!fileUrl) return '';
     if (fileUrl.startsWith('http')) return fileUrl;
     
-    // Si estamos en producción (Render), necesitamos apuntar al backend explícitamente
+    // Si estamos en producción (Render/Dominio Propio), necesitamos apuntar al backend explícitamente
     const apiBase = process.env.REACT_APP_API_BASE_URL || 
-                    (window.location.hostname.includes('onrender.com') 
+                    (window.location.hostname.includes('onrender.com') || window.location.hostname.includes('turnohub.com.ar')
                       ? 'https://consultorio-backend-r2su.onrender.com' 
                       : '');
     
