@@ -35,6 +35,8 @@ import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage';
 import WhyTurnoHubPage from './pages/WhyTurnoHubPage';
 import HelpCenterPage from './pages/HelpCenterPage';
 import SupportPage from './pages/SupportPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 
 // Componentes
 import ProtectedRoute from './components/ProtectedRoute';
@@ -68,6 +70,8 @@ function AppContent() {
       <Route path="/why-turnohub" element={<WhyTurnoHubPage />} />
       <Route path="/help-center" element={<HelpCenterPage />} />
       <Route path="/support" element={<SupportPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsOfServicePage />} />
 
       {/* Rutas del Admin */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
