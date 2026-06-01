@@ -16,11 +16,11 @@ export default function SupportPage() {
       {/* Navbar Minimalista */}
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
-          <Link to="/login" className={styles.logo}>
+          <Link to="/" className={styles.logo}>
             <img src="/logo_turnohub.png" alt="T" />
             <span>TurnoHub Support</span>
           </Link>
-          <Link to="/login" className={styles.backLink}>Regresar</Link>
+          <Link to="/" className={styles.backLink}>Regresar</Link>
         </div>
       </nav>
 

@@ -34,7 +34,7 @@ export default function HelpCenterPage() {
       {/* Header con Búsqueda */}
       <header className={styles.header}>
         <nav className={styles.navbar}>
-          <Link to="/login" className={styles.logo}>
+          <Link to="/" className={styles.logo}>
             <img src="/logo_turnohub.png" alt="T" />
             <span>TurnoHub Help</span>
           </Link>

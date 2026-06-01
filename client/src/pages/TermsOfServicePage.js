@@ -7,11 +7,11 @@ export default function TermsOfServicePage() {
     <div className={styles.container}>
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
-          <Link to="/login" className={styles.logo}>
+          <Link to="/" className={styles.logo}>
             <img src="/logo_turnohub.png" alt="T" onError={(e) => { e.target.style.display = 'none'; }} />
             <span>TurnoHub</span>
           </Link>
-          <Link to="/login" className={styles.backLink}>Volver al Inicio</Link>
+          <Link to="/" className={styles.backLink}>Volver al Inicio</Link>
         </div>
       </nav>
 

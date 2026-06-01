@@ -89,7 +89,7 @@ export default function RegisterPage() {
       {/* Navbar Superior para no quedar atrapado */}
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
-          <Link to="/login" className={styles.navLogo}>
+          <Link to="/" className={styles.navLogo}>
             <img src="/logo_turnohub.png" alt="T" className={styles.smallLogo} />
             <span>TurnoHub</span>
           </Link>

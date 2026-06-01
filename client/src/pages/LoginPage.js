@@ -110,10 +110,10 @@ export default function LoginPage() {
         >
           <div className={styles.overlay}></div>
           <div className={styles.leftContent}>
-            <div className={styles.logoContainer}>
+            <Link to="/" className={styles.logoContainer} style={{ textDecoration: 'none' }}>
               <img src="/logo_turnohub.png" alt="TurnoHub" className={styles.logoImage} />
               <span className={styles.logoText}>TurnoHub</span>
-            </div>
+            </Link>
             
             <h1 className={styles.mainTitle}>
               {carouselData[currentBg].title}
