@@ -6,10 +6,13 @@ import styles from './LandingPage.module.css';
 
 const carouselData = [
   {
-    image: '/hero_dashboard.png',
+    image: '/hero_doctor.png',
   },
   {
-    image: '/patient_booking.png',
+    image: '/hero_barber.png',
+  },
+  {
+    image: '/hero_manicurist.png',
   }
 ];
 
