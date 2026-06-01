@@ -32,6 +32,7 @@ import AdminDoctorsPage from './pages/AdminDoctorsPage';
 import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage';
 
 // Páginas - Info / Landing
+import LandingPage from './pages/LandingPage';
 import WhyTurnoHubPage from './pages/WhyTurnoHubPage';
 import HelpCenterPage from './pages/HelpCenterPage';
 import SupportPage from './pages/SupportPage';
@@ -66,7 +67,8 @@ function AppContent() {
       <Route path="/account-suspended" element={<SuspendedPage />} />
       <Route path="/subscription-expired" element={<SubscriptionExpiredPage />} />
 
-      {/* Páginas Informativas */}
+      {/* Páginas Informativas / Landing */}
+      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/why-turnohub" element={<WhyTurnoHubPage />} />
       <Route path="/help-center" element={<HelpCenterPage />} />
       <Route path="/support" element={<SupportPage />} />
@@ -117,8 +119,7 @@ function AppContent() {
       )}
 
       {/* Redirecciones por defecto */}
-      <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
-      <Route path="*" element={isAuthenticated ? <NotFoundPage /> : <Navigate to="/login" replace />} />
+      <Route path="*" element={isAuthenticated ? <NotFoundPage /> : <Navigate to="/" replace />} />
     </Routes>
     
     {/* Overlay de suscripción expirada */}
