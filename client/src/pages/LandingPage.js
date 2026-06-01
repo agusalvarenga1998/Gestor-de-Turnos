@@ -1,19 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
 import styles from './LandingPage.module.css';
 
+const carouselData = [
+  {
+    image: '/hero_dashboard.png',
+  },
+  {
+    image: '/patient_booking.png',
+  }
+];
+
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [currentBg, setCurrentBg] = useState(0);
 
   useEffect(() => {
-    // Si ya está logueado, llevar al dashboard (excepto si decide quedarse en el landing, pero por defecto lo redirigimos)
-    // if (isAuthenticated) {
-    //   navigate('/dashboard');
-    // }
+    // Si ya está logueado, llevar al dashboard
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBg(prev => (prev + 1) % carouselData.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -39,8 +53,11 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <header className={styles.hero}>
-        <div className={styles.heroBackground}></div>
+      <header 
+        className={styles.hero}
+        style={{ backgroundImage: `url('${carouselData[currentBg].image}')` }}
+      >
+        <div className={styles.heroOverlay}></div>
         <div className={styles.heroContent}>
           <span className={styles.badge}>MÁS QUE UN GESTOR DE TURNOS</span>
           <h1>
@@ -102,6 +119,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Trust / Visual Section */}
+      <section className={styles.visualSection}>
+        <div className={styles.visualImageContainer}>
+          <img src="/patient_booking.png" alt="Paciente agendando desde su teléfono" className={styles.visualImage} />
+        </div>
+        <div className={styles.visualText}>
+          <h2>La experiencia que tus pacientes esperan</h2>
+          <p>Ofrece una experiencia de agendamiento fluida, moderna y 100% digital. Tus pacientes podrán reservar sus turnos desde la comodidad de su hogar en cualquier momento.</p>
+          <ul className={styles.visualList}>
+            <li><Icon name="check" size={20} color="#10b981" /> Reservas 24/7 sin llamadas</li>
+            <li><Icon name="check" size={20} color="#10b981" /> Recordatorios por email</li>
+            <li><Icon name="check" size={20} color="#10b981" /> Reprogramación simple</li>
+          </ul>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="planes" className={styles.pricing}>
         <div className={styles.sectionHeader}>
@@ -155,7 +188,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Trust / CTA Section */}
+      {/* CTA Section */}
       <section className={styles.trust}>
         <div className={styles.trustContent}>
           <h2>¿Listo para transformar tu consultorio?</h2>
