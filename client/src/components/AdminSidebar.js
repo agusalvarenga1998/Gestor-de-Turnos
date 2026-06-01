@@ -26,6 +26,11 @@ export default function AdminSidebar() {
       path: '/admin/subscriptions'
     },
     {
+      label: 'Planes Landing',
+      icon: '📋',
+      path: '/admin/plans'
+    },
+    {
       label: 'Reportes',
       icon: '📊',
       path: '/admin/reports'

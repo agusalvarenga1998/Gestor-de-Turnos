@@ -20,6 +20,7 @@ export default function LandingPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [currentBg, setCurrentBg] = useState(0);
+  const [plans, setPlans] = useState([]);
 
   useEffect(() => {
     // Si ya está logueado, llevar al dashboard
@@ -30,6 +31,46 @@ export default function LandingPage() {
       setCurrentBg(prev => (prev + 1) % carouselData.length);
     }, 5000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fallbackPlans = [
+      {
+        key: 'commission',
+        name: 'Plan Comisión',
+        description: 'Ideal para quienes recién comienzan',
+        price: '3%',
+        price_period: 'turno efectivo',
+        features: ['Todas las funcionalidades', 'Pacientes ilimitados', 'Soporte estándar', 'Pagas solo si trabajas'],
+        is_popular: false
+      },
+      {
+        key: 'monthly',
+        name: 'Plan Mensual',
+        description: 'Para profesionales establecidos',
+        price: 'Consultar',
+        price_period: 'mes fijo',
+        features: ['Turnos ilimitados', 'Pacientes ilimitados', 'Sin comisiones extras', 'Soporte prioritario'],
+        is_popular: true
+      }
+    ];
+
+    const fetchPlans = async () => {
+      try {
+        const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+        const res = await fetch(`${baseUrl}/api/admin/public/plans`);
+        const data = await res.json();
+        if (data.success && data.plans && data.plans.length > 0) {
+          setPlans(data.plans);
+        } else {
+          setPlans(fallbackPlans);
+        }
+      } catch (err) {
+        console.error('Error fetching dynamic plans, using fallback:', err);
+        setPlans(fallbackPlans);
+      }
+    };
+    fetchPlans();
   }, []);
 
   return (
@@ -55,39 +96,29 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero / Banner principal */}
       <header 
         className={styles.hero}
         style={{ backgroundImage: `url('${carouselData[currentBg].image}')` }}
       >
         <div className={styles.heroOverlay}></div>
         <div className={styles.heroContent}>
-          <span className={styles.badge}>MÁS QUE UN GESTOR DE TURNOS</span>
-          <h1>
-            Moderniza tu consultorio y <br />
-            <span>recupera tu tiempo</span>
-          </h1>
-          <p>
-            TurnoHub es la plataforma integral para profesionales de la salud y estética. 
-            Gestiona turnos, historias clínicas, y ofrece a tus pacientes un portal 
-            de reservas 24/7 sin complicaciones.
-          </p>
-          <div className={styles.ctaGroup}>
-            <Link to="/register" className={styles.heroPrimaryBtn}>
-              Comenzar prueba gratis
-            </Link>
-            <a href="#planes" className={styles.heroSecondaryBtn}>
-              Ver planes
-            </a>
+          <span className={styles.badge}>GESTIÓN DE TURNOS PROFESIONAL</span>
+          <h1>Impulsa tu negocio y agenda <br /><span>sin interrupciones</span></h1>
+          <p>La plataforma definitiva para médicos, esteticistas, barberos y profesionales independientes. Automatiza tu agenda, sincroniza con Google Calendar y potencia tu rentabilidad.</p>
+          
+          <div className={styles.heroCta}>
+            <Link to="/register" className={styles.primaryBtnLarge}>Comenzar prueba gratis</Link>
+            <a href="#planes" className={styles.outlineBtnLarge}>Ver Planes de Precios</a>
           </div>
         </div>
       </header>
 
-      {/* Features Section */}
+      {/* Info Cards / Features */}
       <section id="caracteristicas" className={styles.features}>
         <div className={styles.sectionHeader}>
           <h2>Todo lo que necesitas en un solo lugar</h2>
-          <p>Diseñado para que te enfoques en tus pacientes, nosotros nos encargamos del resto.</p>
+          <p>Herramientas diseñadas exclusivamente para optimizar la gestión de tu consultorio o centro de estética.</p>
         </div>
         
         <div className={styles.grid}>
@@ -95,8 +126,8 @@ export default function LandingPage() {
             <div className={styles.iconBox}>
               <Icon name="calendar" size={32} />
             </div>
-            <h3>Agenda Inteligente</h3>
-            <p>Sincronización automática con Google Calendar. Evita solapamientos y gestiona tus horarios con total libertad y facilidad.</p>
+            <h3>Agenda Inteligente 24/7</h3>
+            <p>Permite que tus clientes y pacientes agenden citas a cualquier hora del día desde su celular, evitando llamadas fuera de horario.</p>
           </div>
           <div className={styles.card}>
             <div className={styles.iconBox}>
@@ -146,48 +177,35 @@ export default function LandingPage() {
         </div>
         
         <div className={styles.pricingGrid}>
-          {/* Plan Comisión */}
-          <div className={styles.pricingCard}>
-            <div className={styles.pricingIcon}>
-              <Icon name="percent" size={28} />
+          {plans.map((plan) => (
+            <div 
+              key={plan.key} 
+              className={`${styles.pricingCard} ${plan.is_popular ? styles.popular : ''}`}
+            >
+              {plan.is_popular && <span className={styles.popularBadge}>MÁS ELEGIDO</span>}
+              <div className={styles.pricingIcon}>
+                <Icon name={plan.key === 'commission' ? 'percent' : 'calendar'} size={28} />
+              </div>
+              <h3 className={styles.pricingTitle}>{plan.name}</h3>
+              <p className={styles.pricingDesc}>{plan.description}</p>
+              <div className={styles.pricingPrice}>
+                {plan.price} <span>/ {plan.price_period}</span>
+              </div>
+              <ul className={styles.pricingFeatures}>
+                {(plan.features || []).map((feat, index) => (
+                  <li key={index}>
+                    <Icon name="check" size={20} className={styles.checkIcon} /> {feat}
+                  </li>
+                ))}
+              </ul>
+              <Link 
+                to="/register" 
+                className={`${styles.pricingBtn} ${plan.is_popular ? styles.primary : styles.outline}`}
+              >
+                Empezar prueba gratis
+              </Link>
             </div>
-            <h3 className={styles.pricingTitle}>Plan Comisión</h3>
-            <p className={styles.pricingDesc}>Ideal para quienes recién comienzan</p>
-            <div className={styles.pricingPrice}>
-              3% <span>/ turno efectivo</span>
-            </div>
-            <ul className={styles.pricingFeatures}>
-              <li><Icon name="check" size={20} className={styles.checkIcon} /> Todas las funcionalidades</li>
-              <li><Icon name="check" size={20} className={styles.checkIcon} /> Pacientes ilimitados</li>
-              <li><Icon name="check" size={20} className={styles.checkIcon} /> Soporte estándar</li>
-              <li><Icon name="check" size={20} className={styles.checkIcon} /> Pagas solo si trabajas</li>
-            </ul>
-            <Link to="/register" className={`${styles.pricingBtn} ${styles.outline}`}>
-              Empezar prueba gratis
-            </Link>
-          </div>
-
-          {/* Plan Mensualidad */}
-          <div className={`${styles.pricingCard} ${styles.popular}`}>
-            <span className={styles.popularBadge}>MÁS ELEGIDO</span>
-            <div className={styles.pricingIcon}>
-              <Icon name="calendar" size={28} />
-            </div>
-            <h3 className={styles.pricingTitle}>Plan Mensual</h3>
-            <p className={styles.pricingDesc}>Para profesionales establecidos</p>
-            <div className={styles.pricingPrice}>
-              Consultar <span>/ mes fijo</span>
-            </div>
-            <ul className={styles.pricingFeatures}>
-              <li><Icon name="check" size={20} className={styles.checkIcon} /> Turnos ilimitados</li>
-              <li><Icon name="check" size={20} className={styles.checkIcon} /> Pacientes ilimitados</li>
-              <li><Icon name="check" size={20} className={styles.checkIcon} /> Sin comisiones extras</li>
-              <li><Icon name="check" size={20} className={styles.checkIcon} /> Soporte prioritario</li>
-            </ul>
-            <Link to="/register" className={`${styles.pricingBtn} ${styles.primary}`}>
-              Empezar prueba gratis
-            </Link>
-          </div>
+          ))}
         </div>
       </section>
 

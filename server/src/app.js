@@ -147,7 +147,34 @@ httpServer.listen(PORT, HOST, async () => {
   try {
     await query(`ALTER TABLE services ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE`);
     await query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS meet_link TEXT`);
-    console.log('✓ Migraciones de is_online y meet_link aplicadas');
+    
+    // Crear tabla de planes comerciales si no existe
+    await query(`
+      CREATE TABLE IF NOT EXISTS pricing_plans (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        key VARCHAR(50) UNIQUE NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        price VARCHAR(50) NOT NULL,
+        price_period VARCHAR(50),
+        features TEXT[] DEFAULT '{}',
+        is_popular BOOLEAN DEFAULT false,
+        is_enabled BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Poblar planes por defecto si no existen
+    await query(`
+      INSERT INTO pricing_plans (key, name, description, price, price_period, features, is_popular, is_enabled)
+      VALUES 
+      ('commission', 'Plan Comisión', 'Ideal para quienes recién comienzan', '3%', 'por turno efectivo', ARRAY['Todas las funcionalidades', 'Pacientes ilimitados', 'Soporte estándar', 'Pagas solo si trabajas'], false, true),
+      ('monthly', 'Plan Mensual', 'Para profesionales establecidos', 'Consultar', 'mes fijo', ARRAY['Funcionalidades avanzadas', 'Soporte prioritario 24/7', 'Integraciones personalizadas', 'Sin cobros por comisión'], true, true)
+      ON CONFLICT (key) DO NOTHING
+    `);
+
+    console.log('✓ Migraciones de is_online, meet_link y pricing_plans aplicadas');
   } catch (err) {
     console.error('⚠️ Error en auto-migración:', err.message);
   }

@@ -393,4 +393,72 @@ router.patch('/doctors/:id/plan', verifyAdmin, async (req, res) => {
   }
 });
 
+// --- PRICING PLANS SECTION ---
+
+// Get all active plans (Public endpoint for Landing Page)
+router.get('/public/plans', async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT id, key, name, description, price, price_period, features, is_popular FROM pricing_plans WHERE is_enabled = true ORDER BY created_at ASC'
+    );
+    res.json({ success: true, plans: result.rows });
+  } catch (error) {
+    console.error('Get public plans error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get all plans (Admin endpoint - protected)
+router.get('/plans', verifyAdmin, async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT id, key, name, description, price, price_period, features, is_popular, is_enabled, created_at FROM pricing_plans ORDER BY created_at ASC'
+    );
+    res.json({ success: true, plans: result.rows });
+  } catch (error) {
+    console.error('Get admin plans error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update a plan (Admin endpoint - protected)
+router.put('/plans/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, price_period, features, is_popular, is_enabled } = req.body;
+
+    if (!name || !price) {
+      return res.status(400).json({ error: 'Name and price are required' });
+    }
+
+    const result = await query(
+      `UPDATE pricing_plans
+       SET name = $1,
+           description = $2,
+           price = $3,
+           price_period = $4,
+           features = $5,
+           is_popular = $6,
+           is_enabled = $7,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $8
+       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled`,
+      [name, description, price, price_period, features || [], is_popular, is_enabled, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Plan comercial actualizado correctamente',
+      plan: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Update pricing plan error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;

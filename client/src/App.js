@@ -30,6 +30,7 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminDoctorsPage from './pages/AdminDoctorsPage';
 import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage';
+import AdminPlansPage from './pages/AdminPlansPage';
 
 // Páginas - Info / Landing
 import LandingPage from './pages/LandingPage';
@@ -98,6 +99,14 @@ function AppContent() {
         element={
           <ProtectedAdminRoute>
             <AdminSubscriptionsPage />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/plans"
+        element={
+          <ProtectedAdminRoute>
+            <AdminPlansPage />
           </ProtectedAdminRoute>
         }
       />
