@@ -318,3 +318,27 @@
 .adminAccess { margin-top: 1rem; text-align: center; font-size: 0.85rem; color: #94a3b8; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
 .adminAccess a { color: #64748b; font-weight: 700; text-decoration: none; }
 .adminAccess a:hover { color: #1e3a8a; text-decoration: underline; }
+
+.legalLinks {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+.legalLinks a {
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.legalLinks a:hover {
+  color: #1e3a8a;
+  text-decoration: underline;
+}
+.divider {
+  color: #cbd5e1;
+}

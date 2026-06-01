@@ -239,6 +239,12 @@ export default function LoginPage() {
               <Icon name="lock" size={14} /> 
               ¿Eres administrador? <Link to="/admin/login">Ingresa aquí</Link>
             </div>
+
+            <div className={styles.legalLinks}>
+              <Link to="/privacy">Política de Privacidad</Link>
+              <span className={styles.divider}>•</span>
+              <Link to="/terms">Términos de Servicio</Link>
+            </div>
           </div>
         </div>
         

@@ -566,6 +566,17 @@ export default function PatientPortalHomePage() {
             </div>
           )}
         </main>
+
+        <footer className={styles.footer}>
+          <div className={styles.footerContent}>
+            <p>© 2026 TurnoHub. Todos los derechos reservados.</p>
+            <div className={styles.footerLinks}>
+              <Link to="/privacy">Política de Privacidad</Link>
+              <span className={styles.divider}>•</span>
+              <Link to="/terms">Términos de Servicio</Link>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
