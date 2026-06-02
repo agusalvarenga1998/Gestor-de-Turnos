@@ -13,6 +13,7 @@ export default function AdminPlansPage() {
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [editFormData, setEditFormData] = useState({
+    key: '',
     name: '',
     description: '',
     price: '',
@@ -49,6 +50,7 @@ export default function AdminPlansPage() {
   const handleEditClick = (plan) => {
     setSelectedPlan(plan);
     setEditFormData({
+      key: plan.key,
       name: plan.name,
       description: plan.description || '',
       price: plan.price,
@@ -59,6 +61,46 @@ export default function AdminPlansPage() {
     });
     setSuccessMsg('');
     setError('');
+  };
+
+  const handleCreateClick = () => {
+    setSelectedPlan({ id: 'new', isNew: true });
+    setEditFormData({
+      key: '',
+      name: '',
+      description: '',
+      price: '',
+      price_period: '',
+      features: [],
+      is_popular: false,
+      is_enabled: true
+    });
+    setSuccessMsg('');
+    setError('');
+  };
+
+  const handleDeleteClick = async (plan) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar permanentemente el plan "${plan.name}"?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      setSuccessMsg('');
+      const response = await axios.delete(`${API_BASE_URL}/api/admin/plans/${plan.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setSuccessMsg(response.data.message);
+        setSelectedPlan(null);
+        fetchPlans();
+      }
+    } catch (err) {
+      console.error('Error deleting plan:', err);
+      setError(err.response?.data?.error || 'Error al eliminar el plan.');
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -98,32 +140,52 @@ export default function AdminPlansPage() {
       return;
     }
 
+    if (selectedPlan.isNew && !editFormData.key) {
+      setError('La clave (Key) del plan es obligatoria para planes nuevos.');
+      return;
+    }
+
     try {
       setSaving(true);
       setError('');
       setSuccessMsg('');
       
-      // Filtrar características vacías
       const cleanFeatures = editFormData.features.filter(f => f.trim() !== '');
 
-      const response = await axios.put(
-        `${API_BASE_URL}/api/admin/plans/${selectedPlan.id}`,
-        {
-          ...editFormData,
-          features: cleanFeatures
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      let response;
+      if (selectedPlan.isNew) {
+        // CREAR PLAN NUEVO
+        response = await axios.post(
+          `${API_BASE_URL}/api/admin/plans`,
+          {
+            ...editFormData,
+            features: cleanFeatures
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+      } else {
+        // ACTUALIZAR PLAN EXISTENTE
+        response = await axios.put(
+          `${API_BASE_URL}/api/admin/plans/${selectedPlan.id}`,
+          {
+            ...editFormData,
+            features: cleanFeatures
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+      }
 
       if (response.data.success) {
-        setSuccessMsg('Plan comercial actualizado correctamente.');
+        setSuccessMsg(selectedPlan.isNew ? 'Plan comercial creado correctamente.' : 'Plan comercial actualizado correctamente.');
         setSelectedPlan(null);
         fetchPlans(); // Recargar listado
       }
     } catch (err) {
-      console.error('Error updating plan:', err);
+      console.error('Error saving plan:', err);
       setError(err.response?.data?.error || 'Error al guardar los cambios del plan.');
     } finally {
       setSaving(false);
@@ -138,6 +200,12 @@ export default function AdminPlansPage() {
             <h1>Configuración de Planes Comerciales</h1>
             <p>Administra los planes de precios y beneficios que se muestran públicamente en la Landing Page comercial.</p>
           </div>
+          <button 
+            className={styles.createBtn}
+            onClick={handleCreateClick}
+          >
+            + Crear Nuevo Plan
+          </button>
         </div>
 
         {error && <div style={{ background: '#fee2e2', color: '#ef4444', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontWeight: 600 }}>{error}</div>}
@@ -184,18 +252,38 @@ export default function AdminPlansPage() {
                       className={styles.editBtn}
                       onClick={() => handleEditClick(plan)}
                     >
-                      Editar Plan
+                      Editar
+                    </button>
+                    <button 
+                      className={styles.deleteBtn}
+                      onClick={() => handleDeleteClick(plan)}
+                    >
+                      Eliminar
                     </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Formulario de Edición */}
+            {/* Formulario de Edición / Creación */}
             {selectedPlan && (
               <div className={styles.editorCard}>
-                <h2>Editar: {selectedPlan.name}</h2>
+                <h2>{selectedPlan.isNew ? 'Crear Nuevo Plan' : `Editar: ${selectedPlan.name}`}</h2>
                 <form onSubmit={handleSave}>
+                  {selectedPlan.isNew && (
+                    <div className={styles.formGroup}>
+                      <label>Clave Única (Key - Ej: premium)</label>
+                      <input 
+                        type="text" 
+                        name="key" 
+                        value={editFormData.key} 
+                        onChange={handleInputChange} 
+                        placeholder="Ej: premium"
+                        required 
+                      />
+                    </div>
+                  )}
+
                   <div className={styles.formGroup}>
                     <label>Nombre del Plan</label>
                     <input 
@@ -203,6 +291,7 @@ export default function AdminPlansPage() {
                       name="name" 
                       value={editFormData.name} 
                       onChange={handleInputChange} 
+                      placeholder="Ej: Plan Premium"
                       required 
                     />
                   </div>
@@ -213,6 +302,7 @@ export default function AdminPlansPage() {
                       name="description" 
                       value={editFormData.description} 
                       onChange={handleInputChange}
+                      placeholder="Ej: Para clínicas con alta demanda"
                       rows="2"
                     />
                   </div>
@@ -224,6 +314,7 @@ export default function AdminPlansPage() {
                       name="price" 
                       value={editFormData.price} 
                       onChange={handleInputChange} 
+                      placeholder="Ej: $45.000"
                       required 
                     />
                   </div>
@@ -234,6 +325,7 @@ export default function AdminPlansPage() {
                       type="text" 
                       name="price_period" 
                       value={editFormData.price_period} 
+                      placeholder="Ej: mes fijo"
                       onChange={handleInputChange} 
                     />
                   </div>
@@ -296,7 +388,7 @@ export default function AdminPlansPage() {
                       className={styles.saveBtn}
                       disabled={saving}
                     >
-                      {saving ? 'Guardando...' : 'Guardar Cambios'}
+                      {saving ? 'Guardando...' : (selectedPlan.isNew ? 'Crear Plan' : 'Guardar Cambios')}
                     </button>
                     <button 
                       type="button" 

@@ -461,4 +461,58 @@ router.put('/plans/:id', verifyAdmin, async (req, res) => {
   }
 });
 
+// Create a new plan (Admin endpoint - protected)
+router.post('/plans', verifyAdmin, async (req, res) => {
+  try {
+    const { key, name, description, price, price_period, features, is_popular, is_enabled } = req.body;
+
+    if (!key || !name || !price) {
+      return res.status(400).json({ error: 'Key, Name, and Price are required' });
+    }
+
+    const result = await query(
+      `INSERT INTO pricing_plans (key, name, description, price, price_period, features, is_popular, is_enabled)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled`,
+      [key.trim().toLowerCase(), name, description, price, price_period, features || [], is_popular, is_enabled]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Plan comercial creado correctamente',
+      plan: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Create pricing plan error:', error);
+    if (error.code === '23505') {
+      return res.status(400).json({ error: 'Ya existe un plan con esa clave (Key).' });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete a plan (Admin endpoint - protected)
+router.delete('/plans/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      'DELETE FROM pricing_plans WHERE id = $1 RETURNING id, name',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    res.json({
+      success: true,
+      message: `Plan "${result.rows[0].name}" eliminado correctamente`
+    });
+  } catch (error) {
+    console.error('Delete pricing plan error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;
