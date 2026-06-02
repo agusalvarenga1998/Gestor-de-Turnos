@@ -61,13 +61,16 @@ export default function LandingPage() {
         const res = await fetch(`${baseUrl}/api/admin/public/plans`);
         const data = await res.json();
         if (data.success && data.plans && data.plans.length > 0) {
-          setPlans(data.plans);
+          const sorted = [...data.plans].sort((a, b) => (b.is_popular ? 1 : 0) - (a.is_popular ? 1 : 0));
+          setPlans(sorted);
         } else {
-          setPlans(fallbackPlans);
+          const sortedFallback = [...fallbackPlans].sort((a, b) => (b.is_popular ? 1 : 0) - (a.is_popular ? 1 : 0));
+          setPlans(sortedFallback);
         }
       } catch (err) {
         console.error('Error fetching dynamic plans, using fallback:', err);
-        setPlans(fallbackPlans);
+        const sortedFallback = [...fallbackPlans].sort((a, b) => (b.is_popular ? 1 : 0) - (a.is_popular ? 1 : 0));
+        setPlans(sortedFallback);
       }
     };
     fetchPlans();

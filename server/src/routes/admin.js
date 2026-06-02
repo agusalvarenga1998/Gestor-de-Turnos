@@ -399,7 +399,7 @@ router.patch('/doctors/:id/plan', verifyAdmin, async (req, res) => {
 router.get('/public/plans', async (req, res) => {
   try {
     const result = await query(
-      'SELECT id, key, name, description, price, price_period, features, is_popular FROM pricing_plans WHERE is_enabled = true ORDER BY created_at ASC'
+      'SELECT id, key, name, description, price, price_period, features, is_popular FROM pricing_plans WHERE is_enabled = true ORDER BY is_popular DESC, created_at ASC'
     );
     res.json({ success: true, plans: result.rows });
   } catch (error) {
