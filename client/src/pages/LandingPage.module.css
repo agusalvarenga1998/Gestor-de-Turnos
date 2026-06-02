@@ -326,21 +326,27 @@
 }
 
 .pricingGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 3rem;
-  max-width: 900px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 2rem;
+  max-width: 1200px;
   margin: 0 auto;
+  align-items: stretch;
 }
 
 .pricingCard {
+  flex: 1;
+  min-width: 0;
   background: white;
   border-radius: 24px;
-  padding: 3.5rem 3rem;
+  padding: 3.5rem 2rem;
   border: 1px solid #e2e8f0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
   position: relative;
   transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
 }
 
 .pricingCard:hover {
@@ -443,6 +449,7 @@
   font-weight: 800;
   font-size: 1.1rem;
   transition: all 0.3s;
+  margin-top: auto;
 }
 
 .pricingBtn.primary {
@@ -613,7 +620,7 @@
     flex-direction: column;
   }
   .pricingGrid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
   .footerContent {
     grid-template-columns: 1fr;
