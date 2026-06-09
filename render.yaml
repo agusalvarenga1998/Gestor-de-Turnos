@@ -19,7 +19,7 @@ services:
       - key: DATABASE_URL
         sync: false 
       - key: GOOGLE_AUTH_REDIRECT_URI
-        value: https://consultorio-backend-r2su.onrender.com/api/auth/google/callback
+        value: https://api.turnohub.com.ar/api/auth/google/callback
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -30,7 +30,7 @@ services:
       - key: CORS_ORIGIN
         value: https://turnohub.com.ar 
       - key: BACKEND_WEBHOOK_URL
-        value: https://consultorio-backend-r2su.onrender.com/api/webhooks
+        value: https://api.turnohub.com.ar/api/webhooks
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
@@ -52,6 +52,6 @@ services:
         destination: /index.html
     envVars:
       - key: REACT_APP_API_BASE_URL
-        value: https://consultorio-backend-r2su.onrender.com
+        value: https://api.turnohub.com.ar
       - key: CI
         value: false
