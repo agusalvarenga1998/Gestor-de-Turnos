@@ -52,7 +52,15 @@ export default function DashboardNewPage() {
       try {
         setLoading(true);
 
-        const dashboardRes = await doctorAPI.getDashboard();
+        // Obtener hoy en zona horaria local (no UTC)
+        const now = new Date();
+        const today = now.getFullYear() + '-' +
+                     String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                     String(now.getDate()).padStart(2, '0');
+
+        console.log('Dashboard - Buscando citas para:', today);
+
+        const dashboardRes = await doctorAPI.getDashboard(today);
         if (dashboardRes.success && dashboardRes.dashboard) {
           setStats(dashboardRes.dashboard);
           setUpcomingBirthdays(dashboardRes.dashboard.upcomingBirthdays || []);
@@ -60,13 +68,6 @@ export default function DashboardNewPage() {
 
         const appointmentsRes = await appointmentAPI.getAppointments();
         if (appointmentsRes.success) {
-          // Obtener hoy en zona horaria local (no UTC)
-          const now = new Date();
-          const today = now.getFullYear() + '-' +
-                       String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                       String(now.getDate()).padStart(2, '0');
-
-          console.log('Dashboard - Buscando citas para:', today);
 
           const todayAppts = appointmentsRes.appointments
             .filter(appt => {

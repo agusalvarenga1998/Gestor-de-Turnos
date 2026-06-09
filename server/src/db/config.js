@@ -1,6 +1,9 @@
 import pkg from 'pg';
-const { Pool } = pkg;
+const { Pool, types } = pkg;
 import dotenv from 'dotenv';
+
+// Forzar que el tipo DATE (OID 1082) se retorne como string en lugar de objeto Date de JS
+types.setTypeParser(1082, (val) => val);
 
 dotenv.config();
 

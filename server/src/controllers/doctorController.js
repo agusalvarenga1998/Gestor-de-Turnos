@@ -142,14 +142,32 @@ export const updateProfile = async (req, res) => {
 export const getDashboard = async (req, res) => {
   try {
     const doctorId = req.user.id;
-    console.log('🔍 Fetching dashboard for Doctor ID:', doctorId);
+    let targetDate = req.query.date;
+
+    if (!targetDate) {
+      try {
+        const options = { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' };
+        const formatter = new Intl.DateTimeFormat('fr-CA', options);
+        targetDate = formatter.format(new Date());
+      } catch (e) {
+        const now = new Date();
+        const offset = -3; // Argentina offset
+        const localTime = new Date(now.getTime() + (offset * 60 * 60 * 1000) + (now.getTimezoneOffset() * 60 * 1000));
+        const year = localTime.getFullYear();
+        const month = String(localTime.getMonth() + 1).padStart(2, '0');
+        const day = String(localTime.getDate()).padStart(2, '0');
+        targetDate = `${year}-${month}-${day}`;
+      }
+    }
+
+    console.log(`🔍 Fetching dashboard for Doctor ID: ${doctorId} using date: ${targetDate}`);
 
     // Citas de hoy
     const appointmentsResult = await db.query(
       `SELECT COUNT(*) as count
        FROM appointments
-       WHERE doctor_id = $1 AND appointment_date = CURRENT_DATE AND status = 'scheduled'`,
-      [doctorId]
+       WHERE doctor_id = $1 AND appointment_date = $2 AND status = 'scheduled'`,
+      [doctorId, targetDate]
     );
 
     // Total de pacientes (asociados directamente o con turnos)
@@ -167,8 +185,8 @@ export const getDashboard = async (req, res) => {
        FROM appointments
        WHERE doctor_id = $1
          AND status = 'completed'
-         AND appointment_date >= DATE_TRUNC('month', CURRENT_DATE)`,
-      [doctorId]
+         AND appointment_date >= DATE_TRUNC('month', $2::date)`,
+      [doctorId, targetDate]
     );
 
     // Próximos cumpleaños (próximos 7 días)
@@ -181,15 +199,15 @@ export const getDashboard = async (req, res) => {
          WHERE a.doctor_id = $1
            AND p.date_of_birth IS NOT NULL
            AND (
-             EXTRACT(MONTH FROM p.date_of_birth) = EXTRACT(MONTH FROM CURRENT_DATE)
-             AND EXTRACT(DAY FROM p.date_of_birth) BETWEEN EXTRACT(DAY FROM CURRENT_DATE) AND EXTRACT(DAY FROM (CURRENT_DATE + INTERVAL '7 days'))
+             EXTRACT(MONTH FROM p.date_of_birth) = EXTRACT(MONTH FROM $2::date)
+             AND EXTRACT(DAY FROM p.date_of_birth) BETWEEN EXTRACT(DAY FROM $2::date) AND EXTRACT(DAY FROM ($2::date + INTERVAL '7 days'))
            OR
-             EXTRACT(MONTH FROM p.date_of_birth) = EXTRACT(MONTH FROM (CURRENT_DATE + INTERVAL '7 days'))
-             AND EXTRACT(DAY FROM p.date_of_birth) <= EXTRACT(DAY FROM (CURRENT_DATE + INTERVAL '7 days'))
-             AND EXTRACT(MONTH FROM CURRENT_DATE) != EXTRACT(MONTH FROM (CURRENT_DATE + INTERVAL '7 days'))
+             EXTRACT(MONTH FROM p.date_of_birth) = EXTRACT(MONTH FROM ($2::date + INTERVAL '7 days'))
+             AND EXTRACT(DAY FROM p.date_of_birth) <= EXTRACT(DAY FROM ($2::date + INTERVAL '7 days'))
+             AND EXTRACT(MONTH FROM $2::date) != EXTRACT(MONTH FROM ($2::date + INTERVAL '7 days'))
            )
          ORDER BY EXTRACT(MONTH FROM p.date_of_birth), EXTRACT(DAY FROM p.date_of_birth)`,
-        [doctorId]
+        [doctorId, targetDate]
       );
       upcomingBirthdays = birthdaysResult.rows;
     } catch (bdayError) {

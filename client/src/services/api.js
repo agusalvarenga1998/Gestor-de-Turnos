@@ -90,8 +90,8 @@ export const doctorAPI = {
     return response.data;
   },
 
-  getDashboard: async () => {
-    const response = await apiClient.get('/api/doctor/dashboard');
+  getDashboard: async (date) => {
+    const response = await apiClient.get(date ? `/api/doctor/dashboard?date=${date}` : '/api/doctor/dashboard');
     return response.data;
   },
 
