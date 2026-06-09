@@ -111,10 +111,10 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
     const patient = patientResult.rows[0];
     // const doctor = doctorInfoResult.rows[0]; // Ya está declarado arriba
 
-    // Enviar email de confirmación
+    // Enviar email de confirmación (en segundo plano / no bloqueante)
     if (patient && patient.email) {
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointment/${confirmationToken}`;
-      await emailService.sendAppointmentConfirmation({
+      emailService.sendAppointmentConfirmation({
         to: patient.email,
         patientName: patient.name,
         doctorName: doctor.name,
@@ -124,18 +124,22 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
         reason: reason_for_visit,
         appointmentCode: appointment.appointment_code,
         confirmUrl: confirmUrl
+      }).catch(err => {
+        console.error('❌ Error enviando email de confirmación en segundo plano:', err.message);
       });
     }
 
-    // Sincronizar con Google Calendar si el doctor tiene conexión
-    console.log('🔄 Llamando a createCalendarEvent...');
-    try {
-      const googleEventId = await googleCalendarService.createCalendarEvent(doctorId, appointment);
-      console.log('Resultado:', googleEventId);
-    } catch (error) {
-      console.error('Error sincronizando con Google Calendar:', error.message);
-      // No lanzar error para no romper el flujo de creación de cita
-    }
+    // Sincronizar con Google Calendar si el doctor tiene conexión (en segundo plano / no bloqueante)
+    console.log('🔄 Sincronizando con Google Calendar en segundo plano...');
+    googleCalendarService.createCalendarEvent(doctorId, appointment)
+      .then(result => {
+        if (result) {
+          console.log('✓ Evento sincronizado en Google Calendar en segundo plano:', result.eventId);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error sincronizando con Google Calendar en segundo plano:', error.message);
+      });
 
     console.log('✓ Cita creada exitosamente\n');
     return appointment;
