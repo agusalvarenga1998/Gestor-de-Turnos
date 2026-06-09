@@ -8,6 +8,16 @@ import Icon from '../components/Icon';
 import Loading from '../components/Loading';
 import styles from './DashboardNewPage.module.css';
 
+const formatDateString = (dateStr) => {
+  if (!dateStr) return '';
+  const dateOnly = String(dateStr).split('T')[0];
+  const parts = dateOnly.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+};
+
 export default function DashboardNewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -32,7 +42,7 @@ export default function DashboardNewPage() {
       console.log('🔔 Nueva cita recibida via WS:', data);
       
       // Mostrar alerta/toast
-      alert(`🔔 NUEVO TURNO: ${data.patientName} ha solicitado un turno para el ${new Date(data.appointmentDate).toLocaleDateString()} a las ${data.appointmentTime}`);
+      alert(`🔔 NUEVO TURNO: ${data.patientName} ha solicitado un turno para el ${formatDateString(data.appointmentDate)} a las ${data.appointmentTime}`);
       
       // Recargar datos
       window.location.reload(); // Forma más simple de asegurar que todo se refresque
@@ -385,7 +395,7 @@ export default function DashboardNewPage() {
               <div className={styles.detailGrid}>
                 <div className={styles.detailCard}>
                   <label>📅 Fecha y Hora</label>
-                  <p>{new Date(selectedAppointment.appointment_date).toLocaleDateString('es-ES')} - {selectedAppointment.appointment_time} hs</p>
+                  <p>{formatDateString(selectedAppointment.appointment_date)} - {selectedAppointment.appointment_time} hs</p>
                 </div>
                 <div className={styles.detailCard}>
                   <label>📝 Motivo / Servicio</label>
