@@ -178,6 +178,20 @@ export const getNextAvailableSlots = async (doctorId, date, slotDurationMinutes 
   const dateObj = new Date(year, month - 1, day);
   const dayOfWeek = dateObj.getDay();
 
+  // Obtener fecha y hora actual en Argentina (UTC-3)
+  const now = new Date();
+  const argentinaTimeStr = now.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' });
+  const argDate = new Date(argentinaTimeStr);
+  const argTodayStr = argDate.getFullYear() + '-' +
+                      String(argDate.getMonth() + 1).padStart(2, '0') + '-' +
+                      String(argDate.getDate()).padStart(2, '0');
+
+  // Si la fecha solicitada es anterior a hoy, no hay disponibilidad
+  if (date < argTodayStr) {
+    console.log(`🚫 Bloqueada búsqueda de turnos para fecha pasada: ${date}`);
+    return [];
+  }
+
   // Verificar vacaciones
   const vacation = await query(
     `SELECT * FROM doctor_vacation
@@ -219,9 +233,18 @@ export const getNextAvailableSlots = async (doctorId, date, slotDurationMinutes 
   // pero cada "slot" debe asegurar que cabe la duración completa requerida
   const step = 15; 
 
+  const currentMinutes = date === argTodayStr 
+    ? (argDate.getHours() * 60 + argDate.getMinutes()) 
+    : -1;
+
   for (let minutes = startMinutes; minutes <= (endMinutes - slotDurationMinutes); minutes += step) {
     const slotStart = minutes;
     const slotEnd = minutes + slotDurationMinutes;
+
+    // Si es hoy, no permitir turnos en el pasado
+    if (slotStart <= currentMinutes) {
+      continue;
+    }
 
     // Verificar si este bloque [slotStart, slotEnd] choca con algún turno reservado
     const isOverlap = bookedRanges.some(range => 
