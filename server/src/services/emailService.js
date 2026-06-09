@@ -7,12 +7,17 @@ dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 
-// Crear transportador de email con Gmail (Configuración original simplificada)
+// Crear transportador de email con configuración dinámica (Gmail, DonWeb, etc.)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_PORT === '465', // true para puerto 465, false para otros (como 587)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD
+  },
+  tls: {
+    rejectUnauthorized: false // Evita problemas de certificado en algunos servidores SMTP compartidos
   }
 });
 
