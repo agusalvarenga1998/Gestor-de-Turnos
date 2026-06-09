@@ -3,6 +3,7 @@ import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/
 import { query, transaction } from '../db/config.js';
 import { getAppointmentsForToday, getAppointmentsByDoctor } from '../services/appointmentService.js';
 import { getPatientsByDoctor } from '../services/patientService.js';
+import { getDashboard } from '../controllers/doctorController.js';
 
 const router = express.Router();
 
@@ -83,32 +84,7 @@ router.patch('/profile', async (req, res) => {
 });
 
 // Dashboard del doctor (resumen)
-router.get('/dashboard', async (req, res) => {
-  try {
-    const todayAppointments = await getAppointmentsForToday(req.user.id);
-    const allAppointments = await getAppointmentsByDoctor(req.user.id);
-    const patients = await getPatientsByDoctor(req.user.id);
-    const pendingAppointments = allAppointments.filter(a => a.status === 'pending' || a.status === 'pending_payment').length;
-
-    res.json({
-      success: true,
-      stats: {
-        total_appointments: allAppointments.length,
-        total_patients: patients.length,
-        appointments_today: todayAppointments.length,
-        pending_appointments: pendingAppointments,
-        completed_appointments: allAppointments.filter(a => a.status === 'completed').length,
-        cancelled_appointments: allAppointments.filter(a => a.status === 'cancelled').length
-      }
-    });
-  } catch (error) {
-    console.error('Error al obtener dashboard:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener dashboard'
-    });
-  }
-});
+router.get('/dashboard', getDashboard);
 
 // Obtener horarios de trabajo del doctor
 router.get('/working-hours', async (req, res) => {
