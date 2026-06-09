@@ -26,9 +26,9 @@ services:
         value: 24h
       # Usando tus URLs reales detectadas en los logs
       - key: FRONTEND_URL
-        value: https://consultorio-frontend-4cys.onrender.com 
+        value: https://turnohub.com.ar
       - key: CORS_ORIGIN
-        value: https://consultorio-frontend-4cys.onrender.com 
+        value: https://turnohub.com.ar 
       - key: BACKEND_WEBHOOK_URL
         value: https://consultorio-backend-r2su.onrender.com/api/webhooks
       - key: GOOGLE_CLIENT_ID
