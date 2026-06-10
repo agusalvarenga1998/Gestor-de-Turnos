@@ -9,6 +9,25 @@ dotenv.config();
 const router = express.Router();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
+// Funciones auxiliares para obtener las credenciales con valores de contingencia
+const getClientId = () => {
+  return process.env.MP_CLIENT_ID || 
+         (process.env.MP_ACCESS_TOKEN ? process.env.MP_ACCESS_TOKEN.split('-')[1] : null) || 
+         '3334296268871714';
+};
+
+const getClientSecret = () => {
+  return process.env.MP_CLIENT_SECRET || 'OB3Ug95wFOdoRxF6f4xdqU3dXy8xIkZe';
+};
+
+const getRedirectUri = (req) => {
+  if (process.env.MP_REDIRECT_URI) return process.env.MP_REDIRECT_URI;
+  const host = req.get('host');
+  // Determinar si es conexión local (http) o producción (https)
+  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+  return `${protocol}://${host}/api/mercadopago/oauth/callback`;
+};
+
 // 1. Redirigir al portal de autorización de Mercado Pago
 router.get('/oauth/auth', (req, res) => {
   try {
@@ -35,20 +54,20 @@ router.get('/oauth/auth', (req, res) => {
     }
 
     const doctorId = decoded.id;
+    const clientId = getClientId();
+    const redirectUri = getRedirectUri(req);
 
-    const clientId = process.env.MP_CLIENT_ID;
-    const redirectUri = process.env.MP_REDIRECT_URI;
+    console.log(`OAuth Info: ClientID = ${clientId}, RedirectURI = ${redirectUri}`);
 
-    if (!clientId || !redirectUri) {
-      console.error('❌ MP_CLIENT_ID o MP_REDIRECT_URI no configurados en el servidor.');
+    if (!clientId) {
+      console.error('❌ MP_CLIENT_ID no configurado en el servidor.');
       return res.status(500).json({
         success: false,
-        message: 'Las credenciales de Mercado Pago OAuth no están configuradas en el servidor.'
+        message: 'El ID de Cliente de Mercado Pago no está configurado.'
       });
     }
 
     // Construir URL de autorización de Mercado Pago
-    // state = doctorId
     const authUrl = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${doctorId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
     
     console.log(`Redirigiendo a Mercado Pago para vincular el médico: ${doctorId}`);
@@ -76,9 +95,9 @@ router.get('/oauth/callback', async (req, res) => {
       return res.redirect(`${FRONTEND_URL}/settings?mp_connected=error`);
     }
 
-    const clientId = process.env.MP_CLIENT_ID;
-    const clientSecret = process.env.MP_CLIENT_SECRET;
-    const redirectUri = process.env.MP_REDIRECT_URI;
+    const clientId = getClientId();
+    const clientSecret = getClientSecret();
+    const redirectUri = getRedirectUri(req);
 
     console.log(`Exchanging code for token. Client ID: ${clientId}, Redirect: ${redirectUri}`);
 
