@@ -1,7 +1,19 @@
 import axios from 'axios';
 
-// Usa ruta relativa para que funcione con el proxy de desarrollo (package.json)
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.host;
+    if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+      if (host.includes('turnohub.com.ar')) {
+        return 'https://api.turnohub.com.ar';
+      }
+      return `${window.location.protocol}//${host}`;
+    }
+  }
+  return process.env.REACT_APP_API_BASE_URL || '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

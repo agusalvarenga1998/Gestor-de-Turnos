@@ -268,17 +268,26 @@ let wsClient = null;
 
 export const getWebSocketClient = (url) => {
   if (!wsClient) {
-    const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
     let defaultUrl;
 
-    if (apiBaseUrl) {
-      // Si tenemos URL de API, convertir https a wss o http a ws
-      defaultUrl = apiBaseUrl.replace(/^http/, 'ws');
-    } else if (typeof window !== 'undefined') {
-      // Fallback a la URL actual si no hay env (local)
-      defaultUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
-    } else {
-      defaultUrl = 'ws://localhost:5002';
+    if (typeof window !== 'undefined') {
+      const host = window.location.host;
+      if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+        if (host.includes('turnohub.com.ar')) {
+          defaultUrl = 'wss://api.turnohub.com.ar';
+        } else {
+          defaultUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${host}`;
+        }
+      }
+    }
+
+    if (!defaultUrl) {
+      const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+      if (apiBaseUrl) {
+        defaultUrl = apiBaseUrl.replace(/^http/, 'ws');
+      } else {
+        defaultUrl = 'ws://localhost:5002';
+      }
     }
     
     wsClient = new WebSocketClient(url || defaultUrl);
