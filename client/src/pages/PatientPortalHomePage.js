@@ -447,23 +447,90 @@ export default function PatientPortalHomePage() {
                                 ))}
                                 {services.length === 0 && <p className={styles.emptyMsg}>Este profesional no tiene servicios configurados.</p>}
                               </div>
-                            </>
-                          )}
-
-                          <div className={styles.sectionTitle}>{selectedDoctor ? '3' : '2'}. Tus Datos</div>
+                                                      <div className={styles.sectionTitle}>{selectedDoctor ? '3' : '2'}. Tus Datos</div>
                           <div className={styles.formGrid}>
-
-                            <div className={styles.formGroup}><label>NOMBRE</label><input type="text" name="name" value={patientData.name || ''} onChange={handlePatientDataChange} required /></div>
-                            <div className={styles.formGroup}><label>APELLIDO</label><input type="text" name="lastName" value={patientData.lastName || ''} onChange={handlePatientDataChange} required /></div>
-                            <div className={styles.formGroup}><label>DNI</label><input type="text" name="documentNumber" value={patientData.documentNumber || ''} onChange={handlePatientDataChange} required /></div>
-                            <div className={styles.formGroup}><label>TELÉFONO</label><input type="tel" name="phone" value={patientData.phone || ''} onChange={handlePatientDataChange} required /></div>
-                            <div className={styles.formGroup}><label>EMAIL (Obligatorio)</label><input type="email" name="email" value={patientData.email || ''} onChange={handlePatientDataChange} required /></div>
-                            <div className={`${styles.formGroup} ${styles.fullWidth}`}><label>CONVENIO / DESCUENTO (Opcional)</label>
-                              <select name="insuranceId" value={patientData.insuranceId || ''} onChange={handlePatientDataChange} disabled={!selectedDoctor}>
-                                <option value="">Sin convenio (Particular)</option>
-                                {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                              </select>
+                            <div className={styles.customerTypeToggle}>
+                              <button
+                                type="button"
+                                className={`${styles.toggleBtn} ${!isExistingCustomer ? styles.activeToggle : ''}`}
+                                onClick={() => {
+                                  setIsExistingCustomer(false);
+                                  setAutofilledSuccess(false);
+                                  setPatientData({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
+                                }}
+                              >
+                                Soy Cliente Nuevo
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.toggleBtn} ${isExistingCustomer ? styles.activeToggle : ''}`}
+                                onClick={() => {
+                                  setIsExistingCustomer(true);
+                                  setAutofilledSuccess(false);
+                                  setPatientData({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
+                                }}
+                              >
+                                Ya soy Cliente (Cargar por DNI)
+                              </button>
                             </div>
+
+                            {isExistingCustomer ? (
+                              <>
+                                <div className={styles.dniSearchWrapper}>
+                                  <div className={styles.formGroup} style={{ flex: 1 }}>
+                                    <label>INGRESA TU DNI</label>
+                                    <input
+                                      type="text"
+                                      name="documentNumber"
+                                      value={patientData.documentNumber || ''}
+                                      onChange={handlePatientDataChange}
+                                      placeholder="Ej: 12345678"
+                                      required
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={handleDniSearch}
+                                    className={styles.dniSearchBtn}
+                                  >
+                                    Buscar Datos
+                                  </button>
+                                </div>
+
+                                {autofilledSuccess && (
+                                  <>
+                                    <div className={styles.autofilledAlert}>
+                                      <span>✓</span> ¡Datos cargados con éxito para <strong>{patientData.name} {patientData.lastName}</strong>!
+                                    </div>
+                                    <div className={styles.formGroup}><label>NOMBRE</label><input type="text" name="name" value={patientData.name || ''} onChange={handlePatientDataChange} required disabled /></div>
+                                    <div className={styles.formGroup}><label>APELLIDO</label><input type="text" name="lastName" value={patientData.lastName || ''} onChange={handlePatientDataChange} required disabled /></div>
+                                    <div className={styles.formGroup}><label>TELÉFONO</label><input type="tel" name="phone" value={patientData.phone || ''} onChange={handlePatientDataChange} required /></div>
+                                    <div className={styles.formGroup}><label>EMAIL (Obligatorio)</label><input type="email" name="email" value={patientData.email || ''} onChange={handlePatientDataChange} required /></div>
+                                    <div className={`${styles.formGroup} ${styles.fullWidth}`}><label>CONVENIO / DESCUENTO (Opcional)</label>
+                                      <select name="insuranceId" value={patientData.insuranceId || ''} onChange={handlePatientDataChange} disabled={!selectedDoctor}>
+                                        <option value="">Sin convenio (Particular)</option>
+                                        {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                                      </select>
+                                    </div>
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <div className={styles.formGroup}><label>NOMBRE</label><input type="text" name="name" value={patientData.name || ''} onChange={handlePatientDataChange} required /></div>
+                                <div className={styles.formGroup}><label>APELLIDO</label><input type="text" name="lastName" value={patientData.lastName || ''} onChange={handlePatientDataChange} required /></div>
+                                <div className={styles.formGroup}><label>DNI</label><input type="text" name="documentNumber" value={patientData.documentNumber || ''} onChange={handlePatientDataChange} required /></div>
+                                <div className={styles.formGroup}><label>TELÉFONO</label><input type="tel" name="phone" value={patientData.phone || ''} onChange={handlePatientDataChange} required /></div>
+                                <div className={styles.formGroup}><label>EMAIL (Obligatorio)</label><input type="email" name="email" value={patientData.email || ''} onChange={handlePatientDataChange} required /></div>
+                                <div className={`${styles.formGroup} ${styles.fullWidth}`}><label>CONVENIO / DESCUENTO (Opcional)</label>
+                                  <select name="insuranceId" value={patientData.insuranceId || ''} onChange={handlePatientDataChange} disabled={!selectedDoctor}>
+                                    <option value="">Sin convenio (Particular)</option>
+                                    {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                                  </select>
+                                </div>
+                              </>
+                            )}
+
                             <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                               <label>MÉTODO DE PAGO</label>
                               <select name="paymentMethod" onChange={handlePatientDataChange} value={patientData.paymentMethod}>
