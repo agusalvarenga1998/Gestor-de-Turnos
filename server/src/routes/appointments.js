@@ -685,17 +685,23 @@ router.post('/public/search', async (req, res) => {
 
     const appointment = result.rows[0];
 
-    // Calcular el número de turnos antes en la fila
+    // Obtener todos los turnos activos del médico para ese día
     const queueResult = await query(
-      `SELECT COUNT(*) as count 
+      `SELECT id, appointment_time, status, delay_minutes 
        FROM appointments 
        WHERE doctor_id = $1 
        AND appointment_date = $2 
-       AND appointment_time < $3 
-       AND status IN ('scheduled', 'pending', 'pending_payment')`,
-      [appointment.doctor_id, appointment.appointment_date, appointment.appointment_time]
+       AND status IN ('scheduled', 'pending', 'pending_payment')
+       ORDER BY appointment_time ASC`,
+      [appointment.doctor_id, appointment.appointment_date]
     );
-    appointment.appointments_before = parseInt(queueResult.rows[0].count, 10);
+
+    const queueList = queueResult.rows;
+    const myTime = appointment.appointment_time;
+    const appointmentsBeforeMe = queueList.filter(app => app.appointment_time < myTime);
+
+    appointment.appointments_before = appointmentsBeforeMe.length;
+    appointment.queue_before = appointmentsBeforeMe;
 
     res.json({
       success: true,
@@ -850,17 +856,23 @@ router.get('/public/:token', async (req, res) => {
     const appointment = result.rows[0];
     console.log('✓ Cita encontrada:', appointment.patient_name);
 
-    // Calcular el número de turnos antes en la fila
+    // Obtener todos los turnos activos del médico para ese día
     const queueResult = await query(
-      `SELECT COUNT(*) as count 
+      `SELECT id, appointment_time, status, delay_minutes 
        FROM appointments 
        WHERE doctor_id = $1 
        AND appointment_date = $2 
-       AND appointment_time < $3 
-       AND status IN ('scheduled', 'pending', 'pending_payment')`,
-      [appointment.doctor_id, appointment.appointment_date, appointment.appointment_time]
+       AND status IN ('scheduled', 'pending', 'pending_payment')
+       ORDER BY appointment_time ASC`,
+      [appointment.doctor_id, appointment.appointment_date]
     );
-    appointment.appointments_before = parseInt(queueResult.rows[0].count, 10);
+
+    const queueList = queueResult.rows;
+    const myTime = appointment.appointment_time;
+    const appointmentsBeforeMe = queueList.filter(app => app.appointment_time < myTime);
+
+    appointment.appointments_before = appointmentsBeforeMe.length;
+    appointment.queue_before = appointmentsBeforeMe;
 
     res.json({
       success: true,

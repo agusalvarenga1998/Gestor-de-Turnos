@@ -149,7 +149,14 @@ export default function PatientAppointmentViewPage() {
   // Normalizar la fecha (si viene con T00:00:00... de Postgres, tomamos solo la parte de la fecha)
   const cleanDate = appointment.appointment_date.split('T')[0];
   const appointmentDate = new Date(`${cleanDate}T${appointment.appointment_time}`);
-  const isToday = new Date(appointment.appointment_date).toDateString() === new Date().toDateString();
+  
+  // Obtener fecha de hoy en formato local YYYY-MM-DD sin problemas de huso horario
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const isToday = cleanDate === todayStr;
 
   return (
     <div className={styles.container}>
@@ -217,12 +224,48 @@ export default function PatientAppointmentViewPage() {
                 <div className={styles.queueIcon}>
                   <Icon name="users" size={24} color="#166534" />
                 </div>
-                <div className={styles.queueInfo}>
+                <div className={styles.queueInfo} style={{ width: '100%' }}>
                   <label>ESTADO DE LA FILA</label>
                   {appointment.appointments_before === 0 ? (
                     <p className={styles.status}>¡Eres el próximo turno en ser atendido!</p>
                   ) : (
-                    <p>Hay <strong>{appointment.appointments_before}</strong> {appointment.appointments_before === 1 ? 'turno' : 'turnos'} antes que el tuyo en la fila.</p>
+                    <>
+                      <p style={{ marginBottom: '12px' }}>
+                        Hay <strong>{appointment.appointments_before}</strong> {appointment.appointments_before === 1 ? 'turno' : 'turnos'} antes que el tuyo:
+                      </p>
+                      <div className={styles.queueList}>
+                        {appointment.queue_before && appointment.queue_before.map((q, idx) => {
+                          const qTime = q.appointment_time.substring(0, 5);
+                          
+                          // Determinar si la hora ya pasó
+                          const now = new Date();
+                          const todayStrLocal = now.toLocaleDateString('sv');
+                          const qDateTime = new Date(`${todayStrLocal}T${q.appointment_time}`);
+                          const hasPassed = now > qDateTime;
+                          
+                          let statusLabel = 'Programado';
+                          let statusClass = styles.qScheduled;
+                          
+                          if (q.status === 'pending' || q.status === 'pending_payment') {
+                            statusLabel = 'Pendiente';
+                            statusClass = styles.qPending;
+                          } else if (hasPassed) {
+                            statusLabel = 'En Espera';
+                            statusClass = styles.qWaiting;
+                          } else {
+                            statusLabel = 'Confirmado';
+                            statusClass = styles.qConfirmed;
+                          }
+                          
+                          return (
+                            <div key={idx} className={styles.queueItem}>
+                              <span className={styles.queueTime}>🕒 {qTime} hs</span>
+                              <span className={`${styles.queueStatusBadge} ${statusClass}`}>{statusLabel}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
