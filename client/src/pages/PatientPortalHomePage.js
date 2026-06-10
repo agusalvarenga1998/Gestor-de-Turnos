@@ -75,6 +75,38 @@ export default function PatientPortalHomePage() {
     }
   }, [selectedDoctor, appointmentDate, selectedService]);
 
+  useEffect(() => {
+    const fetchPatientDataByDni = async () => {
+      const dni = patientData.documentNumber?.trim();
+      if (!selectedDoctor || !dni || dni.length < 7 || dni.length > 10) {
+        return;
+      }
+
+      try {
+        console.log(`Buscando datos del paciente para DNI: ${dni}`);
+        const response = await appointmentAPI.getPublicPatientDetails(selectedDoctor, dni);
+        if (response.success && response.patient) {
+          console.log('Paciente encontrado, autocompletando datos:', response.patient);
+          setPatientData(prev => ({
+            ...prev,
+            name: response.patient.name,
+            lastName: response.patient.lastName,
+            email: response.patient.email,
+            phone: response.patient.phone
+          }));
+        }
+      } catch (err) {
+        console.error('Error al autocompletar datos de paciente:', err);
+      }
+    };
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchPatientDataByDni();
+    }, 600); // Debounce de 600ms para esperar que termine de escribir
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [patientData.documentNumber, selectedDoctor]);
+
   const loadDoctorAvailability = async (doctorId) => {
     try {
       const response = await appointmentAPI.getDoctorAvailability(doctorId);
@@ -420,13 +452,14 @@ export default function PatientPortalHomePage() {
 
                           <div className={styles.sectionTitle}>{selectedDoctor ? '3' : '2'}. Tus Datos</div>
                           <div className={styles.formGrid}>
-                            <div className={styles.formGroup}><label>NOMBRE</label><input type="text" name="name" onChange={handlePatientDataChange} required /></div>
-                            <div className={styles.formGroup}><label>APELLIDO</label><input type="text" name="lastName" onChange={handlePatientDataChange} required /></div>
-                            <div className={styles.formGroup}><label>DNI</label><input type="text" name="documentNumber" onChange={handlePatientDataChange} required /></div>
-                            <div className={styles.formGroup}><label>TELÉFONO</label><input type="tel" name="phone" onChange={handlePatientDataChange} required /></div>
-                            <div className={styles.formGroup}><label>EMAIL (Obligatorio)</label><input type="email" name="email" onChange={handlePatientDataChange} required /></div>
+
+                            <div className={styles.formGroup}><label>NOMBRE</label><input type="text" name="name" value={patientData.name || ''} onChange={handlePatientDataChange} required /></div>
+                            <div className={styles.formGroup}><label>APELLIDO</label><input type="text" name="lastName" value={patientData.lastName || ''} onChange={handlePatientDataChange} required /></div>
+                            <div className={styles.formGroup}><label>DNI</label><input type="text" name="documentNumber" value={patientData.documentNumber || ''} onChange={handlePatientDataChange} required /></div>
+                            <div className={styles.formGroup}><label>TELÉFONO</label><input type="tel" name="phone" value={patientData.phone || ''} onChange={handlePatientDataChange} required /></div>
+                            <div className={styles.formGroup}><label>EMAIL (Obligatorio)</label><input type="email" name="email" value={patientData.email || ''} onChange={handlePatientDataChange} required /></div>
                             <div className={`${styles.formGroup} ${styles.fullWidth}`}><label>CONVENIO / DESCUENTO (Opcional)</label>
-                              <select name="insuranceId" onChange={handlePatientDataChange} disabled={!selectedDoctor}>
+                              <select name="insuranceId" value={patientData.insuranceId || ''} onChange={handlePatientDataChange} disabled={!selectedDoctor}>
                                 <option value="">Sin convenio (Particular)</option>
                                 {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                               </select>

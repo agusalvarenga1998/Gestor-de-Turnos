@@ -143,6 +143,52 @@ router.get('/public/available-slots/:doctorId/:date', async (req, res) => {
   }
 });
 
+// Obtener datos de paciente existente por DNI y Doctor ID (Autocompletado público)
+router.get('/public/patient-details/:doctorId/:documentNumber', async (req, res) => {
+  try {
+    const { doctorId, documentNumber } = req.params;
+
+    console.log(`🔓 Buscando datos de paciente por DNI: ${documentNumber} y Doctor: ${doctorId}`);
+
+    const result = await query(
+      `SELECT name, email, phone, document_number
+       FROM patients
+       WHERE doctor_id = $1 AND document_number = $2
+       LIMIT 1`,
+      [doctorId, documentNumber]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'Paciente no registrado'
+      });
+    }
+
+    const patient = result.rows[0];
+    const nameParts = patient.name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    res.json({
+      success: true,
+      patient: {
+        name: firstName,
+        lastName: lastName,
+        email: patient.email || '',
+        phone: patient.phone || '',
+        documentNumber: patient.document_number
+      }
+    });
+  } catch (error) {
+    console.error('Error obteniendo datos de paciente para autocompletado:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al buscar datos del paciente'
+    });
+  }
+});
+
 // ===== RUTAS PÚBLICAS ADICIONALES =====
 
 // Ruta pública para crear una cita (sin autenticación)

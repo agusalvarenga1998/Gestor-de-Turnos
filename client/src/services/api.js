@@ -168,6 +168,11 @@ export const appointmentAPI = {
     return response.data;
   },
 
+  getPublicPatientDetails: async (doctorId, documentNumber) => {
+    const response = await axios.get(`${API_BASE_URL}/api/appointments/public/patient-details/${doctorId}/${documentNumber}`);
+    return response.data;
+  },
+
   updateDelay: async (appointmentId, data) => {
     const response = await apiClient.patch(`/api/appointments/${appointmentId}/delay`, data);
     return response.data;
