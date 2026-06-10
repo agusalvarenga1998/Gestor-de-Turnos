@@ -18,6 +18,7 @@ import adminRoutes from './routes/admin.js';
 import webhookRoutes from './routes/webhooks.js';
 import serviceRoutes from './routes/services.js';
 import patientRecordRoutes from './routes/patientRecords.js';
+import mercadopagoRoutes from './routes/mercadopago.js';
 import path from 'path';
 import { uploadsDir } from './utils/paths.js';
 import { query } from './db/config.js';
@@ -103,6 +104,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/patient-records', patientRecordRoutes);
+app.use('/api/mercadopago', mercadopagoRoutes);
 
 // Servir archivos estáticos (uploads)
 app.use('/uploads', express.static(uploadsDir));
@@ -193,7 +195,12 @@ httpServer.listen(PORT, HOST, async () => {
       ALTER TABLE appointments ADD COLUMN IF NOT EXISTS insurance_plan_id UUID REFERENCES insurance_plans(id)
     `);
 
-    console.log('✓ Migraciones de is_online, meet_link, pricing_plans e insurance_plans aplicadas');
+    // Añadir columna mp_refresh_token a doctors si no existe
+    await query(`
+      ALTER TABLE doctors ADD COLUMN IF NOT EXISTS mp_refresh_token TEXT
+    `);
+
+    console.log('✓ Migraciones de is_online, meet_link, pricing_plans, insurance_plans y mp_refresh_token aplicadas');
   } catch (err) {
     console.error('⚠️ Error en auto-migración:', err.message);
   }

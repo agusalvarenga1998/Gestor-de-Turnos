@@ -120,7 +120,19 @@ export default function SettingsPage() {
       setSuccessMessage('✗ Error al conectar Google Calendar');
       setTimeout(() => setSuccessMessage(''), 5000);
     }
-  }, [searchParams, user]);
+
+    // Detectar si viene del callback de Mercado Pago
+    if (searchParams.get('mp_connected') === 'true') {
+      setSuccessMessage('✓ Mercado Pago conectado exitosamente');
+      refreshUser();
+      setTimeout(() => setSuccessMessage(''), 5000);
+    }
+
+    if (searchParams.get('mp_connected') === 'error') {
+      setSuccessMessage('✗ Error al conectar Mercado Pago');
+      setTimeout(() => setSuccessMessage(''), 5000);
+    }
+  }, [searchParams, user, refreshUser]);
 
   const fetchGoogleStatus = async () => {
     try {
@@ -355,28 +367,13 @@ export default function SettingsPage() {
                 <button
                   className={styles.connectBtn}
                   style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}
-                  onClick={async () => {
-                    const mpToken = window.prompt('Para vincular tu cuenta, ingresa tu Access Token de Producción de Mercado Pago:');
-                    if (mpToken && mpToken.startsWith('APP_USR-')) {
-                      try {
-                        setSavingProfile(true);
-                        const res = await apiClient.put('/api/auth/profile', { 
-                          mp_connected: true, 
-                          mp_access_token: mpToken 
-                        });
-                        
-                        if (res.data.success) {
-                          setSuccessMessage('✓ ¡Mercado Pago vinculado exitosamente!');
-                          refreshUser();
-                        }
-                      } catch (err) {
-                        alert('Error al vincular el token. Verifica que sea válido.');
-                      } finally {
-                        setSavingProfile(false);
-                      }
-                    } else if (mpToken) {
-                      alert('El token debe comenzar con APP_USR-');
+                  onClick={() => {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                      setSuccessMessage('✗ No hay sesión activa');
+                      return;
                     }
+                    window.location.href = `${process.env.REACT_APP_API_BASE_URL || ''}/api/mercadopago/oauth/auth?token=${token}`;
                   }}
                 >
                    <Icon name="check-circle" size={18} color="white" />
