@@ -18,7 +18,6 @@ export default function PatientPortalHomePage() {
   const [showSplash, setShowSplash] = useState(true);
   const [searchType, setSearchType] = useState('data');
   const [formData, setFormData] = useState({ name: '', lastName: '', documentNumber: '', doctorId: '', specialization: '' });
-  const [searchDoctors, setSearchDoctors] = useState([]);
   const [appointmentCode, setAppointmentCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,6 +41,7 @@ export default function PatientPortalHomePage() {
   const [doctorAvailability, setDoctorAvailability] = useState({ workingDays: [], vacations: [] });
   const [isExistingCustomer, setIsExistingCustomer] = useState(false);
   const [autofilledSuccess, setAutofilledSuccess] = useState(false);
+  const [allDoctors, setAllDoctors] = useState([]);
 
   useEffect(() => {
     if (activeTab === 'book' && "geolocation" in navigator) {
@@ -53,6 +53,7 @@ export default function PatientPortalHomePage() {
 
   useEffect(() => {
     loadSpecializations();
+    loadAllDoctors();
   }, []);
 
   useEffect(() => {
@@ -170,6 +171,13 @@ export default function PatientPortalHomePage() {
     } catch (err) { }
   };
 
+  const loadAllDoctors = async () => {
+    try {
+      const response = await appointmentAPI.getAllPublicDoctors();
+      if (response.success) setAllDoctors(response.doctors);
+    } catch (err) { }
+  };
+
   const loadDoctors = async (specialization) => {
     try {
       const response = await appointmentAPI.getPublicDoctors(specialization);
@@ -203,17 +211,6 @@ export default function PatientPortalHomePage() {
     setPatientData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSearchSpecializationChange = async (spec) => {
-    setFormData(prev => ({ ...prev, specialization: spec, doctorId: '' }));
-    if (spec) {
-      try {
-        const response = await appointmentAPI.getPublicDoctors(spec);
-        if (response.success) setSearchDoctors(response.doctors);
-      } catch (err) { setSearchDoctors([]); }
-    } else {
-      setSearchDoctors([]);
-    }
-  };
 
   const handleBookAppointment = async (e) => {
     e.preventDefault();
@@ -347,32 +344,31 @@ export default function PatientPortalHomePage() {
                   <form onSubmit={handleSubmitSearch}>
                     {searchType === 'data' ? (
                       <div className={styles.formGrid}>
-                        <div className={styles.formGroup}>
-                          <label>RUBRO / CATEGORÍA</label>
-                          <select 
-                            value={formData.specialization} 
-                            onChange={(e) => handleSearchSpecializationChange(e.target.value)}
-                            required
-                          >
-                            <option value="">Selecciona...</option>
-                            {specializations.map(s => <option key={s} value={s}>{s}</option>)}
-                          </select>
-                        </div>
-                        <div className={styles.formGroup}>
+                        <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                           <label>PROFESIONAL / LOCAL</label>
                           <select 
                             value={formData.doctorId} 
                             onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
-                            disabled={!formData.specialization}
                             required
                           >
                             <option value="">Selecciona...</option>
-                            {searchDoctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            {allDoctors.map(d => (
+                              <option key={d.id} value={d.id}>
+                                {d.name} ({d.specialization})
+                              </option>
+                            ))}
                           </select>
                         </div>
-                        <div className={styles.formGroup}><label>NOMBRE</label><input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required /></div>
-                        <div className={styles.formGroup}><label>APELLIDO</label><input type="text" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} required /></div>
-                        <div className={`${styles.formGroup} ${styles.fullWidth}`}><label>DNI</label><input type="text" value={formData.documentNumber} onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })} required /></div>
+                        <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                          <label>DNI DEL PACIENTE</label>
+                          <input 
+                            type="text" 
+                            value={formData.documentNumber} 
+                            onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })} 
+                            placeholder="Ej: 12345678"
+                            required 
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div className={styles.formGroup}><label>CÓDIGO</label><input type="text" value={appointmentCode} onChange={(e) => setAppointmentCode(e.target.value)} required /></div>

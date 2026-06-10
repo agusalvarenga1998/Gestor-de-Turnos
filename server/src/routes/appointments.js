@@ -53,6 +53,30 @@ router.get('/public/specializations', async (req, res) => {
   }
 });
 
+// Obtener todos los médicos aprobados (sin filtrar por especialidad)
+router.get('/public/all-doctors', async (req, res) => {
+  try {
+    console.log('🔓 Obtener todos los médicos aprobados');
+    const result = await query(
+      `SELECT id, name, specialization, clinic_name, phone, address, latitude, longitude, booking_fee, appointment_price, plan_type
+       FROM doctors
+       WHERE status = 'approved'
+       AND subscription_status IN ('active', 'trial')
+       ORDER BY name ASC`
+    );
+    res.json({
+      success: true,
+      doctors: result.rows
+    });
+  } catch (error) {
+    console.error('Error obteniendo todos los médicos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener médicos'
+    });
+  }
+});
+
 // Obtener médicos por especialidad
 router.get('/public/doctors/:specialization', async (req, res) => {
   try {

@@ -152,6 +152,12 @@ export const appointmentAPI = {
     return response.data;
   },
 
+  getAllPublicDoctors: async () => {
+    // Obtener todos los médicos aprobados (sin autenticación)
+    const response = await axios.get(`${API_BASE_URL}/api/appointments/public/all-doctors`);
+    return response.data;
+  },
+
   getPublicAvailableSlots: async (doctorId, date, duration = 30) => {
     // Obtener horarios disponibles (sin autenticación)
     const response = await axios.get(`${API_BASE_URL}/api/appointments/public/available-slots/${doctorId}/${date}?duration=${duration}`);
