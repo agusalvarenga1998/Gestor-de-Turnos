@@ -35,8 +35,9 @@ export default function PatientPortalHomePage() {
   const [bookingError, setBookingError] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
-  const [patientData, setPatientData] = useState({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
+  const [patientData, setPatientData] = useState({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', insurancePlanId: '', paymentMethod: 'online' });
   const [doctorInsurances, setDoctorInsurances] = useState([]);
+  const [selectedInsurancePlans, setSelectedInsurancePlans] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [doctorAvailability, setDoctorAvailability] = useState({ workingDays: [], vacations: [] });
   const [isExistingCustomer, setIsExistingCustomer] = useState(false);
@@ -208,7 +209,17 @@ export default function PatientPortalHomePage() {
 
   const handlePatientDataChange = (e) => {
     const { name, value } = e.target;
-    setPatientData(prev => ({ ...prev, [name]: value }));
+    if (name === 'insuranceId') {
+      const selectedIns = doctorInsurances.find(i => i.id === value);
+      setSelectedInsurancePlans(selectedIns?.plans || []);
+      setPatientData(prev => ({
+        ...prev,
+        insuranceId: value,
+        insurancePlanId: '' // reset plan when insurance changes
+      }));
+    } else {
+      setPatientData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
 
@@ -231,6 +242,7 @@ export default function PatientPortalHomePage() {
         patientDocumentNumber: patientData.documentNumber,
         patientPhone: patientData.phone,
         insuranceId: patientData.insuranceId,
+        insurancePlanId: patientData.insurancePlanId,
         paymentMethod: patientData.paymentMethod
       });
 
@@ -257,7 +269,8 @@ export default function PatientPortalHomePage() {
     setAppointmentDate('');
     setAvailableSlots([]);
     setSelectedSlot('');
-    setPatientData({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
+    setPatientData({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', insurancePlanId: '', paymentMethod: 'online' });
+    setSelectedInsurancePlans([]);
     setError('');
     setBookingError('');
     setIsExistingCustomer(false);
@@ -554,6 +567,25 @@ export default function PatientPortalHomePage() {
                                         {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                                       </select>
                                     </div>
+
+                                    {patientData.insuranceId && selectedInsurancePlans.length > 0 && (
+                                      <div className={`${styles.formGroup} ${styles.fullWidth}`} style={{ marginTop: '10px' }}>
+                                        <label>PLAN DE OBRA SOCIAL*</label>
+                                        <select 
+                                          name="insurancePlanId" 
+                                          value={patientData.insurancePlanId || ''} 
+                                          onChange={handlePatientDataChange}
+                                          required
+                                        >
+                                          <option value="">Selecciona tu plan...</option>
+                                          {selectedInsurancePlans.map(p => (
+                                            <option key={p.id} value={p.id}>
+                                              {p.name} ({p.coverage_type === 'percentage' ? `${parseFloat(p.coverage_value)}%` : `$${parseFloat(p.coverage_value)}`})
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    )}
                                   </>
                                 )}
                               </>
@@ -570,6 +602,25 @@ export default function PatientPortalHomePage() {
                                     {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                                   </select>
                                 </div>
+
+                                {patientData.insuranceId && selectedInsurancePlans.length > 0 && (
+                                  <div className={`${styles.formGroup} ${styles.fullWidth}`} style={{ marginTop: '10px' }}>
+                                    <label>PLAN DE OBRA SOCIAL*</label>
+                                    <select 
+                                      name="insurancePlanId" 
+                                      value={patientData.insurancePlanId || ''} 
+                                      onChange={handlePatientDataChange}
+                                      required
+                                    >
+                                      <option value="">Selecciona tu plan...</option>
+                                      {selectedInsurancePlans.map(p => (
+                                        <option key={p.id} value={p.id}>
+                                          {p.name} ({p.coverage_type === 'percentage' ? `${parseFloat(p.coverage_value)}%` : `$${parseFloat(p.coverage_value)}`})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                )}
                               </>
                             )}
 
@@ -614,19 +665,31 @@ export default function PatientPortalHomePage() {
                                 const d = doctors.find(doc => doc.id === selectedDoctor);
                                 const servicePrice = parseFloat(selectedService.price);
                                 
-                                // Obtener descuento de obra social si existe
                                 const selectedInsurance = doctorInsurances.find(i => i.id === patientData.insuranceId);
                                 let insuranceDiscount = 0;
+                                let selectedPlanName = '';
                                 if (selectedInsurance) {
-                                  const specificCoverage = selectedInsurance.coverages?.find(c => c.service_id === selectedService.id);
-                                  if (specificCoverage) {
-                                    if (specificCoverage.coverage_type === 'percentage') {
-                                      insuranceDiscount = servicePrice * (parseFloat(specificCoverage.coverage_value) / 100);
-                                    } else {
-                                      insuranceDiscount = parseFloat(specificCoverage.coverage_value);
+                                  if (patientData.insurancePlanId) {
+                                    const selectedPlan = selectedInsurance.plans?.find(p => p.id === patientData.insurancePlanId);
+                                    if (selectedPlan) {
+                                      selectedPlanName = selectedPlan.name;
+                                      if (selectedPlan.coverage_type === 'percentage') {
+                                        insuranceDiscount = servicePrice * (parseFloat(selectedPlan.coverage_value) / 100);
+                                      } else {
+                                        insuranceDiscount = parseFloat(selectedPlan.coverage_value);
+                                      }
                                     }
                                   } else {
-                                    insuranceDiscount = parseFloat(selectedInsurance.additional_fee || 0);
+                                    const specificCoverage = selectedInsurance.coverages?.find(c => c.service_id === selectedService.id);
+                                    if (specificCoverage) {
+                                      if (specificCoverage.coverage_type === 'percentage') {
+                                        insuranceDiscount = servicePrice * (parseFloat(specificCoverage.coverage_value) / 100);
+                                      } else {
+                                        insuranceDiscount = parseFloat(specificCoverage.coverage_value);
+                                      }
+                                    } else {
+                                      insuranceDiscount = parseFloat(selectedInsurance.additional_fee || 0);
+                                    }
                                   }
                                 }
 
@@ -636,9 +699,7 @@ export default function PatientPortalHomePage() {
                                   : parseFloat(d?.booking_fee || 0);
                                 
                                 const totalCustomerCost = servicePrice + systemFee - insuranceDiscount;
-                                // Si la OS cubre el total, el cliente paga 0 ahora
                                 const totalNow = insuranceDiscount >= servicePrice ? 0 : (professionalFee + systemFee);
-                                // Lo que queda para el local (mínimo 0)
                                 const balanceInLocal = Math.max(0, servicePrice - professionalFee - insuranceDiscount);
 
                                 return (
@@ -656,7 +717,7 @@ export default function PatientPortalHomePage() {
                                     
                                     {insuranceDiscount > 0 && (
                                       <div className={styles.paymentRow} style={{ color: '#10b981', fontWeight: '500' }}>
-                                        <span>Cobertura {selectedInsurance.name}:</span>
+                                        <span>Cobertura {selectedInsurance.name} {selectedPlanName ? `(${selectedPlanName})` : ''}:</span>
                                         <span>-${insuranceDiscount.toLocaleString()}</span>
                                       </div>
                                     )}

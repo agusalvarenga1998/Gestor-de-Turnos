@@ -24,6 +24,18 @@ export default function InsurancePage() {
   const [savingCoverage, setSavingCoverage] = useState(false);
   const [importErrors, setImportErrors] = useState(null);
 
+  // Estado para gestión de planes
+  const [showPlansModal, setShowPlansModal] = useState(false);
+  const [configuringPlansInsurance, setConfiguringPlansInsurance] = useState(null);
+  const [plans, setPlans] = useState([]);
+  const [planFormData, setPlanFormData] = useState({
+    name: '',
+    coverageType: 'fixed_amount',
+    coverageValue: ''
+  });
+  const [editingPlanId, setEditingPlanId] = useState(null);
+  const [savingPlan, setSavingPlan] = useState(false);
+
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -212,6 +224,103 @@ export default function InsurancePage() {
     } finally {
       setSavingCoverage(null);
     }
+  };
+
+  // Lógica para Gestión de Planes
+  const handleConfigurePlans = async (insurance) => {
+    if (!insurance || !insurance.id) return;
+    setConfiguringPlansInsurance(insurance);
+    setLoading(true);
+    try {
+      const response = await insuranceAPI.getPlans(insurance.id);
+      if (response.success) {
+        setPlans(response.plans || []);
+        resetPlanForm();
+        setShowPlansModal(true);
+      }
+    } catch (err) {
+      console.error('Error cargando planes:', err);
+      alert('Error al cargar los planes de la obra social');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePlanFormChange = (e) => {
+    const { name, value } = e.target;
+    setPlanFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSavePlan = async (e) => {
+    e.preventDefault();
+    if (!planFormData.name || planFormData.name.trim() === '') {
+      alert('Por favor ingresa el nombre del plan');
+      return;
+    }
+
+    setSavingPlan(true);
+    try {
+      let response;
+      const data = {
+        name: planFormData.name,
+        coverageType: planFormData.coverageType,
+        coverageValue: parseFloat(planFormData.coverageValue) || 0
+      };
+
+      if (editingPlanId) {
+        response = await insuranceAPI.updatePlan(editingPlanId, data);
+      } else {
+        response = await insuranceAPI.createPlan(configuringPlansInsurance.id, data);
+      }
+
+      if (response.success) {
+        // Recargar planes
+        const plansRes = await insuranceAPI.getPlans(configuringPlansInsurance.id);
+        if (plansRes.success) setPlans(plansRes.plans || []);
+        resetPlanForm();
+      }
+    } catch (err) {
+      console.error('Error guardando plan:', err);
+      alert(err.response?.data?.message || 'Error al guardar el plan');
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const handleEditPlan = (plan) => {
+    setPlanFormData({
+      name: plan.name,
+      coverageType: plan.coverage_type,
+      coverageValue: plan.coverage_value
+    });
+    setEditingPlanId(plan.id);
+  };
+
+  const handleDeletePlan = async (planId) => {
+    if (!window.confirm('¿Confirmas que deseas eliminar este plan?')) return;
+
+    try {
+      const response = await insuranceAPI.deletePlan(planId);
+      if (response.success) {
+        setPlans(prev => prev.filter(p => p.id !== planId));
+        if (editingPlanId === planId) resetPlanForm();
+      }
+    } catch (err) {
+      console.error('Error eliminando plan:', err);
+      alert('Error al eliminar el plan');
+    }
+  };
+
+  const resetPlanForm = () => {
+    setPlanFormData({
+      name: '',
+      coverageType: 'fixed_amount',
+      coverageValue: ''
+    });
+    setEditingPlanId(null);
   };
 
   const handleExportExcel = async () => {
@@ -465,6 +574,141 @@ export default function InsurancePage() {
           </div>
         )}
 
+        {/* Modal de Gestión de Planes */}
+        {showPlansModal && configuringPlansInsurance && (
+          <div className={styles.modal}>
+            <div className={`${styles.modalContent} ${styles.largeModal}`}>
+              <div className={styles.modalHeader}>
+                <div>
+                  <h2>Gestionar Planes: {configuringPlansInsurance.name}</h2>
+                  <p className={styles.modalSubtitle}>Crea o edita los diferentes planes de esta obra social.</p>
+                </div>
+                <button
+                  onClick={() => setShowPlansModal(false)}
+                  className={styles.closeBtn}
+                >
+                  <Icon name="x" size={20} color="currentColor" />
+                </button>
+              </div>
+
+              {/* Formulario para Crear / Editar Plan */}
+              <form onSubmit={handleSavePlan} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', background: '#f8fafc', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+                <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>Nombre del Plan*</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={planFormData.name}
+                    onChange={handlePlanFormChange}
+                    placeholder="Ej: OSDE 210, Galeno Oro"
+                    required
+                    style={{ padding: '8px 12px', border: '1px solid var(--ticket-border)', borderRadius: '6px' }}
+                  />
+                </div>
+                
+                <div style={{ flex: 1.5, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>Tipo Cobertura</label>
+                  <select
+                    name="coverageType"
+                    value={planFormData.coverageType}
+                    onChange={handlePlanFormChange}
+                    style={{ padding: '8px 12px', border: '1px solid var(--ticket-border)', borderRadius: '6px', height: '38px' }}
+                  >
+                    <option value="fixed_amount">Monto Fijo ($)</option>
+                    <option value="percentage">Porcentaje (%)</option>
+                  </select>
+                </div>
+
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>Valor*</label>
+                  <input
+                    type="number"
+                    name="coverageValue"
+                    value={planFormData.coverageValue}
+                    onChange={handlePlanFormChange}
+                    placeholder="0"
+                    step="0.01"
+                    min="0"
+                    required
+                    style={{ padding: '8px 12px', border: '1px solid var(--ticket-border)', borderRadius: '6px' }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={savingPlan}
+                  className={styles.saveCoverageBtn}
+                  style={{ height: '38px', padding: '0 15px' }}
+                >
+                  {savingPlan ? '...' : (editingPlanId ? 'Guardar' : 'Agregar')}
+                </button>
+
+                {editingPlanId && (
+                  <button
+                    type="button"
+                    onClick={resetPlanForm}
+                    className={styles.cancelBtn}
+                    style={{ height: '38px', padding: '0 10px', background: 'transparent', border: 'none', color: 'var(--text-muted)' }}
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </form>
+
+              {/* Lista de Planes Existentes */}
+              <div className={styles.coverageList}>
+                <div className={styles.coverageHeader} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '10px 15px', fontWeight: 'bold', borderBottom: '2px solid var(--ticket-border)' }}>
+                  <span>Nombre del Plan</span>
+                  <span>Tipo Cobertura</span>
+                  <span>Valor Cobertura</span>
+                  <span>Acciones</span>
+                </div>
+                
+                {plans.length === 0 ? (
+                  <p className={styles.emptyServices} style={{ padding: '20px 15px' }}>Esta obra social aún no tiene planes configurados.</p>
+                ) : (
+                  plans.map(plan => (
+                    <div key={plan.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '12px 15px', alignItems: 'center', borderBottom: '1px solid var(--ticket-border)' }}>
+                      <strong style={{ color: 'var(--text-main)' }}>{plan.name}</strong>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                        {plan.coverage_type === 'percentage' ? 'Porcentaje (%)' : 'Monto Fijo ($)'}
+                      </span>
+                      <strong style={{ color: 'var(--primary)' }}>
+                        {plan.coverage_type === 'percentage' ? `${parseFloat(plan.coverage_value)}%` : `$${parseFloat(plan.coverage_value).toFixed(2)}`}
+                      </strong>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleEditPlan(plan)}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                          title="Editar"
+                        >
+                          <Icon name="edit" size={16} color="currentColor" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePlan(plan.id)}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--danger)' }}
+                          title="Eliminar"
+                        >
+                          <Icon name="trash" size={16} color="currentColor" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              <div className={styles.modalFooter}>
+                <button 
+                  onClick={() => setShowPlansModal(false)}
+                  className={styles.doneBtn}
+                >
+                  Finalizar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Insurance Table */}
         {insurances.length === 0 ? (
           <div className={styles.emptyState}>
@@ -497,6 +741,15 @@ export default function InsurancePage() {
                       ${parseFloat(insurance.additional_fee || 0).toFixed(2)}
                     </td>
                     <td className={styles.actions}>
+                      <button
+                        onClick={() => handleConfigurePlans(insurance)}
+                        className={styles.configBtn}
+                        title="Gestionar Planes de Cobertura"
+                        style={{ marginRight: '6px' }}
+                      >
+                        <Icon name="list" size={18} color="currentColor" />
+                        Planes
+                      </button>
                       <button
                         onClick={() => handleConfigureCoverage(insurance)}
                         className={styles.configBtn}

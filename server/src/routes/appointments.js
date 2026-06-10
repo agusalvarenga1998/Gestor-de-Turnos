@@ -229,6 +229,7 @@ router.post('/public/create', async (req, res) => {
       patientDocumentNumber,
       patientPhone,
       insuranceId,
+      insurancePlanId,
       paymentMethod = 'online' // 'online' o 'cash'
     } = req.body;
 
@@ -289,40 +290,55 @@ router.post('/public/create', async (req, res) => {
     
     let insuranceDiscount = 0;
     if (insuranceId) {
-      // 1. Intentar buscar cobertura específica para este servicio
-      if (serviceId) {
-        const serviceCoverageCheck = await query(
-          'SELECT coverage_type, coverage_value FROM insurance_service_coverage WHERE insurance_company_id = $1 AND service_id = $2 AND is_active = TRUE',
-          [insuranceId, serviceId]
+      if (insurancePlanId) {
+        // A. Usar cobertura específica del plan seleccionado
+        const planCheck = await query(
+          'SELECT coverage_type, coverage_value FROM insurance_plans WHERE id = $1 AND insurance_company_id = $2',
+          [insurancePlanId, insuranceId]
         );
-        
-        if (serviceCoverageCheck.rows.length > 0) {
-          const coverage = serviceCoverageCheck.rows[0];
-          if (coverage.coverage_type === 'percentage') {
-            insuranceDiscount = (fullPrice * parseFloat(coverage.coverage_value)) / 100;
+        if (planCheck.rows.length > 0) {
+          const plan = planCheck.rows[0];
+          if (plan.coverage_type === 'percentage') {
+            insuranceDiscount = (fullPrice * parseFloat(plan.coverage_value)) / 100;
           } else {
-            insuranceDiscount = parseFloat(coverage.coverage_value);
+            insuranceDiscount = parseFloat(plan.coverage_value);
           }
-          console.log(`🛡️ Cobertura específica encontrada: ${coverage.coverage_type} ${coverage.coverage_value} (Total: $${insuranceDiscount})`);
+          console.log(`🛡️ Cobertura por Plan encontrada: ${plan.coverage_type} ${plan.coverage_value} (Total: $${insuranceDiscount})`);
+        }
+      } else {
+        // B. Lógica anterior (coberturas por servicio o global)
+        if (serviceId) {
+          const serviceCoverageCheck = await query(
+            'SELECT coverage_type, coverage_value FROM insurance_service_coverage WHERE insurance_company_id = $1 AND service_id = $2 AND is_active = TRUE',
+            [insuranceId, serviceId]
+          );
+          
+          if (serviceCoverageCheck.rows.length > 0) {
+            const coverage = serviceCoverageCheck.rows[0];
+            if (coverage.coverage_type === 'percentage') {
+              insuranceDiscount = (fullPrice * parseFloat(coverage.coverage_value)) / 100;
+            } else {
+              insuranceDiscount = parseFloat(coverage.coverage_value);
+            }
+            console.log(`🛡️ Cobertura específica encontrada: ${coverage.coverage_type} ${coverage.coverage_value} (Total: $${insuranceDiscount})`);
+          } else {
+            const insuranceCheck = await query(
+              'SELECT additional_fee FROM insurance_companies WHERE id = $1',
+              [insuranceId]
+            );
+            if (insuranceCheck.rows.length > 0) {
+              insuranceDiscount = parseFloat(insuranceCheck.rows[0].additional_fee) || 0;
+              console.log(`🛡️ Usando cobertura global de obra social: $${insuranceDiscount}`);
+            }
+          }
         } else {
-          // 2. Si no hay específica, usar el monto global de la obra social
           const insuranceCheck = await query(
             'SELECT additional_fee FROM insurance_companies WHERE id = $1',
             [insuranceId]
           );
           if (insuranceCheck.rows.length > 0) {
             insuranceDiscount = parseFloat(insuranceCheck.rows[0].additional_fee) || 0;
-            console.log(`🛡️ Usando cobertura global de obra social: $${insuranceDiscount}`);
           }
-        }
-      } else {
-        // Fallback si no hay serviceId (no debería pasar con el nuevo flujo)
-        const insuranceCheck = await query(
-          'SELECT additional_fee FROM insurance_companies WHERE id = $1',
-          [insuranceId]
-        );
-        if (insuranceCheck.rows.length > 0) {
-          insuranceDiscount = parseFloat(insuranceCheck.rows[0].additional_fee) || 0;
         }
       }
     }
@@ -403,6 +419,7 @@ router.post('/public/create', async (req, res) => {
         appointment_time,
         status,
         insurance_company_id,
+        insurance_plan_id,
         total_amount,
         system_fee,
         payment_status,
@@ -413,7 +430,7 @@ router.post('/public/create', async (req, res) => {
         service_id,
         duration_minutes
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING id, appointment_date, appointment_time, total_amount, appointment_code`,
       [
         doctorId,
@@ -422,6 +439,7 @@ router.post('/public/create', async (req, res) => {
         appointmentTime,
         totalToPayNow > 0 ? 'pending_payment' : 'pending',
         insuranceId || null,
+        insurancePlanId || null,
         totalToPayNow,
         systemFee,
         (isCash || totalToPayNow > 0) ? 'pending' : 'paid',
@@ -659,11 +677,15 @@ router.post('/public/search', async (req, res) => {
         p.email as patient_email,
         d.name as doctor_name,
         d.specialization as doctor_specialization,
-        s.is_online
+        s.is_online,
+        ic.name as insurance_name,
+        ip.name as insurance_plan_name
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       JOIN doctors d ON a.doctor_id = d.id
       LEFT JOIN services s ON a.service_id = s.id
+      LEFT JOIN insurance_companies ic ON a.insurance_company_id = ic.id
+      LEFT JOIN insurance_plans ip ON a.insurance_plan_id = ip.id
       WHERE a.doctor_id = $1 ${patientClause}
       AND a.status IN ('scheduled', 'pending', 'pending_payment', 'completed')
       ORDER BY 
@@ -847,11 +869,15 @@ router.get('/public/:token', async (req, res) => {
         p.document_number as patient_dni,
         d.name as doctor_name,
         d.specialization as doctor_specialization,
-        s.is_online
+        s.is_online,
+        ic.name as insurance_name,
+        ip.name as insurance_plan_name
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       JOIN doctors d ON a.doctor_id = d.id
       LEFT JOIN services s ON a.service_id = s.id
+      LEFT JOIN insurance_companies ic ON a.insurance_company_id = ic.id
+      LEFT JOIN insurance_plans ip ON a.insurance_plan_id = ip.id
       WHERE a.confirmation_token::text = $1 OR a.id::text = $1 OR a.appointment_code = $1`,
       [token]
     );

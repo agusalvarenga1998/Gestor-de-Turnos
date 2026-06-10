@@ -618,7 +618,10 @@ export default function AppointmentsPage() {
                       <td className={styles.reasonCol} data-label="Motivo / OS">
                         <div className={styles.reasonText}>{appt.reason_for_visit || 'Visita general'}</div>
                         {appt.insurance_name && (
-                          <div className={styles.insuranceBadge}>{appt.insurance_name}</div>
+                          <div className={styles.insuranceBadge}>
+                            {appt.insurance_name}
+                            {appt.insurance_plan_name ? ` (${appt.insurance_plan_name})` : ''}
+                          </div>
                         )}
                       </td>
                       <td className={styles.amount} data-label="Total">

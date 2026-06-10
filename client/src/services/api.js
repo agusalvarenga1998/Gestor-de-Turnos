@@ -348,6 +348,22 @@ export const insuranceAPI = {
       }
     });
     return response.data;
+  },
+  getPlans: async (insuranceId) => {
+    const response = await apiClient.get(`/api/insurance/${insuranceId}/plans`);
+    return response.data;
+  },
+  createPlan: async (insuranceId, data) => {
+    const response = await apiClient.post(`/api/insurance/${insuranceId}/plans`, data);
+    return response.data;
+  },
+  updatePlan: async (planId, data) => {
+    const response = await apiClient.patch(`/api/insurance/plans/${planId}`, data);
+    return response.data;
+  },
+  deletePlan: async (planId) => {
+    const response = await apiClient.delete(`/api/insurance/plans/${planId}`);
+    return response.data;
   }
 };
 

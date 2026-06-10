@@ -30,4 +30,10 @@ router.put('/patient/:patientId', insuranceController.setPatientInsurances);
 router.get('/:id/coverages', insuranceController.getServiceCoverages);
 router.post('/:id/coverages', insuranceController.setServiceCoverage);
 
+// Rutas para planes de obras sociales
+router.get('/:id/plans', insuranceController.getPlans);
+router.post('/:id/plans', insuranceController.createPlan);
+router.patch('/plans/:planId', insuranceController.updatePlan);
+router.delete('/plans/:planId', insuranceController.deletePlan);
+
 export default router;

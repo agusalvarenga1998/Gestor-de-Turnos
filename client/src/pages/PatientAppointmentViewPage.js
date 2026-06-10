@@ -347,6 +347,15 @@ export default function PatientAppointmentViewPage() {
                 <span className={styles.dataLabel}>IDENTIFICACIÓN</span>
                 <span className={styles.dataValue}>{appointment.patient_dni || '---'}</span>
               </div>
+              {appointment.insurance_name && (
+                <div className={styles.dataRow}>
+                  <span className={styles.dataLabel}>OBRA SOCIAL</span>
+                  <span className={styles.dataValue}>
+                    {appointment.insurance_name}
+                    {appointment.insurance_plan_name ? ` (${appointment.insurance_plan_name})` : ''}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Código QR / Alfanumérico */}

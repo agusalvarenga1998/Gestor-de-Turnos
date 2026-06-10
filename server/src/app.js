@@ -174,7 +174,26 @@ httpServer.listen(PORT, HOST, async () => {
       ON CONFLICT (key) DO NOTHING
     `);
 
-    console.log('✓ Migraciones de is_online, meet_link y pricing_plans aplicadas');
+    // Crear tabla de planes de obras sociales si no existe
+    await query(`
+      CREATE TABLE IF NOT EXISTS insurance_plans (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        insurance_company_id UUID NOT NULL REFERENCES insurance_companies(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        coverage_type VARCHAR(20) NOT NULL DEFAULT 'fixed_amount',
+        coverage_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(insurance_company_id, name)
+      )
+    `);
+
+    // Añadir columna de plan de obra social a citas
+    await query(`
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS insurance_plan_id UUID REFERENCES insurance_plans(id)
+    `);
+
+    console.log('✓ Migraciones de is_online, meet_link, pricing_plans e insurance_plans aplicadas');
   } catch (err) {
     console.error('⚠️ Error en auto-migración:', err.message);
   }

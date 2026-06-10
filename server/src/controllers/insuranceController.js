@@ -1,4 +1,6 @@
 import * as insuranceService from '../services/insuranceService.js';
+import * as insurancePlanService from '../services/insurancePlanService.js';
+import { query } from '../db/config.js';
 import * as XLSX from 'xlsx';
 
 export const exportInsuranceCoverages = async (req, res) => {
@@ -288,10 +290,13 @@ export const getPublicInsurances = async (req, res) => {
     const { doctorId } = req.params;
     const insurances = await insuranceService.getInsurancesByDoctor(doctorId);
     
-    // Adjuntar las coberturas específicas por servicio para cada obra social
+    // Adjuntar las coberturas específicas por servicio y los planes para cada obra social
     for (let insurance of insurances) {
       const coverages = await insuranceService.getInsuranceServiceCoverages(insurance.id);
       insurance.coverages = coverages || [];
+      
+      const plans = await insurancePlanService.getPlansByInsurance(insurance.id);
+      insurance.plans = plans || [];
     }
 
     res.json({
@@ -366,6 +371,93 @@ export const setServiceCoverage = async (req, res) => {
       success: false,
       message: 'Error al configurar cobertura'
     });
+  }
+};
+
+export const getPlans = async (req, res) => {
+  try {
+    const { id } = req.params; // insurance company id
+    const plans = await insurancePlanService.getPlansByInsurance(id);
+    res.json({ success: true, plans });
+  } catch (error) {
+    console.error('Error obteniendo planes de obra social:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener planes' });
+  }
+};
+
+export const createPlan = async (req, res) => {
+  try {
+    const { id } = req.params; // insurance company id
+    const { name, coverageType, coverageValue } = req.body;
+    const doctorId = req.user.id;
+
+    // Verificar que la obra social pertenece al doctor
+    const insuranceCheck = await query(
+      'SELECT doctor_id FROM insurance_companies WHERE id = $1',
+      [id]
+    );
+    if (insuranceCheck.rows.length === 0 || insuranceCheck.rows[0].doctor_id !== doctorId) {
+      return res.status(403).json({ success: false, message: 'No tienes permiso para agregar planes a esta obra social' });
+    }
+
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ success: false, message: 'El nombre del plan es requerido' });
+    }
+
+    const plan = await insurancePlanService.createPlan(
+      id,
+      name,
+      coverageType || 'fixed_amount',
+      parseFloat(coverageValue) || 0
+    );
+
+    res.status(201).json({ success: true, plan });
+  } catch (error) {
+    console.error('Error creando plan:', error);
+    res.status(500).json({ success: false, message: 'Error al crear plan' });
+  }
+};
+
+export const updatePlan = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const { name, coverageType, coverageValue } = req.body;
+    const doctorId = req.user.id;
+
+    const plan = await insurancePlanService.getPlanById(planId);
+    if (!plan || plan.doctor_id !== doctorId) {
+      return res.status(403).json({ success: false, message: 'No tienes permiso para modificar este plan' });
+    }
+
+    const updated = await insurancePlanService.updatePlan(planId, {
+      name,
+      coverage_type: coverageType,
+      coverage_value: parseFloat(coverageValue)
+    });
+
+    res.json({ success: true, plan: updated });
+  } catch (error) {
+    console.error('Error actualizando plan:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar plan' });
+  }
+};
+
+export const deletePlan = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const doctorId = req.user.id;
+
+    const plan = await insurancePlanService.getPlanById(planId);
+    if (!plan || plan.doctor_id !== doctorId) {
+      return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar este plan' });
+    }
+
+    await insurancePlanService.deletePlan(planId);
+
+    res.json({ success: true, message: 'Plan eliminado exitosamente' });
+  } catch (error) {
+    console.error('Error eliminando plan:', error);
+    res.status(500).json({ success: false, message: 'Error al eliminar plan' });
   }
 };
 
