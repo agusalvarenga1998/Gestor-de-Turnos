@@ -40,6 +40,8 @@ export default function PatientPortalHomePage() {
   const [doctorInsurances, setDoctorInsurances] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [doctorAvailability, setDoctorAvailability] = useState({ workingDays: [], vacations: [] });
+  const [isExistingCustomer, setIsExistingCustomer] = useState(false);
+  const [autofilledSuccess, setAutofilledSuccess] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'book' && "geolocation" in navigator) {
@@ -78,7 +80,7 @@ export default function PatientPortalHomePage() {
   useEffect(() => {
     const fetchPatientDataByDni = async () => {
       const dni = patientData.documentNumber?.trim();
-      if (!selectedDoctor || !dni || dni.length < 7 || dni.length > 10) {
+      if (!isExistingCustomer || !selectedDoctor || !dni || dni.length < 7 || dni.length > 10) {
         return;
       }
 
@@ -94,6 +96,7 @@ export default function PatientPortalHomePage() {
             email: response.patient.email,
             phone: response.patient.phone
           }));
+          setAutofilledSuccess(true);
         }
       } catch (err) {
         console.error('Error al autocompletar datos de paciente:', err);
@@ -105,7 +108,46 @@ export default function PatientPortalHomePage() {
     }, 600); // Debounce de 600ms para esperar que termine de escribir
 
     return () => clearTimeout(delayDebounceFn);
-  }, [patientData.documentNumber, selectedDoctor]);
+  }, [patientData.documentNumber, selectedDoctor, isExistingCustomer]);
+
+  const handleDniSearch = async () => {
+    const dni = patientData.documentNumber?.trim();
+    if (!selectedDoctor) {
+      setBookingError('Por favor selecciona un profesional primero');
+      return;
+    }
+    if (!dni || dni.length < 7 || dni.length > 10) {
+      setBookingError('Por favor ingresa un DNI válido (entre 7 y 10 dígitos)');
+      return;
+    }
+
+    setBookingLoading(true);
+    setBookingError('');
+    try {
+      console.log(`Buscando datos del paciente para DNI: ${dni}`);
+      const response = await appointmentAPI.getPublicPatientDetails(selectedDoctor, dni);
+      if (response.success && response.patient) {
+        console.log('Paciente encontrado, autocompletando datos:', response.patient);
+        setPatientData(prev => ({
+          ...prev,
+          name: response.patient.name,
+          lastName: response.patient.lastName,
+          email: response.patient.email,
+          phone: response.patient.phone
+        }));
+        setAutofilledSuccess(true);
+      } else {
+        setBookingError('No se encontró ningún paciente con ese DNI.');
+        setAutofilledSuccess(false);
+      }
+    } catch (err) {
+      console.error('Error al buscar datos de paciente por DNI:', err);
+      setBookingError(err.response?.data?.message || 'No se encontró ningún paciente con ese DNI.');
+      setAutofilledSuccess(false);
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   const loadDoctorAvailability = async (doctorId) => {
     try {
@@ -221,6 +263,8 @@ export default function PatientPortalHomePage() {
     setPatientData({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
     setError('');
     setBookingError('');
+    setIsExistingCustomer(false);
+    setAutofilledSuccess(false);
   };
 
   const handleSubmitSearch = async (e) => {
