@@ -659,7 +659,17 @@ router.post('/public/search', async (req, res) => {
       JOIN doctors d ON a.doctor_id = d.id
       WHERE a.doctor_id = $1 ${patientClause}
       AND a.status IN ('scheduled', 'pending', 'pending_payment', 'completed')
-      ORDER BY a.appointment_date DESC, a.appointment_time DESC
+      ORDER BY 
+        CASE 
+          WHEN a.appointment_date = CURRENT_DATE THEN 0
+          WHEN a.appointment_date > CURRENT_DATE THEN 1
+          ELSE 2
+        END ASC,
+        CASE 
+          WHEN a.appointment_date >= CURRENT_DATE THEN (a.appointment_date - CURRENT_DATE)
+          ELSE (CURRENT_DATE - a.appointment_date)
+        END ASC,
+        a.appointment_time ASC
       LIMIT 1`,
       params
     );
