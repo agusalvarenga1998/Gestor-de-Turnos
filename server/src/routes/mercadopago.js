@@ -98,6 +98,7 @@ router.get('/oauth/callback', async (req, res) => {
     const clientId = getClientId();
     const clientSecret = getClientSecret();
     const redirectUri = getRedirectUri(req);
+    const platformToken = process.env.MP_ACCESS_TOKEN || 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647';
 
     console.log(`Exchanging code for token. Client ID: ${clientId}, Redirect: ${redirectUri}`);
 
@@ -114,7 +115,8 @@ router.get('/oauth/callback', async (req, res) => {
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'accept': 'application/json'
+          'accept': 'application/json',
+          'Authorization': `Bearer ${platformToken}`
         }
       }
     );
