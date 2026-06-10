@@ -605,8 +605,25 @@
 
 @media (max-width: 768px) {
   .navLinks {
-    display: none; /* In a real app, we'd add a hamburger menu */
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    padding: 2rem 1.5rem;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    gap: 1.5rem;
+    align-items: center;
   }
+  
+  .navActive {
+    display: flex;
+  }
+  
   .mobileMenuBtn {
     display: block;
   }

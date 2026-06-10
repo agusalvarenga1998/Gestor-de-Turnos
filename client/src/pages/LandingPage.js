@@ -21,6 +21,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [currentBg, setCurrentBg] = useState(0);
   const [plans, setPlans] = useState([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     // Si ya está logueado, llevar al dashboard
@@ -86,15 +87,15 @@ export default function LandingPage() {
             <span>TurnoHub</span>
           </Link>
           
-          <div className={styles.navLinks}>
-            <Link to="/patient" className={styles.navLink}>Soy Paciente</Link>
-            <Link to="/login" className={styles.navLink}>Acceso Profesional</Link>
-            <Link to="/admin/login" className={styles.navLink}>Administración</Link>
-            <Link to="/register" className={styles.primaryBtn}>Prueba Gratis</Link>
+          <div className={`${styles.navLinks} ${isMenuOpen ? styles.navActive : ''}`}>
+            <Link to="/patient" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Soy Paciente</Link>
+            <Link to="/login" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Acceso Profesional</Link>
+            <Link to="/admin/login" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Administración</Link>
+            <Link to="/register" className={styles.primaryBtn} onClick={() => setIsMenuOpen(false)}>Prueba Gratis</Link>
           </div>
           
-          <button className={styles.mobileMenuBtn}>
-            <Icon name="menu" size={24} />
+          <button className={styles.mobileMenuBtn} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <Icon name={isMenuOpen ? "x" : "menu"} size={24} />
           </button>
         </div>
       </nav>
