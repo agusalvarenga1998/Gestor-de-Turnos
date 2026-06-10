@@ -80,26 +80,30 @@ router.post('/mercadopago', async (req, res) => {
             console.log(`✅ Turno ${appointmentId} confirmado. Sin deuda por plan: ${plan_type}`);
           }
 
-          // Integración con Google Calendar
-          try {
-            const { createCalendarEvent } = await import('../services/googleCalendarService.js');
-            const calResult = await createCalendarEvent(doctor_id, {
-              id: appointment.id,
-              patient_id: patient_id,
-              appointment_date: appointment_date,
-              appointment_time: appointment_time,
-              reason_for_visit: is_online ? '🎥 Consulta Online' : 'Consulta Presencial',
-              is_online: is_online
-            });
-            meetLink = calResult?.meetLink || null;
-            if (meetLink) {
-              await query('UPDATE appointments SET meet_link = $1 WHERE id = $2', [meetLink, appointment.id]);
-              console.log('🎥 Meet link generado en webhook:', meetLink);
-            } else {
-              console.log('📅 Evento de calendario creado en webhook');
+          // Integración con Google Calendar (Solo si NO es consulta online)
+          if (!is_online) {
+            try {
+              const { createCalendarEvent } = await import('../services/googleCalendarService.js');
+              const calResult = await createCalendarEvent(doctor_id, {
+                id: appointment.id,
+                patient_id: patient_id,
+                appointment_date: appointment_date,
+                appointment_time: appointment_time,
+                reason_for_visit: 'Consulta Presencial',
+                is_online: false
+              });
+              meetLink = calResult?.meetLink || null;
+              if (meetLink) {
+                await query('UPDATE appointments SET meet_link = $1 WHERE id = $2', [meetLink, appointment.id]);
+                console.log('🎥 Meet link generado en webhook:', meetLink);
+              } else {
+                console.log('📅 Evento de calendario creado en webhook');
+              }
+            } catch (err) {
+              console.error('⚠️ Error en Google Calendar (webhook):', err.message);
             }
-          } catch (err) {
-            console.error('⚠️ Error en Google Calendar (webhook):', err.message);
+          } else {
+            console.log('🎥 Cita online detectada en webhook. El evento de calendario y meet link se generarán al ser aceptada por el doctor.');
           }
 
           // 4. NOTIFICAR AL DOCTOR MEDIANTE WEBSOCKET

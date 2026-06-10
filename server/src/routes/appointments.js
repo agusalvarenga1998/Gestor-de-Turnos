@@ -470,22 +470,26 @@ router.post('/public/create', async (req, res) => {
         dashboardUrl: dashboardUrl
       }).catch(err => console.error("Error asíncrono enviando email al doctor:", err));
 
-      // Integración con Google Calendar
-      try {
-        const { createCalendarEvent } = await import('../services/googleCalendarService.js');
-        const calResult = await createCalendarEvent(doctorId, {
-          ...appointment,
-          patient_id: patientId,
-          appointment_date: appointmentDate,
-          appointment_time: appointmentTime,
-          reason_for_visit: isOnlineService ? '🎥 Consulta Online' : (serviceLabel || 'Consulta Presencial'),
-          is_online: isOnlineService
-        });
-        meetLink = calResult?.meetLink || null;
-        if (meetLink) console.log('🎥 Meet link obtenido:', meetLink);
-        else console.log('📅 Evento de calendario creado para turno presencial');
-      } catch (err) {
-        console.error('⚠️ Error en Google Calendar:', err.message);
+      // Integración con Google Calendar (Solo si NO es consulta online)
+      if (!isOnlineService) {
+        try {
+          const { createCalendarEvent } = await import('../services/googleCalendarService.js');
+          const calResult = await createCalendarEvent(doctorId, {
+            ...appointment,
+            patient_id: patientId,
+            appointment_date: appointmentDate,
+            appointment_time: appointmentTime,
+            reason_for_visit: serviceLabel || 'Consulta Presencial',
+            is_online: false
+          });
+          meetLink = calResult?.meetLink || null;
+          if (meetLink) console.log('🎥 Meet link obtenido:', meetLink);
+          else console.log('📅 Evento de calendario creado para turno presencial');
+        } catch (err) {
+          console.error('⚠️ Error en Google Calendar:', err.message);
+        }
+      } else {
+        console.log('🎥 Cita online detectada. El evento de calendario y meet link se generarán al ser aceptada por el doctor.');
       }
 
       // NOTIFICAR AL PACIENTE (Cobertura Total / Efectivo)
@@ -649,14 +653,17 @@ router.post('/public/search', async (req, res) => {
         a.status,
         a.delay_minutes,
         a.delay_reason,
+        a.meet_link,
         p.name as patient_name,
         p.phone as patient_phone,
         p.email as patient_email,
         d.name as doctor_name,
-        d.specialization as doctor_specialization
+        d.specialization as doctor_specialization,
+        s.is_online
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       JOIN doctors d ON a.doctor_id = d.id
+      LEFT JOIN services s ON a.service_id = s.id
       WHERE a.doctor_id = $1 ${patientClause}
       AND a.status IN ('scheduled', 'pending', 'pending_payment', 'completed')
       ORDER BY 
@@ -834,14 +841,17 @@ router.get('/public/:token', async (req, res) => {
         a.status,
         a.delay_minutes,
         a.delay_reason,
+        a.meet_link,
         p.name as patient_name,
         p.phone as patient_phone,
         p.document_number as patient_dni,
         d.name as doctor_name,
-        d.specialization as doctor_specialization
+        d.specialization as doctor_specialization,
+        s.is_online
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       JOIN doctors d ON a.doctor_id = d.id
+      LEFT JOIN services s ON a.service_id = s.id
       WHERE a.confirmation_token::text = $1 OR a.id::text = $1 OR a.appointment_code = $1`,
       [token]
     );
@@ -914,10 +924,12 @@ router.patch('/:appointmentId/accept', async (req, res) => {
       `SELECT a.status, a.doctor_id, a.appointment_date, a.appointment_time,
               p.name as patient_name, p.email as patient_email,
               d.name as doctor_name, d.specialization as doctor_specialization,
-              a.appointment_code
+              a.appointment_code, a.patient_id, a.meet_link,
+              s.is_online, s.name as service_name
        FROM appointments a
        JOIN patients p ON a.patient_id = p.id
        JOIN doctors d ON a.doctor_id = d.id
+       LEFT JOIN services s ON a.service_id = s.id
        WHERE a.id = $1`,
       [appointmentId]
     );
@@ -968,6 +980,30 @@ router.patch('/:appointmentId/accept', async (req, res) => {
 
     console.log('✓ Cita aceptada:', appointmentId);
 
+    // Integración diferida con Google Calendar si la consulta es online
+    let meetLink = appointmentData.meet_link || null;
+    if (appointmentData.is_online) {
+      try {
+        const { createCalendarEvent } = await import('../services/googleCalendarService.js');
+        const calResult = await createCalendarEvent(doctorId, {
+          id: appointmentId,
+          patient_id: appointmentData.patient_id,
+          appointment_date: appointmentData.appointment_date,
+          appointment_time: appointmentData.appointment_time,
+          reason_for_visit: appointmentData.service_name ? `🎥 Consulta Online: ${appointmentData.service_name}` : '🎥 Consulta Online',
+          is_online: true
+        });
+        meetLink = calResult?.meetLink || null;
+        if (meetLink) {
+          console.log('🎥 Meet link generado en la aceptación:', meetLink);
+        } else {
+          console.log('📅 Evento de calendario creado al aceptar (sin link generado)');
+        }
+      } catch (err) {
+        console.error('⚠️ Error en Google Calendar al aceptar la cita:', err.message);
+      }
+    }
+
     // Enviar email de confirmación al paciente de manera asíncrona
     if (appointmentData.patient_email) {
       sendAppointmentConfirmation({
@@ -978,7 +1014,8 @@ router.patch('/:appointmentId/accept', async (req, res) => {
         appointmentDate: appointmentData.appointment_date,
         appointmentTime: appointmentData.appointment_time,
         appointmentCode: appointmentData.appointment_code,
-        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`
+        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`,
+        meetLink: meetLink
       }).catch(err => console.error('Error asíncrono enviando confirmación:', err));
       console.log('📧 Email de confirmación programado para:', appointmentData.patient_email);
     }

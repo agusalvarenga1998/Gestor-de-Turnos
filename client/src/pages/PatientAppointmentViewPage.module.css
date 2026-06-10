@@ -446,3 +446,71 @@
   50% { opacity: 1; }
   100% { opacity: 0.8; }
 }
+
+/* Online Consultation Card Styling */
+.onlineConsultationCard {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
+}
+
+.onlineIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.onlineInfo {
+  flex: 1;
+}
+
+.onlineInfo label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #1e40af;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+
+.onlineInfo p {
+  margin: 0 0 1rem 0;
+  font-size: 0.85rem;
+  color: #1e3a8a;
+  line-height: 1.4;
+}
+
+.meetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #10b981;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+}
+
+.meetBtn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+.pendingLinkText {
+  margin: 0 !important;
+  font-size: 0.85rem;
+  color: #d97706 !important;
+  line-height: 1.4;
+  font-weight: 500;
+}

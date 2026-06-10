@@ -131,7 +131,23 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
 
     // Sincronizar con Google Calendar si el doctor tiene conexión (en segundo plano / no bloqueante)
     console.log('🔄 Sincronizando con Google Calendar en segundo plano...');
-    googleCalendarService.createCalendarEvent(doctorId, appointment)
+    (async () => {
+      let isOnline = false;
+      if (serviceId) {
+        try {
+          const serviceRes = await query('SELECT is_online FROM services WHERE id = $1', [serviceId]);
+          if (serviceRes.rows.length > 0) {
+            isOnline = serviceRes.rows[0].is_online || false;
+          }
+        } catch (err) {
+          console.error('Error fetching service is_online for doctor-created appointment:', err.message);
+        }
+      }
+      return googleCalendarService.createCalendarEvent(doctorId, {
+        ...appointment,
+        is_online: isOnline
+      });
+    })()
       .then(result => {
         if (result) {
           console.log('✓ Evento sincronizado en Google Calendar en segundo plano:', result.eventId);

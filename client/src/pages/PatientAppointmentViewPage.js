@@ -283,6 +283,35 @@ export default function PatientAppointmentViewPage() {
               </div>
             </div>
 
+            {/* Consulta Online Link / Estado */}
+            {appointment.is_online && (
+              <div className={styles.onlineConsultationCard}>
+                <div className={styles.onlineIcon}>
+                  <Icon name="video" size={24} color={appointment.meet_link ? "#16a34a" : "#d97706"} />
+                </div>
+                <div className={styles.onlineInfo}>
+                  <label>MODALIDAD ONLINE</label>
+                  {appointment.meet_link ? (
+                    <>
+                      <p>Tu consulta es online. Únete a la videollamada de Google Meet haciendo clic abajo:</p>
+                      <a 
+                        href={appointment.meet_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className={styles.meetBtn}
+                      >
+                        🎥 Unirme a Google Meet
+                      </a>
+                    </>
+                  ) : (
+                    <p className={styles.pendingLinkText}>
+                      ⏳ El link de videollamada estará disponible aquí y te llegará por email una vez que el profesional confirme el turno.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Grid de Tiempo */}
             <div className={styles.timeGrid}>
               <div className={styles.timeItem}>
