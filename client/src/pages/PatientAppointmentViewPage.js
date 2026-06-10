@@ -211,6 +211,23 @@ export default function PatientAppointmentViewPage() {
               </div>
             )}
 
+            {/* Estado de la Fila del Médico (Solo para el día de hoy) */}
+            {isToday && (appointment.status === 'scheduled' || appointment.status === 'pending') && typeof appointment.appointments_before !== 'undefined' && (
+              <div className={styles.queueCard}>
+                <div className={styles.queueIcon}>
+                  <Icon name="users" size={24} color="#166534" />
+                </div>
+                <div className={styles.queueInfo}>
+                  <label>ESTADO DE LA FILA</label>
+                  {appointment.appointments_before === 0 ? (
+                    <p className={styles.status}>¡Eres el próximo turno en ser atendido!</p>
+                  ) : (
+                    <p>Hay <strong>{appointment.appointments_before}</strong> {appointment.appointments_before === 1 ? 'turno' : 'turnos'} antes que el tuyo en la fila.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Bloque Principal Doctor y Especialidad */}
             <div className={styles.doctorBlock}>
               <div className={styles.avatarCircle}>

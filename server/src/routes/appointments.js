@@ -642,6 +642,7 @@ router.post('/public/search', async (req, res) => {
     const result = await query(
       `SELECT
         a.id,
+        a.doctor_id,
         a.appointment_date,
         a.appointment_time,
         a.reason_for_visit,
@@ -673,6 +674,19 @@ router.post('/public/search', async (req, res) => {
     }
 
     const appointment = result.rows[0];
+
+    // Calcular el número de turnos antes en la fila
+    const queueResult = await query(
+      `SELECT COUNT(*) as count 
+       FROM appointments 
+       WHERE doctor_id = $1 
+       AND appointment_date = $2 
+       AND appointment_time < $3 
+       AND status IN ('scheduled', 'pending', 'pending_payment')`,
+      [appointment.doctor_id, appointment.appointment_date, appointment.appointment_time]
+    );
+    appointment.appointments_before = parseInt(queueResult.rows[0].count, 10);
+
     res.json({
       success: true,
       appointment
@@ -797,6 +811,7 @@ router.get('/public/:token', async (req, res) => {
     const result = await query(
       `SELECT
         a.id,
+        a.doctor_id,
         a.appointment_date,
         a.appointment_time,
         a.reason_for_visit,
@@ -824,6 +839,18 @@ router.get('/public/:token', async (req, res) => {
 
     const appointment = result.rows[0];
     console.log('✓ Cita encontrada:', appointment.patient_name);
+
+    // Calcular el número de turnos antes en la fila
+    const queueResult = await query(
+      `SELECT COUNT(*) as count 
+       FROM appointments 
+       WHERE doctor_id = $1 
+       AND appointment_date = $2 
+       AND appointment_time < $3 
+       AND status IN ('scheduled', 'pending', 'pending_payment')`,
+      [appointment.doctor_id, appointment.appointment_date, appointment.appointment_time]
+    );
+    appointment.appointments_before = parseInt(queueResult.rows[0].count, 10);
 
     res.json({
       success: true,
