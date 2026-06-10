@@ -447,7 +447,9 @@ export default function PatientPortalHomePage() {
                                 ))}
                                 {services.length === 0 && <p className={styles.emptyMsg}>Este profesional no tiene servicios configurados.</p>}
                               </div>
-                                                      <div className={styles.sectionTitle}>{selectedDoctor ? '3' : '2'}. Tus Datos</div>
+                            </>
+                          )}
+                          <div className={styles.sectionTitle}>{selectedDoctor ? '3' : '2'}. Tus Datos</div>
                           <div className={styles.formGrid}>
                             <div className={styles.customerTypeToggle}>
                               <button
