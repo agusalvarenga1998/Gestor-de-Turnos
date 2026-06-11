@@ -8,14 +8,14 @@ export const createAppointment = async (req, res) => {
     console.log('\n🔵 === POST /api/appointments ===');
     console.log('Body:', req.body);
 
-    const { 
-      patientId, 
+    const {
+      patientId,
       serviceId,
-      appointment_date, 
-      appointment_time, 
-      end_time, 
-      reason_for_visit, 
-      insurance_company_id 
+      appointment_date,
+      appointment_time,
+      end_time,
+      reason_for_visit,
+      insurance_company_id
     } = req.body;
     const doctorId = req.user.id;
 
@@ -303,6 +303,43 @@ export const getStatistics = async (req, res) => {
       success: false,
       message: 'Error al obtener estadísticas'
     });
+  }
+};
+
+// Obtener turnos del día siguiente
+export const getProximosTurnos = async (req, res) => {
+  try {
+    console.log('\n === GET /api/appointments/proximos ===');
+    const doctorId = req.user.id;
+
+    const result = await query(
+      `SELECT
+         a.id,
+         p.name AS nombre_paciente,
+         p.phone AS telefono,
+         p.email,
+         a.appointment_date AS fecha,
+         a.appointment_time AS hora,
+         a.status AS estado
+       FROM appointments a
+       JOIN patients p ON p.id = a.patient_id
+       WHERE a.doctor_id = $1
+         AND a.appointment_date = CURRENT_DATE + INTERVAL '1 day'
+         AND a.status NOT IN ('cancelled', 'rejected')
+       ORDER BY a.appointment_time ASC`,
+      [doctorId]
+    );
+
+    console.log(`Turnos próximos encontrados: ${result.rows.length}`);
+    res.json({
+      success: true,
+      message: 'Turnos del día siguiente obtenidos correctamente',
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error al obtener próximos turnos:', error.message);
+    res.status(500).json({ success: false, message: 'Error al obtener los próximos turnos' });
   }
 };
 

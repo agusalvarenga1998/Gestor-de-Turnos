@@ -981,6 +981,7 @@ router.get('/', appointmentController.getAppointments);
 router.get('/today', appointmentController.getTodayAppointments);
 router.get('/available-slots', appointmentController.getAvailableSlots);
 router.get('/statistics', appointmentController.getStatistics);
+router.get('/proximos', appointmentController.getProximosTurnos);
 router.get('/:appointmentId', appointmentController.getAppointment);
 router.patch('/:appointmentId', appointmentController.updateAppointment);
 router.delete('/:appointmentId', appointmentController.cancelAppointment);
