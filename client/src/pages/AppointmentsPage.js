@@ -37,6 +37,109 @@ export default function AppointmentsPage() {
   const [delayModal, setDelayModal] = useState({ show: false, appointmentId: null });
   const [delayMinutes, setDelayMinutes] = useState(15);
 
+  // New calendar states
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'agenda'
+  
+  const getLocalDateString = (dateObj) => {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const parseLocalDate = (dateStr) => {
+    const parts = dateStr.split('-');
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  };
+
+  const getMondayOfDate = (dateStr) => {
+    const date = parseLocalDate(dateStr);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(date.setDate(diff));
+    return getLocalDateString(monday);
+  };
+
+  const [selectedDate, setSelectedDate] = useState(() => getLocalDateString(new Date()));
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => getMondayOfDate(getLocalDateString(new Date())));
+
+  const getDaysOfWeek = (mondayStr) => {
+    const days = [];
+    const monday = parseLocalDate(mondayStr);
+    const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(monday);
+      dayDate.setDate(monday.getDate() + i);
+      days.push({
+        name: dayNames[i],
+        dateStr: getLocalDateString(dayDate),
+        dayNum: dayDate.getDate()
+      });
+    }
+    return days;
+  };
+
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 8; hour <= 20; hour++) {
+      slots.push(`${String(hour).padStart(2, '0')}:00`);
+      if (hour < 20) {
+        slots.push(`${String(hour).padStart(2, '0')}:30`);
+      }
+    }
+    return slots;
+  };
+
+  const handlePrevWeek = () => {
+    const monday = parseLocalDate(currentWeekStart);
+    monday.setDate(monday.getDate() - 7);
+    const newMondayStr = getLocalDateString(monday);
+    setCurrentWeekStart(newMondayStr);
+    setSelectedDate(newMondayStr);
+  };
+
+  const handleNextWeek = () => {
+    const monday = parseLocalDate(currentWeekStart);
+    monday.setDate(monday.getDate() + 7);
+    const newMondayStr = getLocalDateString(monday);
+    setCurrentWeekStart(newMondayStr);
+    setSelectedDate(newMondayStr);
+  };
+
+  const handleGoToToday = () => {
+    const todayStr = getLocalDateString(new Date());
+    setSelectedDate(todayStr);
+    setCurrentWeekStart(getMondayOfDate(todayStr));
+  };
+
+  const getWeekRangeLabel = () => {
+    const monday = parseLocalDate(currentWeekStart);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    
+    const options = { day: 'numeric', month: 'short' };
+    const startStr = monday.toLocaleDateString('es-ES', options);
+    const endStr = sunday.toLocaleDateString('es-ES', options);
+    const yearStr = monday.getFullYear();
+    
+    return `${startStr} - ${endStr}, ${yearStr}`;
+  };
+
+  const handleEmptySlotClick = (timeSlot) => {
+    setFormData({
+      patientId: '',
+      serviceId: '',
+      appointment_date: selectedDate,
+      appointment_time: timeSlot,
+      reason_for_visit: '',
+      insurance_company_id: ''
+    });
+    setSelectedService(null);
+    setPatientInsurances([]);
+    setAvailableSlots(prev => prev.includes(timeSlot) ? prev : [...prev, timeSlot].sort());
+    setShowForm(true);
+  };
+
   useEffect(() => {
     fetchAppointments();
     fetchPatients();
@@ -123,10 +226,11 @@ export default function AppointmentsPage() {
     }
 
     // Filtro por Fecha (Normalizado)
-    if (filterDate) {
+    const activeDateFilter = viewMode === 'agenda' ? selectedDate : filterDate;
+    if (activeDateFilter) {
       filtered = filtered.filter(a => {
         const dateStr = String(a.appointment_date).split('T')[0];
-        return dateStr === filterDate;
+        return dateStr === activeDateFilter;
       });
     }
 
@@ -141,7 +245,7 @@ export default function AppointmentsPage() {
     }
 
     setFilteredAppointments(filtered);
-  }, [appointments, searchTerm, filterStatus, filterDate]);
+  }, [appointments, searchTerm, filterStatus, filterDate, viewMode, selectedDate]);
 
   const fetchAppointments = async () => {
     try {
@@ -347,6 +451,160 @@ export default function AppointmentsPage() {
     window.open(whatsappUrl, '_blank');
   };
 
+  const renderAgendaGrid = () => {
+    const slots = generateTimeSlots();
+    
+    return (
+      <div className={styles.agendaContainer}>
+        <div className={styles.tableContainer}>
+          <table className={styles.agendaTable}>
+            <thead>
+              <tr>
+                <th className={styles.timeColHeader}>Hora</th>
+                <th className={styles.statusColHeader}>Presentismo</th>
+                <th className={styles.patientColHeader}>Paciente</th>
+                <th className={styles.insuranceColHeader}>Obra social / Plan</th>
+                <th className={styles.observationColHeader}>Observación</th>
+                <th className={styles.actionsColHeader}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {slots.map((slot) => {
+                const slotAppointments = filteredAppointments.filter((appt) => {
+                  const dateStr = String(appt.appointment_date).split('T')[0];
+                  if (dateStr !== selectedDate) return false;
+                  const apptTime = String(appt.appointment_time).substring(0, 5);
+                  return apptTime === slot;
+                });
+
+                if (slotAppointments.length === 0) {
+                  return (
+                    <tr key={slot} className={styles.emptyRow}>
+                      <td className={styles.timeCell}>
+                        <span className={styles.timeLabel}>{slot}</span>
+                      </td>
+                      <td colSpan="5" className={styles.emptySlotCell}>
+                        <button 
+                          type="button"
+                          onClick={() => handleEmptySlotClick(slot)}
+                          className={styles.availableSlotBtn}
+                          title="Hacer clic para crear una cita en este horario"
+                        >
+                          <span className={styles.plusIcon}>+</span>
+                          <span className={styles.availableText}>Disponible</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
+
+                return slotAppointments.map((appt, index) => {
+                  return (
+                    <tr key={`${slot}-${appt.id}`} className={styles.agendaRow}>
+                      {index === 0 ? (
+                        <td className={styles.timeCell} rowSpan={slotAppointments.length}>
+                          <span className={styles.timeLabel}>{slot}</span>
+                        </td>
+                      ) : null}
+                      <td data-label="Presentismo" className={styles.statusCell}>
+                        {getStatusBadge(appt.status)}
+                        {appt.delay_minutes > 0 && (
+                          <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
+                        )}
+                      </td>
+                      <td data-label="Paciente" className={styles.patientCell}>
+                        <div className={styles.pName}>{appt.patient_name}</div>
+                        <div className={styles.pPhone}>{appt.patient_phone}</div>
+                      </td>
+                      <td data-label="Obra social / Plan" className={styles.insuranceCell}>
+                        {appt.insurance_name ? (
+                          <div className={styles.insuranceBadge}>
+                            {appt.insurance_name}
+                            {appt.insurance_plan_name ? ` (${appt.insurance_plan_name})` : ''}
+                          </div>
+                        ) : (
+                          <span className={styles.particularLabel}>Particular</span>
+                        )}
+                      </td>
+                      <td data-label="Observación" className={styles.observationCell}>
+                        <span className={styles.serviceNameBadge}>
+                          {appt.service_name || 'Consulta General'}
+                        </span>
+                        <div className={styles.reasonText}>
+                          {appt.reason_for_visit || 'Visita general'}
+                        </div>
+                      </td>
+                      <td data-label="Acciones" className={styles.actionsCell}>
+                        <div className={styles.actionButtons}>
+                          {['pending', 'pending_payment'].includes(appt.status) ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleAcceptAppointment(appt.id)}
+                                className={styles.acceptBtn}
+                                title="Confirmar/Aceptar cita"
+                              >
+                                ✓ Aceptar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRejectAppointment(appt.id)}
+                                className={styles.rejectBtn}
+                                title="Rechazar cita"
+                              >
+                                ✗ Rechazar
+                              </button>
+                            </>
+                          ) : appt.status === 'scheduled' ? (
+                            <>
+                              <select
+                                value={appt.status}
+                                onChange={(e) => handleStatusChange(appt.id, e.target.value)}
+                                className={styles.statusSelect}
+                              >
+                                <option value="scheduled">Programado</option>
+                                <option value="completed">Completado</option>
+                                <option value="cancelled">Cancelado</option>
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => setDelayModal({ show: true, appointmentId: appt.id })}
+                                className={styles.delayBtn}
+                                title="Registrar retraso"
+                              >
+                                ⏱️ Retraso
+                              </button>
+                            </>
+                          ) : (
+                            <div className={styles.statusOnly}>
+                              {getStatusBadge(appt.status)}
+                            </div>
+                          )}
+                          
+                          {!['cancelled', 'rejected'].includes(appt.status) && (
+                            <button
+                              type="button"
+                              onClick={() => handleWhatsAppReminder(appt)}
+                              className={styles.whatsappBtn}
+                              title="Recordar cita por WhatsApp"
+                            >
+                              <Icon name="whatsapp" size={18} color="#FFF" />
+                              WPP
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                });
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <DoctorLayout>
@@ -363,16 +621,39 @@ export default function AppointmentsPage() {
             <h1 className={styles.title}>Gestión de Citas</h1>
             <p className={styles.subtitle}>Administra todas tus citas médicas</p>
           </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
-            className={styles.addBtn}
-          >
-            <Icon name="plus" size={18} color="currentColor" />
-            Nueva Cita
-          </button>
+          <div className={styles.headerActions}>
+            <div className={styles.viewToggle}>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.activeToggle : ''}`}
+                title="Vista de Lista"
+              >
+                <Icon name="list" size={18} />
+                <span>Lista</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('agenda')}
+                className={`${styles.toggleBtn} ${viewMode === 'agenda' ? styles.activeToggle : ''}`}
+                title="Vista de Agenda"
+              >
+                <Icon name="calendar" size={18} />
+                <span>Agenda</span>
+              </button>
+            </div>
+            
+            <button
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+              className={styles.addBtn}
+            >
+              <Icon name="plus" size={18} color="currentColor" />
+              Nueva Cita
+            </button>
+          </div>
         </div>
 
         {error && <div className={styles.errorBox}>{error}</div>}
@@ -553,12 +834,14 @@ export default function AppointmentsPage() {
               <option value="rejected">Rechazado</option>
             </select>
 
-            <input
-              type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className={styles.select}
-            />
+            {viewMode === 'list' && (
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className={styles.select}
+              />
+            )}
 
             <button onClick={fetchAppointments} className={styles.refreshBtn} title="Actualizar">
               <Icon name="search" size={18} color="currentColor" />
@@ -567,8 +850,48 @@ export default function AppointmentsPage() {
           </div>
         </div>
 
+        {/* Navigation & Day Selector for Agenda */}
+        {viewMode === 'agenda' && (
+          <div className={styles.calendarNavContainer}>
+            <div className={styles.calendarNavControls}>
+              <button type="button" onClick={handlePrevWeek} className={styles.navBtn} title="Semana anterior">
+                <Icon name="chevronLeft" size={18} />
+              </button>
+              <button type="button" onClick={handleGoToToday} className={styles.todayBtn}>
+                Hoy
+              </button>
+              <button type="button" onClick={handleNextWeek} className={styles.navBtn} title="Semana siguiente">
+                <Icon name="chevronRight" size={18} />
+              </button>
+              <span className={styles.weekLabel}>
+                {getWeekRangeLabel()}
+              </span>
+            </div>
+            
+            <div className={styles.dayPills}>
+              {getDaysOfWeek(currentWeekStart).map((day) => {
+                const isSelected = day.dateStr === selectedDate;
+                const isToday = day.dateStr === getLocalDateString(new Date());
+                return (
+                  <button
+                    key={day.dateStr}
+                    type="button"
+                    onClick={() => setSelectedDate(day.dateStr)}
+                    className={`${styles.dayPill} ${isSelected ? styles.activePill : ''} ${isToday ? styles.todayPill : ''}`}
+                  >
+                    <span className={styles.dayName}>{day.name}</span>
+                    <span className={styles.dayNum}>{day.dayNum}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Tabla de citas */}
-        {filteredAppointments.length === 0 ? (
+        {viewMode === 'agenda' ? (
+          renderAgendaGrid()
+        ) : filteredAppointments.length === 0 ? (
           <div className={styles.emptyState}>
             <p>No hay citas que coincidan con tus filtros</p>
           </div>

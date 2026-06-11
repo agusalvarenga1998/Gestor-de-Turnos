@@ -128,6 +128,16 @@ export const Icon = ({ name, size = 24, color = 'currentColor' }) => {
         <polyline points="12 5 19 12 12 19"></polyline>
       </svg>
     ),
+    chevronLeft: (
+      <svg {...iconProps}>
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    ),
+    chevronRight: (
+      <svg {...iconProps}>
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    ),
     home: (
       <svg {...iconProps}>
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
