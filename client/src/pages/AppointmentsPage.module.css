@@ -107,8 +107,21 @@
 
 .appointmentsTable {
   width: 100%;
+  min-width: 1220px;
+  table-layout: fixed;
   border-collapse: collapse;
 }
+
+.appointmentsTable th:nth-child(1), .appointmentsTable td:nth-child(1) { width: 110px; } /* Turno */
+.appointmentsTable th:nth-child(2), .appointmentsTable td:nth-child(2) { width: 140px; } /* Cliente */
+.appointmentsTable th:nth-child(3), .appointmentsTable td:nth-child(3) { width: 110px; } /* Servicio */
+.appointmentsTable th:nth-child(4), .appointmentsTable td:nth-child(4) { width: 140px; } /* Motivo / OS */
+.appointmentsTable th:nth-child(5), .appointmentsTable td:nth-child(5) { width: 85px; }  /* Costo Total */
+.appointmentsTable th:nth-child(6), .appointmentsTable td:nth-child(6) { width: 85px; }  /* Seña Pagada */
+.appointmentsTable th:nth-child(7), .appointmentsTable td:nth-child(7) { width: 95px; }  /* Cobertura OS */
+.appointmentsTable th:nth-child(8), .appointmentsTable td:nth-child(8) { width: 100px; } /* Estado */
+.appointmentsTable th:nth-child(9), .appointmentsTable td:nth-child(9) { width: 85px; }  /* A Cobrar */
+.appointmentsTable th:nth-child(10), .appointmentsTable td:nth-child(10) { width: 270px; } /* Acciones */
 
 .appointmentsTable th {
   background-color: #f8fafc;
@@ -119,12 +132,17 @@
   text-transform: uppercase;
   color: var(--gray);
   border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .appointmentsTable td {
   padding: 0.75rem 0.5rem;
   border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
+  word-break: break-word;
+  overflow: hidden;
 }
 
 .dateTime {
