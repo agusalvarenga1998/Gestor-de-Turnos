@@ -69,6 +69,24 @@ export default function PatientPortalHomePage() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (activeTab) return;
+
+    const handleMouseMove = (e) => {
+      const moveX = (e.clientX - window.innerWidth / 2) / 50;
+      const moveY = (e.clientY - window.innerHeight / 2) / 50;
+      const floatImg = document.querySelector(`.${styles.floatAnimation}`);
+      if (floatImg) {
+        floatImg.style.transform = `translate(${moveX}px, ${moveY}px)`;
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [activeTab]);
+
+  useEffect(() => {
     loadSpecializations();
     loadAllDoctors();
   }, []);
@@ -564,40 +582,78 @@ export default function PatientPortalHomePage() {
       {showSplash && <SplashLoader onComplete={() => setShowSplash(false)} />}
       {bookingLoading && <Loading />}
       <div className={styles.pageWrapper}>
-        <nav className={styles.navbar}>
+        <header className={styles.navbar}>
           <div className={styles.navContent}>
-            <Link to="/patient" className={styles.navLogo} onClick={() => setActiveTab(null)}>
-              <img src="/logo_turnohub.png" alt="T" />
-              <span>TurnoHub Turnos</span>
+            <Link to="/patient" className={styles.navLogo} onClick={handleReset}>
+              <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
+              <span className={styles.logoText}>TurnoHub Turnos</span>
             </Link>
-          </div>
-        </nav>
-
-        <header className={styles.hero}>
-          <div className={styles.heroContent}>
-            <h1>Tu tiempo, <span>optimizado</span></h1>
-            <p>Gestiona tus turnos y reservas de forma rápida y sencilla.</p>
           </div>
         </header>
 
         <main className={styles.mainContent}>
           {!activeTab ? (
-            <div className={styles.menuGrid}>
-              <div className={styles.menuCard} onClick={() => setActiveTab('book')}>
-                <div className={styles.cardIcon}>📅</div>
-                <div className={styles.cardInfo}>
-                  <h3>Pedir un Turno</h3>
-                  <p>Reserva tu cita con especialistas en pocos pasos.</p>
+            <>
+              {/* Hero Section */}
+              <section className={styles.hero}>
+                <div className={styles.heroContent}>
+                  <div className={styles.heroText}>
+                    <h2 className={styles.heroTitle}>Bienvenido a TurnoHub</h2>
+                    <p className={styles.heroSubtitle}>Gestiona tus turnos y reservas de forma rápida, segura y desde cualquier lugar.</p>
+                    <div className={styles.heroBadges}>
+                      <div className={styles.heroBadge}>
+                        <span className="material-symbols-outlined">verified</span>
+                        <span>100% Seguro</span>
+                      </div>
+                      <div className={styles.heroBadge}>
+                        <span className="material-symbols-outlined">bolt</span>
+                        <span>Acceso Rápido</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={`${styles.heroIllustration} ${styles.floatAnimation}`}>
+                    <img 
+                      alt="Productivity illustration" 
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzjd_j1hNQk1lYETh4LhorZYbpcpqm8gePv0Xyl8R5tOYvzpDe4-54SkGpdxLWd8NvjEnmcQDt4r3EtJyd5I-HmhZoe_bC4Geu7rf1or8I612o2dOTPZ9idEc9tSNLAE98cK5XoMZm-UHpXnZozxPfvFdZA9orvWiVl3gJo5UJ1BbEGQgUpvwlKRITUd01Jg7h3bc6ztnyxNZbjYmX9lIXK9dca8wt-BHcMq9sEzimBjpA9GTTspcXVaBADJ8yS2CAGru1CD7GBIAg" 
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className={styles.menuCard} onClick={() => setActiveTab('search')}>
-                <div className={styles.cardIcon}>🔍</div>
-                <div className={styles.cardInfo}>
-                  <h3>Mis Turnos</h3>
-                  <p>Consulta el estado de tu cita o descarga tu comprobante.</p>
+                {/* Abstract background shapes */}
+                <div className={styles.bgCircle1}></div>
+                <div className={styles.bgCircle2}></div>
+              </section>
+
+              {/* Action Cards Grid */}
+              <section className={styles.gridSection}>
+                <div className={styles.menuGrid}>
+                  {/* Pedir un Turno Card */}
+                  <button type="button" className={styles.menuCard} onClick={() => setActiveTab('book')}>
+                    <div className={`${styles.cardIconBox} ${styles.primaryIconBox}`}>
+                      <span className="material-symbols-outlined">calendar_month</span>
+                    </div>
+                    <h3 className={`${styles.cardTitle} ${styles.primaryTitle}`}>Pedir un Turno</h3>
+                    <p className={styles.cardDesc}>Reserva tu cita con especialistas en pocos pasos. Encuentra disponibilidad inmediata.</p>
+                    <div className={`${styles.cardAction} ${styles.primaryAction}`}>
+                      <span>Empezar ahora</span>
+                      <span className="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                  </button>
+
+                  {/* Mis Turnos Card */}
+                  <button type="button" className={styles.menuCard} onClick={() => setActiveTab('search')}>
+                    <div className={`${styles.cardIconBox} ${styles.secondaryIconBox}`}>
+                      <span className="material-symbols-outlined">history</span>
+                    </div>
+                    <h3 className={`${styles.cardTitle} ${styles.secondaryTitle}`}>Mis Turnos</h3>
+                    <p className={styles.cardDesc}>Consulta el estado de tu cita o descarga tu comprobante. Revisa tu historial completo.</p>
+                    <div className={`${styles.cardAction} ${styles.secondaryAction}`}>
+                      <span>Ver historial</span>
+                      <span className="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                  </button>
                 </div>
-              </div>
-            </div>
+              </section>
+            </>
           ) : (
             <div className={styles.formContainer}>
               <button className={styles.backBtn} onClick={() => setActiveTab(null)}>
