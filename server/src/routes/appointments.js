@@ -175,7 +175,7 @@ router.get('/public/patient-details/:doctorId/:documentNumber', async (req, res)
     console.log(`🔓 Buscando datos de paciente por DNI: ${documentNumber} y Doctor: ${doctorId}`);
 
     const result = await query(
-      `SELECT name, email, phone, document_number
+      `SELECT name, email, phone, document_number, document_type, date_of_birth, gender, address, locality, province, insurance_company_id, insurance_plan_id, insurance_policy_number
        FROM patients
        WHERE doctor_id = $1 AND document_number = $2
        LIMIT 1`,
@@ -190,18 +190,24 @@ router.get('/public/patient-details/:doctorId/:documentNumber', async (req, res)
     }
 
     const patient = result.rows[0];
-    const nameParts = patient.name.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
 
     res.json({
       success: true,
       patient: {
-        name: firstName,
-        lastName: lastName,
+        name: patient.name,
+        lastName: '',
         email: patient.email || '',
         phone: patient.phone || '',
-        documentNumber: patient.document_number
+        documentNumber: patient.document_number,
+        documentType: patient.document_type || 'DNI',
+        dateOfBirth: patient.date_of_birth ? new Date(patient.date_of_birth).toISOString().split('T')[0] : '',
+        gender: patient.gender || '',
+        address: patient.address || '',
+        locality: patient.locality || '',
+        province: patient.province || '',
+        insuranceId: patient.insurance_company_id || '',
+        insurancePlanId: patient.insurance_plan_id || '',
+        insurancePolicyNumber: patient.insurance_policy_number || ''
       }
     });
   } catch (error) {
@@ -230,7 +236,14 @@ router.post('/public/create', async (req, res) => {
       patientPhone,
       insuranceId,
       insurancePlanId,
-      paymentMethod = 'online' // 'online' o 'cash'
+      paymentMethod = 'online', // 'online' o 'cash'
+      documentType,
+      dateOfBirth,
+      gender,
+      address,
+      locality,
+      province,
+      insurancePolicyNumber
     } = req.body;
 
     console.log('📝 Creating public appointment for Doctor ID:', doctorId);
@@ -385,27 +398,60 @@ router.post('/public/create', async (req, res) => {
       // Actualizar datos del paciente si existen cambios
       await query(
         `UPDATE patients
-         SET name = $1, phone = $2, email = $3
+         SET name = $1, 
+             phone = COALESCE($2, phone), 
+             email = COALESCE($3, email),
+             document_type = COALESCE($5, document_type),
+             date_of_birth = COALESCE($6, date_of_birth),
+             gender = COALESCE($7, gender),
+             address = COALESCE($8, address),
+             locality = COALESCE($9, locality),
+             province = COALESCE($10, province),
+             insurance_company_id = COALESCE($11, insurance_company_id),
+             insurance_plan_id = COALESCE($12, insurance_plan_id),
+             insurance_policy_number = COALESCE($13, insurance_policy_number)
          WHERE id = $4`,
         [
-          `${patientName} ${patientLastName}`,
-          patientPhone,
-          patientEmail,
-          patientId
+          (patientName + ' ' + (patientLastName || '')).trim(),
+          patientPhone || null,
+          patientEmail || null,
+          patientId,
+          documentType || null,
+          dateOfBirth || null,
+          gender || null,
+          address || null,
+          locality || null,
+          province || null,
+          insuranceId || null,
+          insurancePlanId || null,
+          insurancePolicyNumber || null
         ]
       );
     } else {
       // Crear nuevo paciente asociado al doctor
       const newPatientResult = await query(
-        `INSERT INTO patients (name, phone, email, document_number, doctor_id)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO patients (
+           name, phone, email, document_number, doctor_id,
+           document_type, date_of_birth, gender, address, locality, province,
+           insurance_company_id, insurance_plan_id, insurance_policy_number
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          RETURNING id`,
         [
-          `${patientName} ${patientLastName}`,
-          patientPhone,
-          patientEmail,
+          (patientName + ' ' + (patientLastName || '')).trim(),
+          patientPhone || null,
+          patientEmail || null,
           patientDocumentNumber,
-          doctorId
+          doctorId,
+          documentType || 'DNI',
+          dateOfBirth || null,
+          gender || null,
+          address || null,
+          locality || null,
+          province || null,
+          insuranceId || null,
+          insurancePlanId || null,
+          insurancePolicyNumber || null
         ]
       );
       patientId = newPatientResult.rows[0].id;

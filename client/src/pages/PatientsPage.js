@@ -17,6 +17,7 @@ export default function PatientsPage() {
   const [insurances, setInsurances] = useState([]);
   const [selectedInsurances, setSelectedInsurances] = useState([]);
   const [patientInsurances, setPatientInsurances] = useState({});
+  const [plans, setPlans] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,7 +25,13 @@ export default function PatientsPage() {
     date_of_birth: '',
     gender: 'M',
     address: '',
-    document_number: ''
+    document_number: '',
+    document_type: 'DNI',
+    locality: '',
+    province: '',
+    insurance_company_id: '',
+    insurance_plan_id: '',
+    insurance_policy_number: ''
   });
 
   useEffect(() => {
@@ -89,12 +96,38 @@ export default function PatientsPage() {
     }
   };
 
+  const loadInsurancePlans = async (insuranceId) => {
+    if (!insuranceId) {
+      setPlans([]);
+      return;
+    }
+    try {
+      const response = await insuranceAPI.getPlans(insuranceId);
+      if (response.success) {
+        setPlans(response.plans || []);
+      }
+    } catch (err) {
+      console.error('Error cargando planes:', err);
+      setPlans([]);
+    }
+  };
+
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    if (name === 'insurance_company_id') {
+      loadInsurancePlans(value);
+      setFormData(prev => ({
+        ...prev,
+        insurance_company_id: value,
+        insurance_plan_id: '',
+        insurance_policy_number: ''
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -119,21 +152,30 @@ export default function PatientsPage() {
 
       if (response.success) {
         // Guardar obras sociales
-        if (selectedInsurances.length > 0 || editingId) {
-          await insuranceAPI.setPatientInsurances(patientId, selectedInsurances);
-          setPatientInsurances(prev => ({
-            ...prev,
-            [patientId]: selectedInsurances.map(id =>
-              insurances.find(ins => ins.id === id)
-            ).filter(Boolean)
-          }));
-        }
+        const updatedInsuranceIds = formData.insurance_company_id ? [formData.insurance_company_id] : selectedInsurances;
+        await insuranceAPI.setPatientInsurances(patientId, updatedInsuranceIds);
+        
+        const companyName = insurances.find(ins => ins.id === formData.insurance_company_id)?.name || '';
+        const planName = plans.find(p => p.id === formData.insurance_plan_id)?.name || '';
+        
+        const enrichedPatient = {
+          ...response.patient,
+          insurance_company_name: companyName,
+          insurance_plan_name: planName
+        };
+
+        setPatientInsurances(prev => ({
+          ...prev,
+          [patientId]: updatedInsuranceIds.map(id =>
+            insurances.find(ins => ins.id === id)
+          ).filter(Boolean)
+        }));
 
         setPatients(prev => {
           if (editingId) {
-            return prev.map(p => p.id === editingId ? response.patient : p);
+            return prev.map(p => p.id === editingId ? enrichedPatient : p);
           } else {
-            return [...prev, response.patient];
+            return [...prev, enrichedPatient];
           }
         });
 
@@ -171,9 +213,21 @@ export default function PatientsPage() {
       date_of_birth: patient.date_of_birth || '',
       gender: patient.gender || 'M',
       address: patient.address || '',
-      document_number: patient.document_number || ''
+      document_number: patient.document_number || '',
+      document_type: patient.document_type || 'DNI',
+      locality: patient.locality || '',
+      province: patient.province || '',
+      insurance_company_id: patient.insurance_company_id || '',
+      insurance_plan_id: patient.insurance_plan_id || '',
+      insurance_policy_number: patient.insurance_policy_number || ''
     });
     setEditingId(patient.id);
+
+    if (patient.insurance_company_id) {
+      loadInsurancePlans(patient.insurance_company_id);
+    } else {
+      setPlans([]);
+    }
 
     // Cargar obras sociales del paciente
     try {
@@ -202,10 +256,17 @@ export default function PatientsPage() {
       date_of_birth: '',
       gender: 'M',
       address: '',
-      document_number: ''
+      document_number: '',
+      document_type: 'DNI',
+      locality: '',
+      province: '',
+      insurance_company_id: '',
+      insurance_plan_id: '',
+      insurance_policy_number: ''
     });
     setEditingId(null);
     setSelectedInsurances([]);
+    setPlans([]);
   };
 
   if (loading) {
@@ -265,50 +326,46 @@ export default function PatientsPage() {
                 >
                   <Icon name="x" size={20} color="currentColor" />
                 </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className={styles.form}>
+              </div>              <form onSubmit={handleSubmit} className={styles.form}>
+                <h3 className={styles.formSectionTitle}>Información Personal</h3>
+                
                 <div className={styles.formGroup}>
-                  <label>Nombre*</label>
+                  <label>Nombre y Apellido*</label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleFormChange}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>DNI / Documento*</label>
-                  <input
-                    type="text"
-                    name="document_number"
-                    value={formData.document_number}
-                    onChange={handleFormChange}
-                    placeholder="Ej: 12345678"
+                    placeholder="Apellido, Nombre"
                     required
                   />
                 </div>
 
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
+                    <label>Tipo Doc.*</label>
+                    <select
+                      name="document_type"
+                      value={formData.document_type || 'DNI'}
                       onChange={handleFormChange}
-                    />
+                      required
+                    >
+                      <option value="DNI">DNI</option>
+                      <option value="LC">LC</option>
+                      <option value="LE">LE</option>
+                      <option value="CI">CI</option>
+                      <option value="PASAPORTE">PASAPORTE</option>
+                    </select>
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label>Teléfono*</label>
+                    <label>DNI / Documento*</label>
                     <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
+                      type="text"
+                      name="document_number"
+                      value={formData.document_number}
                       onChange={handleFormChange}
+                      placeholder="Ej: 12345678"
                       required
                     />
                   </div>
@@ -339,6 +396,32 @@ export default function PatientsPage() {
                   </div>
                 </div>
 
+                <h3 className={styles.formSectionTitle}>Contacto</h3>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Teléfono*</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleFormChange}
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleFormChange}
+                      placeholder="ejemplo@email.com"
+                    />
+                  </div>
+                </div>
+
+                <h3 className={styles.formSectionTitle}>Domicilio</h3>
                 <div className={styles.formGroup}>
                   <label>Dirección</label>
                   <input
@@ -346,30 +429,79 @@ export default function PatientsPage() {
                     name="address"
                     value={formData.address}
                     onChange={handleFormChange}
+                    placeholder="Calle 123"
                   />
                 </div>
 
-                {insurances.length > 0 && (
+                <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label>Obras Sociales</label>
-                    <div className={styles.checkboxGroup}>
-                      {insurances.map(insurance => (
-                        <label key={insurance.id} className={styles.checkboxLabel}>
-                          <input
-                            type="checkbox"
-                            checked={selectedInsurances.includes(insurance.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedInsurances(prev => [...prev, insurance.id]);
-                              } else {
-                                setSelectedInsurances(prev => prev.filter(id => id !== insurance.id));
-                              }
-                            }}
-                          />
-                          {insurance.name}
-                        </label>
+                    <label>Localidad</label>
+                    <input
+                      type="text"
+                      name="locality"
+                      value={formData.locality || ''}
+                      onChange={handleFormChange}
+                      placeholder="Ej: Buenos Aires"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Provincia</label>
+                    <input
+                      type="text"
+                      name="province"
+                      value={formData.province || ''}
+                      onChange={handleFormChange}
+                      placeholder="Ej: CABA"
+                    />
+                  </div>
+                </div>
+
+                <h3 className={styles.formSectionTitle}>Obra Social / Cobertura</h3>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Obra Social</label>
+                    <select
+                      name="insurance_company_id"
+                      value={formData.insurance_company_id || ''}
+                      onChange={handleFormChange}
+                    >
+                      <option value="">Particular / Sin obra social</option>
+                      {insurances.map(ins => (
+                        <option key={ins.id} value={ins.id}>{ins.name}</option>
                       ))}
+                    </select>
+                  </div>
+
+                  {formData.insurance_company_id && plans.length > 0 && (
+                    <div className={styles.formGroup}>
+                      <label>Plan</label>
+                      <select
+                        name="insurance_plan_id"
+                        value={formData.insurance_plan_id || ''}
+                        onChange={handleFormChange}
+                        required
+                      >
+                        <option value="">Selecciona tu plan...</option>
+                        {plans.map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+                  )}
+                </div>
+
+                {formData.insurance_company_id && (
+                  <div className={styles.formGroup}>
+                    <label>N° de Afiliado</label>
+                    <input
+                      type="text"
+                      name="insurance_policy_number"
+                      value={formData.insurance_policy_number || ''}
+                      onChange={handleFormChange}
+                      placeholder="N° de credencial"
+                    />
                   </div>
                 )}
 
@@ -438,7 +570,13 @@ export default function PatientsPage() {
                         </td>
                         <td data-label="Obra Social">
                           <div className={styles.insuranceList}>
-                            {patientInsurances[patient.id]?.length > 0 ? (
+                            {patient.insurance_company_name ? (
+                              <span className={styles.insuranceBadge}>
+                                {patient.insurance_company_name}
+                                {patient.insurance_plan_name && ` • Plan: ${patient.insurance_plan_name}`}
+                                {patient.insurance_policy_number && ` • Afiliado: ${patient.insurance_policy_number}`}
+                              </span>
+                            ) : patientInsurances[patient.id]?.length > 0 ? (
                               patientInsurances[patient.id].map(ins => (
                                 <span key={ins.id} className={styles.insuranceBadge}>
                                   {ins.name}

@@ -200,7 +200,18 @@ httpServer.listen(PORT, HOST, async () => {
       ALTER TABLE doctors ADD COLUMN IF NOT EXISTS mp_refresh_token TEXT
     `);
 
-    console.log('✓ Migraciones de is_online, meet_link, pricing_plans, insurance_plans y mp_refresh_token aplicadas');
+    // Añadir columnas de domicilio, tipo de documento y obra social a pacientes
+    await query(`
+      ALTER TABLE patients 
+        ADD COLUMN IF NOT EXISTS document_type VARCHAR(50) DEFAULT 'DNI',
+        ADD COLUMN IF NOT EXISTS locality VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS province VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS insurance_company_id UUID REFERENCES insurance_companies(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS insurance_plan_id UUID REFERENCES insurance_plans(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS insurance_policy_number VARCHAR(100)
+    `);
+
+    console.log('✓ Migraciones de is_online, meet_link, pricing_plans, insurance_plans, mp_refresh_token y patients aplicadas');
   } catch (err) {
     console.error('⚠️ Error en auto-migración:', err.message);
   }

@@ -100,6 +100,16 @@ async function initDatabase(retries = 3) {
     `);
 
     await client.query(`
+      ALTER TABLE patients 
+        ADD COLUMN IF NOT EXISTS document_type VARCHAR(50) DEFAULT 'DNI',
+        ADD COLUMN IF NOT EXISTS locality VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS province VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS insurance_company_id UUID REFERENCES insurance_companies(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS insurance_plan_id UUID REFERENCES insurance_plans(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS insurance_policy_number VARCHAR(100);
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS appointments (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,

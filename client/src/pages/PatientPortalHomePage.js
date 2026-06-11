@@ -35,7 +35,23 @@ export default function PatientPortalHomePage() {
   const [bookingError, setBookingError] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
-  const [patientData, setPatientData] = useState({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', insurancePlanId: '', paymentMethod: 'online' });
+  const [patientData, setPatientData] = useState({ 
+    name: '', 
+    lastName: '', 
+    email: '', 
+    documentNumber: '', 
+    phone: '', 
+    insuranceId: '', 
+    insurancePlanId: '', 
+    paymentMethod: 'online',
+    documentType: 'DNI',
+    dateOfBirth: '',
+    gender: 'Masculino',
+    insurancePolicyNumber: '',
+    address: '',
+    locality: '',
+    province: ''
+  });
   const [doctorInsurances, setDoctorInsurances] = useState([]);
   const [selectedInsurancePlans, setSelectedInsurancePlans] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
@@ -94,10 +110,27 @@ export default function PatientPortalHomePage() {
           setPatientData(prev => ({
             ...prev,
             name: response.patient.name,
-            lastName: response.patient.lastName,
-            email: response.patient.email,
-            phone: response.patient.phone
+            lastName: response.patient.lastName || '',
+            email: response.patient.email || '',
+            phone: response.patient.phone || '',
+            documentType: response.patient.documentType || 'DNI',
+            dateOfBirth: response.patient.dateOfBirth || '',
+            gender: response.patient.gender || 'Masculino',
+            address: response.patient.address || '',
+            locality: response.patient.locality || '',
+            province: response.patient.province || '',
+            insuranceId: response.patient.insuranceId || '',
+            insurancePlanId: response.patient.insurancePlanId || '',
+            insurancePolicyNumber: response.patient.insurancePolicyNumber || ''
           }));
+
+          if (response.patient.insuranceId) {
+            const selectedIns = doctorInsurances.find(i => i.id === response.patient.insuranceId);
+            setSelectedInsurancePlans(selectedIns?.plans || []);
+          } else {
+            setSelectedInsurancePlans([]);
+          }
+
           setAutofilledSuccess(true);
         }
       } catch (err) {
@@ -110,7 +143,7 @@ export default function PatientPortalHomePage() {
     }, 600); // Debounce de 600ms para esperar que termine de escribir
 
     return () => clearTimeout(delayDebounceFn);
-  }, [patientData.documentNumber, selectedDoctor, isExistingCustomer]);
+  }, [patientData.documentNumber, selectedDoctor, isExistingCustomer, doctorInsurances]);
 
   const handleDniSearch = async () => {
     const dni = patientData.documentNumber?.trim();
@@ -133,10 +166,27 @@ export default function PatientPortalHomePage() {
         setPatientData(prev => ({
           ...prev,
           name: response.patient.name,
-          lastName: response.patient.lastName,
-          email: response.patient.email,
-          phone: response.patient.phone
+          lastName: response.patient.lastName || '',
+          email: response.patient.email || '',
+          phone: response.patient.phone || '',
+          documentType: response.patient.documentType || 'DNI',
+          dateOfBirth: response.patient.dateOfBirth || '',
+          gender: response.patient.gender || 'Masculino',
+          address: response.patient.address || '',
+          locality: response.patient.locality || '',
+          province: response.patient.province || '',
+          insuranceId: response.patient.insuranceId || '',
+          insurancePlanId: response.patient.insurancePlanId || '',
+          insurancePolicyNumber: response.patient.insurancePolicyNumber || ''
         }));
+
+        if (response.patient.insuranceId) {
+          const selectedIns = doctorInsurances.find(i => i.id === response.patient.insuranceId);
+          setSelectedInsurancePlans(selectedIns?.plans || []);
+        } else {
+          setSelectedInsurancePlans([]);
+        }
+
         setAutofilledSuccess(true);
       } else {
         setBookingError('No se encontró ningún paciente con ese DNI.');
@@ -225,8 +275,8 @@ export default function PatientPortalHomePage() {
 
   const handleBookAppointment = async (e) => {
     e.preventDefault();
-    if (!patientData.name || !patientData.lastName || !patientData.documentNumber || !patientData.phone || !selectedSlot) {
-      setBookingError('Por favor completa todos los campos requeridos');
+    if (!patientData.name || !patientData.documentType || !patientData.documentNumber || !patientData.dateOfBirth || !selectedSlot) {
+      setBookingError('Por favor completa todos los campos requeridos (*)');
       return;
     }
     setBookingLoading(true);
@@ -237,13 +287,20 @@ export default function PatientPortalHomePage() {
         appointmentDate,
         appointmentTime: selectedSlot,
         patientName: patientData.name,
-        patientLastName: patientData.lastName,
+        patientLastName: patientData.lastName || '',
         patientEmail: patientData.email,
         patientDocumentNumber: patientData.documentNumber,
         patientPhone: patientData.phone,
         insuranceId: patientData.insuranceId,
         insurancePlanId: patientData.insurancePlanId,
-        paymentMethod: patientData.paymentMethod
+        paymentMethod: patientData.paymentMethod,
+        documentType: patientData.documentType,
+        dateOfBirth: patientData.dateOfBirth,
+        gender: patientData.gender,
+        address: patientData.address,
+        locality: patientData.locality,
+        province: patientData.province,
+        insurancePolicyNumber: patientData.insurancePolicyNumber
       });
 
       if (response.success) {
@@ -298,6 +355,208 @@ export default function PatientPortalHomePage() {
       setError('No se encontró ninguna cita.');
       setLoading(false);
     }
+  };
+
+  const renderPatientFormFields = (isDisabled) => {
+    return (
+      <div className={styles.patientFormCardsGrid}>
+        {/* Tarjeta 1: Datos del paciente */}
+        <div className={styles.formCardBox}>
+          <h3 className={styles.cardBoxTitle}>Datos del paciente</h3>
+          <p className={styles.cardBoxSub}>Información básica de identificación.</p>
+          
+          <div className={styles.formGroup}>
+            <label>Apellido y Nombre *</label>
+            <input 
+              type="text" 
+              name="name" 
+              value={patientData.name || ''} 
+              onChange={handlePatientDataChange} 
+              placeholder="Apellido, Nombre"
+              required 
+              disabled={isDisabled}
+            />
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label>Tipo doc. *</label>
+              <select 
+                name="documentType" 
+                value={patientData.documentType || 'DNI'} 
+                onChange={handlePatientDataChange}
+                required
+                disabled={isDisabled}
+              >
+                <option value="DNI">DNI</option>
+                <option value="LC">LC</option>
+                <option value="LE">LE</option>
+                <option value="CI">CI</option>
+                <option value="PASAPORTE">PASAPORTE</option>
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label>N° Documento *</label>
+              <input 
+                type="text" 
+                name="documentNumber" 
+                value={patientData.documentNumber || ''} 
+                onChange={handlePatientDataChange} 
+                placeholder="12345678"
+                required 
+                disabled={isDisabled}
+              />
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label>Fecha de nac. *</label>
+              <input 
+                type="date" 
+                name="dateOfBirth" 
+                value={patientData.dateOfBirth || ''} 
+                onChange={handlePatientDataChange}
+                required
+                disabled={isDisabled}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Sexo</label>
+              <select 
+                name="gender" 
+                value={patientData.gender || 'Masculino'} 
+                onChange={handlePatientDataChange}
+                disabled={isDisabled}
+              >
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Tarjeta 2: Obra social */}
+        <div className={styles.formCardBox}>
+          <h3 className={styles.cardBoxTitle}>Obra social</h3>
+          <p className={styles.cardBoxSub}>Seleccioná tu cobertura médica si tenés.</p>
+          
+          <div className={styles.formGroup}>
+            <label>Obra social</label>
+            <select 
+              name="insuranceId" 
+              value={patientData.insuranceId || ''} 
+              onChange={handlePatientDataChange}
+              disabled={!selectedDoctor || isDisabled}
+            >
+              <option value="">Particular / Sin obra social</option>
+              {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+            </select>
+          </div>
+
+          {patientData.insuranceId && selectedInsurancePlans.length > 0 && (
+            <div className={styles.formGroup}>
+              <label>Plan</label>
+              <select 
+                name="insurancePlanId" 
+                value={patientData.insurancePlanId || ''} 
+                onChange={handlePatientDataChange}
+                required
+                disabled={isDisabled}
+              >
+                <option value="">Selecciona tu plan...</option>
+                {selectedInsurancePlans.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.coverage_type === 'percentage' ? `${parseFloat(p.coverage_value)}%` : `$${parseFloat(p.coverage_value)}`})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className={styles.formGroup}>
+            <label>N° de afiliado</label>
+            <input 
+              type="text" 
+              name="insurancePolicyNumber" 
+              value={patientData.insurancePolicyNumber || ''} 
+              onChange={handlePatientDataChange} 
+              placeholder="0000000"
+              disabled={isDisabled}
+            />
+          </div>
+        </div>
+
+        {/* Tarjeta 3: Contacto */}
+        <div className={styles.formCardBox}>
+          <h3 className={styles.cardBoxTitle}>Contacto</h3>
+          <p className={styles.cardBoxSub}>Teléfono y email para comunicarnos con vos.</p>
+
+          <div className={styles.formGroup}>
+            <label>Celular</label>
+            <input 
+              type="tel" 
+              name="phone" 
+              value={patientData.phone || ''} 
+              onChange={handlePatientDataChange} 
+              placeholder="+54 9 11 0000-0000"
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label>Email</label>
+            <input 
+              type="email" 
+              name="email" 
+              value={patientData.email || ''} 
+              onChange={handlePatientDataChange} 
+              placeholder="nombre@email.com"
+            />
+          </div>
+        </div>
+
+        {/* Tarjeta 4: Domicilio */}
+        <div className={styles.formCardBox}>
+          <h3 className={styles.cardBoxTitle}>Domicilio</h3>
+          <p className={styles.cardBoxSub}>Dirección de residencia actual.</p>
+
+          <div className={styles.formGroup}>
+            <label>Dirección</label>
+            <input 
+              type="text" 
+              name="address" 
+              value={patientData.address || ''} 
+              onChange={handlePatientDataChange} 
+              placeholder="Av. Corrientes 1234"
+            />
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label>Localidad</label>
+              <input 
+                type="text" 
+                name="locality" 
+                value={patientData.locality || ''} 
+                onChange={handlePatientDataChange} 
+                placeholder="Buenos Aires"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Provincia</label>
+              <input 
+                type="text" 
+                name="province" 
+                value={patientData.province || ''} 
+                onChange={handlePatientDataChange} 
+                placeholder="CABA"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -555,73 +814,14 @@ export default function PatientPortalHomePage() {
                                 {autofilledSuccess && (
                                   <>
                                     <div className={styles.autofilledAlert}>
-                                      <span>✓</span> ¡Datos cargados con éxito para <strong>{patientData.name} {patientData.lastName}</strong>!
+                                      <span>✓</span> ¡Datos cargados con éxito para <strong>{patientData.name}</strong>!
                                     </div>
-                                    <div className={styles.formGroup}><label>NOMBRE</label><input type="text" name="name" value={patientData.name || ''} onChange={handlePatientDataChange} required disabled /></div>
-                                    <div className={styles.formGroup}><label>APELLIDO</label><input type="text" name="lastName" value={patientData.lastName || ''} onChange={handlePatientDataChange} required disabled /></div>
-                                    <div className={styles.formGroup}><label>TELÉFONO</label><input type="tel" name="phone" value={patientData.phone || ''} onChange={handlePatientDataChange} required /></div>
-                                    <div className={styles.formGroup}><label>EMAIL (Obligatorio)</label><input type="email" name="email" value={patientData.email || ''} onChange={handlePatientDataChange} required /></div>
-                                    <div className={`${styles.formGroup} ${styles.fullWidth}`}><label>CONVENIO / DESCUENTO (Opcional)</label>
-                                      <select name="insuranceId" value={patientData.insuranceId || ''} onChange={handlePatientDataChange} disabled={!selectedDoctor}>
-                                        <option value="">Sin convenio (Particular)</option>
-                                        {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                                      </select>
-                                    </div>
-
-                                    {patientData.insuranceId && selectedInsurancePlans.length > 0 && (
-                                      <div className={`${styles.formGroup} ${styles.fullWidth}`} style={{ marginTop: '10px' }}>
-                                        <label>PLAN DE OBRA SOCIAL*</label>
-                                        <select 
-                                          name="insurancePlanId" 
-                                          value={patientData.insurancePlanId || ''} 
-                                          onChange={handlePatientDataChange}
-                                          required
-                                        >
-                                          <option value="">Selecciona tu plan...</option>
-                                          {selectedInsurancePlans.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                              {p.name} ({p.coverage_type === 'percentage' ? `${parseFloat(p.coverage_value)}%` : `$${parseFloat(p.coverage_value)}`})
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </div>
-                                    )}
+                                    {renderPatientFormFields(true)}
                                   </>
                                 )}
                               </>
                             ) : (
-                              <>
-                                <div className={styles.formGroup}><label>NOMBRE</label><input type="text" name="name" value={patientData.name || ''} onChange={handlePatientDataChange} required /></div>
-                                <div className={styles.formGroup}><label>APELLIDO</label><input type="text" name="lastName" value={patientData.lastName || ''} onChange={handlePatientDataChange} required /></div>
-                                <div className={styles.formGroup}><label>DNI</label><input type="text" name="documentNumber" value={patientData.documentNumber || ''} onChange={handlePatientDataChange} required /></div>
-                                <div className={styles.formGroup}><label>TELÉFONO</label><input type="tel" name="phone" value={patientData.phone || ''} onChange={handlePatientDataChange} required /></div>
-                                <div className={styles.formGroup}><label>EMAIL (Obligatorio)</label><input type="email" name="email" value={patientData.email || ''} onChange={handlePatientDataChange} required /></div>
-                                <div className={`${styles.formGroup} ${styles.fullWidth}`}><label>CONVENIO / DESCUENTO (Opcional)</label>
-                                  <select name="insuranceId" value={patientData.insuranceId || ''} onChange={handlePatientDataChange} disabled={!selectedDoctor}>
-                                    <option value="">Sin convenio (Particular)</option>
-                                    {doctorInsurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                                  </select>
-                                </div>
-
-                                {patientData.insuranceId && selectedInsurancePlans.length > 0 && (
-                                  <div className={`${styles.formGroup} ${styles.fullWidth}`} style={{ marginTop: '10px' }}>
-                                    <label>PLAN DE OBRA SOCIAL*</label>
-                                    <select 
-                                      name="insurancePlanId" 
-                                      value={patientData.insurancePlanId || ''} 
-                                      onChange={handlePatientDataChange}
-                                      required
-                                    >
-                                      <option value="">Selecciona tu plan...</option>
-                                      {selectedInsurancePlans.map(p => (
-                                        <option key={p.id} value={p.id}>
-                                          {p.name} ({p.coverage_type === 'percentage' ? `${parseFloat(p.coverage_value)}%` : `$${parseFloat(p.coverage_value)}`})
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                )}
-                              </>
+                              renderPatientFormFields(false)
                             )}
 
                             <div className={`${styles.formGroup} ${styles.fullWidth}`}>

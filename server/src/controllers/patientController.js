@@ -4,7 +4,10 @@ import * as patientService from '../services/patientService.js';
 export const createPatient = async (req, res) => {
   try {
     const doctorId = req.user.id;
-    const { name, email, phone, date_of_birth, gender, address, document_number } = req.body;
+    const { 
+      name, email, phone, date_of_birth, gender, address, document_number,
+      document_type, locality, province, insurance_company_id, insurance_plan_id, insurance_policy_number
+    } = req.body;
 
     // Validaciones
     if (!name) {
@@ -21,7 +24,13 @@ export const createPatient = async (req, res) => {
       date_of_birth,
       gender,
       address,
-      document_number
+      document_number,
+      document_type,
+      locality,
+      province,
+      insurance_company_id,
+      insurance_plan_id,
+      insurance_policy_number
     });
 
     res.status(201).json({

@@ -3,13 +3,35 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Crear un paciente
 export const createPatient = async (doctorId, patientData) => {
-  const { email, phone, name, date_of_birth, gender, address, document_number } = patientData;
+  const { 
+    email, phone, name, date_of_birth, gender, address, document_number,
+    document_type, locality, province, insurance_company_id, insurance_plan_id, insurance_policy_number 
+  } = patientData;
 
   const result = await query(
-    `INSERT INTO patients (id, doctor_id, email, phone, name, date_of_birth, gender, address, document_number)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO patients (
+       id, doctor_id, email, phone, name, date_of_birth, gender, address, document_number,
+       document_type, locality, province, insurance_company_id, insurance_plan_id, insurance_policy_number
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING *`,
-    [uuidv4(), doctorId, email, phone, name, date_of_birth, gender, address, document_number]
+    [
+      uuidv4(), 
+      doctorId, 
+      email || null, 
+      phone || null, 
+      name, 
+      date_of_birth || null, 
+      gender || null, 
+      address || null, 
+      document_number,
+      document_type || 'DNI', 
+      locality || null, 
+      province || null, 
+      insurance_company_id || null, 
+      insurance_plan_id || null, 
+      insurance_policy_number || null
+    ]
   );
 
   return result.rows[0];
@@ -20,9 +42,13 @@ export const getPatientsByDoctor = async (doctorId, searchQuery = '') => {
   let queryText = `
     SELECT 
       p.*,
+      ic.name as insurance_company_name,
+      ip.name as insurance_plan_name,
       COUNT(a.id) as visit_count,
       MAX(a.appointment_date) as last_appointment_date
     FROM patients p
+    LEFT JOIN insurance_companies ic ON p.insurance_company_id = ic.id
+    LEFT JOIN insurance_plans ip ON p.insurance_plan_id = ip.id
     LEFT JOIN appointments a ON p.id = a.patient_id
     WHERE p.doctor_id = $1 AND p.is_active = true
   `;
@@ -34,7 +60,7 @@ export const getPatientsByDoctor = async (doctorId, searchQuery = '') => {
     params.push(`%${searchQuery}%`);
   }
 
-  queryText += ` GROUP BY p.id ORDER BY p.created_at DESC`;
+  queryText += ` GROUP BY p.id, ic.name, ip.name ORDER BY p.created_at DESC`;
 
   const result = await query(queryText, params);
   return result.rows;
@@ -80,22 +106,66 @@ export const getPatientWithAppointments = async (patientId, doctorId) => {
 
 // Actualizar paciente
 export const updatePatient = async (patientId, doctorId, updateData) => {
-  const { email, phone, name, date_of_birth, gender, address, medical_history, document_number } = updateData;
+  const existing = await getPatientById(patientId, doctorId);
+  if (!existing) return null;
+
+  const { 
+    email, phone, name, date_of_birth, gender, address, medical_history, document_number,
+    document_type, locality, province, insurance_company_id, insurance_plan_id, insurance_policy_number 
+  } = updateData;
+
+  const emailVal = email !== undefined ? email : existing.email;
+  const phoneVal = phone !== undefined ? phone : existing.phone;
+  const nameVal = name !== undefined ? name : existing.name;
+  const dobVal = date_of_birth !== undefined ? date_of_birth : existing.date_of_birth;
+  const genderVal = gender !== undefined ? gender : existing.gender;
+  const addressVal = address !== undefined ? address : existing.address;
+  const medVal = medical_history !== undefined ? medical_history : existing.medical_history;
+  const docNumVal = document_number !== undefined ? document_number : existing.document_number;
+  const docTypeVal = document_type !== undefined ? document_type : existing.document_type;
+  const localityVal = locality !== undefined ? locality : existing.locality;
+  const provinceVal = province !== undefined ? province : existing.province;
+  const insCompanyVal = insurance_company_id !== undefined ? insurance_company_id : existing.insurance_company_id;
+  const insPlanVal = insurance_plan_id !== undefined ? insurance_plan_id : existing.insurance_plan_id;
+  const insPolicyVal = insurance_policy_number !== undefined ? insurance_policy_number : existing.insurance_policy_number;
 
   const result = await query(
     `UPDATE patients
-     SET email = COALESCE($1, email),
-         phone = COALESCE($2, phone),
-         name = COALESCE($3, name),
-         date_of_birth = COALESCE($4, date_of_birth),
-         gender = COALESCE($5, gender),
-         address = COALESCE($6, address),
-         medical_history = COALESCE($7, medical_history),
-         document_number = COALESCE($10, document_number),
+     SET email = $1,
+         phone = $2,
+         name = $3,
+         date_of_birth = $4,
+         gender = $5,
+         address = $6,
+         medical_history = $7,
+         document_number = $8,
+         document_type = $9,
+         locality = $10,
+         province = $11,
+         insurance_company_id = $12,
+         insurance_plan_id = $13,
+         insurance_policy_number = $14,
          updated_at = CURRENT_TIMESTAMP
-     WHERE id = $8 AND doctor_id = $9
+     WHERE id = $15 AND doctor_id = $16
      RETURNING *`,
-    [email, phone, name, date_of_birth, gender, address, medical_history, patientId, doctorId, document_number]
+    [
+      emailVal, 
+      phoneVal, 
+      nameVal, 
+      dobVal || null, 
+      genderVal || null, 
+      addressVal || null, 
+      medVal || null, 
+      docNumVal, 
+      docTypeVal || 'DNI',
+      localityVal || null,
+      provinceVal || null,
+      insCompanyVal || null,
+      insPlanVal || null,
+      insPolicyVal || null,
+      patientId,
+      doctorId
+    ]
   );
 
   return result.rows[0];
