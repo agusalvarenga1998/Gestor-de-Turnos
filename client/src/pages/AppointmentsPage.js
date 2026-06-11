@@ -79,15 +79,29 @@ export default function AppointmentsPage() {
     return days;
   };
 
-  const generateTimeSlots = () => {
-    const slots = [];
+  const generateTimeSlots = (dayAppointments = []) => {
+    const slots = new Set();
+    
+    // Add standard 30-minute slots
     for (let hour = 8; hour <= 20; hour++) {
-      slots.push(`${String(hour).padStart(2, '0')}:00`);
+      slots.add(`${String(hour).padStart(2, '0')}:00`);
       if (hour < 20) {
-        slots.push(`${String(hour).padStart(2, '0')}:30`);
+        slots.add(`${String(hour).padStart(2, '0')}:30`);
       }
     }
-    return slots;
+    
+    // Dynamically insert any scheduled appointment times for the selected date
+    dayAppointments.forEach(appt => {
+      if (appt.appointment_date && appt.appointment_time) {
+        const dateStr = String(appt.appointment_date).split('T')[0];
+        if (dateStr === selectedDate) {
+          const apptTime = String(appt.appointment_time).substring(0, 5);
+          slots.add(apptTime);
+        }
+      }
+    });
+    
+    return Array.from(slots).sort();
   };
 
   const handlePrevWeek = () => {
@@ -452,7 +466,7 @@ export default function AppointmentsPage() {
   };
 
   const renderAgendaGrid = () => {
-    const slots = generateTimeSlots();
+    const slots = generateTimeSlots(appointments);
     
     return (
       <div className={styles.agendaContainer}>
