@@ -703,10 +703,22 @@
 .patientFormCardsGrid {
   grid-column: span 2;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-top: 1rem;
   margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .patientFormCardsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1350px) {
+  .patientFormCardsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .formCardBox {
@@ -742,12 +754,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-}
-
-@media (max-width: 768px) {
-  .patientFormCardsGrid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 480px) {
