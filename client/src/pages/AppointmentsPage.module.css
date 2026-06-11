@@ -198,17 +198,54 @@
 }
 
 .actionButtons {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 120px 90px 60px;
+  gap: 0.4rem;
+  align-items: center;
+  width: 100%;
+}
+
+.statusSelect, .statusOnly, .acceptBtn {
+  grid-column: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rejectBtn, .delayBtn {
+  grid-column: 2;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.whatsappBtn {
+  grid-column: 3;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+}
+
+.statusSelect {
+  padding: 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: white;
+  cursor: pointer;
 }
 
 .acceptBtn, .rejectBtn, .delayBtn {
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.25rem;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .acceptBtn {
