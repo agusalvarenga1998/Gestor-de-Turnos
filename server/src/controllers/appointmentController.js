@@ -343,6 +343,35 @@ export const getProximosTurnos = async (req, res) => {
   }
 };
 
+// Endpoint de sistema: turnos del día siguiente para integraciones externas (n8n)
+export const getNextDayAppointmentsSystem = async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT
+         a.id,
+         p.name AS patient_name,
+         p.phone AS patient_phone,
+         p.email AS patient_email,
+         a.appointment_date,
+         a.appointment_time,
+         a.status,
+         d.name AS doctor_name,
+         d.email AS doctor_email
+       FROM appointments a
+       JOIN patients p ON p.id = a.patient_id
+       JOIN doctors d ON d.id = a.doctor_id
+       WHERE a.appointment_date = CURRENT_DATE + INTERVAL '1 day'
+         AND a.status NOT IN ('cancelled', 'rejected')
+       ORDER BY d.name, a.appointment_time ASC`
+    );
+
+    res.json({ appointments: result.rows });
+  } catch (error) {
+    console.error('Error obteniendo turnos del día siguiente (system):', error.message);
+    res.status(500).json({ success: false, message: 'Error al obtener los turnos' });
+  }
+};
+
 // Obtener slots disponibles
 export const getAvailableSlots = async (req, res) => {
   try {

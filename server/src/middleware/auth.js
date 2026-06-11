@@ -87,6 +87,20 @@ export const checkSubscription = async (req, res, next) => {
   }
 };
 
+// Middleware para verificar API Key de integraciones externas (n8n)
+export const verifyApiKey = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+
+  if (!apiKey || apiKey !== process.env.N8N_API_KEY) {
+    return res.status(401).json({
+      success: false,
+      message: 'API key inválida o no proporcionada'
+    });
+  }
+
+  next();
+};
+
 // Generar JWT
 export const generateToken = (user) => {
   return jwt.sign(

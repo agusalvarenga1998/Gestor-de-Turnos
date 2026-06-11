@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
+import { verifyToken, verifyDoctorRole, checkSubscription, verifyApiKey } from '../middleware/auth.js';
 import * as appointmentController from '../controllers/appointmentController.js';
 import { query } from '../db/config.js';
 import { notifyDoctor } from '../websocket/server.js';
@@ -968,6 +968,9 @@ router.get('/public/:token', async (req, res) => {
     });
   }
 });
+
+// ===== RUTAS DE SISTEMA (API Key) =====
+router.get('/system/next-day', verifyApiKey, appointmentController.getNextDayAppointmentsSystem);
 
 // ===== RUTAS PROTEGIDAS PARA DOCTORES =====
 
