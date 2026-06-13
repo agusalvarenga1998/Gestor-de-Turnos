@@ -29,8 +29,9 @@
   font-size: 1.25rem;
 }
 
-.logo img {
-  height: 32px;
+.logoIcon {
+  color: #1e3a8a;
+  font-size: 28px !important;
 }
 
 .backLink {

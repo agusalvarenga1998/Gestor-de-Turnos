@@ -17,7 +17,7 @@ export default function SupportPage() {
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
           <Link to="/" className={styles.logo}>
-            <img src="/logo_turnohub.png" alt="T" />
+            <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
             <span>TurnoHub Support</span>
           </Link>
           <Link to="/" className={styles.backLink}>Regresar</Link>

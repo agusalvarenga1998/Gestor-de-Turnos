@@ -308,7 +308,7 @@
 }
 
 
-.logoImage { height: 45px; width: auto; margin-right: 0.75rem; }
+.logoIcon { color: #ffffff; font-size: 45px !important; margin-right: 0.75rem; }
 .loginDivider { display: flex; align-items: center; margin: 1.5rem 0; color: #94a3b8; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; }
 .loginDivider::before, .loginDivider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
 .loginDivider span { padding: 0 1rem; }

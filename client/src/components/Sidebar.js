@@ -31,7 +31,7 @@ export default function Sidebar({ isMobile, isOpen, onClose }) {
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.logo}>
-          <img src="/logo_turnohub.png" alt="TurnoHub" className={styles.sidebarLogo} />
+          <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
           {(!isCollapsed || isOpen) && <span className={styles.logoText}>TurnoHub</span>}
         </div>
         

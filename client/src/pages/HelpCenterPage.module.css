@@ -30,8 +30,9 @@
   font-size: 1.25rem;
 }
 
-.logo img {
-  height: 32px;
+.logoIcon {
+  color: white;
+  font-size: 28px !important;
 }
 
 .backLink {

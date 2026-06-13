@@ -169,7 +169,7 @@ export default function PatientAppointmentViewPage() {
           {/* Header del Ticket - Marca y Estado */}
           <div className={`${styles.ticketHeader} ${styles[appointment.status]}`}>
             <div className={styles.brandRow}>
-              <img src="/logo_turnohub.png" alt="TurnoHub" className={styles.logo} />
+              <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
               <div className={styles.statusGroup}>
                 <div className={`${styles.badge} ${styles['badge' + appointment.status]}`}>
                   {appointment.status === 'scheduled' ? 'CONFIRMADO' : appointment.status.toUpperCase()}

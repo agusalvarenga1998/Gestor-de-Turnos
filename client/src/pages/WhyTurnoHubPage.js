@@ -43,7 +43,7 @@ export default function WhyTurnoHubPage() {
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
           <Link to="/" className={styles.logo}>
-            <img src="/logo_turnohub.png" alt="T" />
+            <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
             <span>TurnoHub</span>
           </Link>
           <Link to="/login" className={styles.backBtn}>Volver al Login</Link>

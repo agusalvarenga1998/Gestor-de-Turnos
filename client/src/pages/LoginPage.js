@@ -111,7 +111,7 @@ export default function LoginPage() {
           <div className={styles.overlay}></div>
           <div className={styles.leftContent}>
             <Link to="/" className={styles.logoContainer} style={{ textDecoration: 'none' }}>
-              <img src="/logo_turnohub.png" alt="TurnoHub" className={styles.logoImage} />
+              <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
               <span className={styles.logoText}>TurnoHub</span>
             </Link>
             

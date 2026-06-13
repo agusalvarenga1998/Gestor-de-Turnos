@@ -72,8 +72,9 @@
   margin-bottom: 1.5rem;
 }
 
-.logo {
-  height: 60px;
+.logoIcon {
+  color: var(--primary);
+  font-size: 36px !important;
 }
 
 .badge {

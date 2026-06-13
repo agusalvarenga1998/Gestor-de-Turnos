@@ -8,7 +8,7 @@ export default function TermsOfServicePage() {
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
           <Link to="/" className={styles.logo}>
-            <img src="/logo_turnohub.png" alt="T" onError={(e) => { e.target.style.display = 'none'; }} />
+            <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
             <span>TurnoHub</span>
           </Link>
           <Link to="/" className={styles.backLink}>Volver al Inicio</Link>

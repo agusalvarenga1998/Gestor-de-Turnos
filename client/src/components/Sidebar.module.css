@@ -31,9 +31,9 @@
   gap: var(--spacing-md);
 }
 
-.sidebarLogo {
-  height: 32px;
-  width: auto;
+.logoIcon {
+  color: var(--primary-color);
+  font-size: 28px !important;
 }
 
 .logoText {

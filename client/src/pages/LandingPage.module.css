@@ -42,8 +42,9 @@
   letter-spacing: -0.5px;
 }
 
-.logo img {
-  height: 36px;
+.logoIcon {
+  color: #1e3a8a;
+  font-size: 28px !important;
 }
 
 .navLinks {

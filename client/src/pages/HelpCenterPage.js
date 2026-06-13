@@ -35,7 +35,7 @@ export default function HelpCenterPage() {
       <header className={styles.header}>
         <nav className={styles.navbar}>
           <Link to="/" className={styles.logo}>
-            <img src="/logo_turnohub.png" alt="T" />
+            <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
             <span>TurnoHub Help</span>
           </Link>
           <Link to="/login" className={styles.backLink}>Volver al Login</Link>

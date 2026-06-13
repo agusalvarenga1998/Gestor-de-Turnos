@@ -90,7 +90,7 @@ export default function RegisterPage() {
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
           <Link to="/" className={styles.navLogo}>
-            <img src="/logo_turnohub.png" alt="T" className={styles.smallLogo} />
+            <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
             <span>TurnoHub</span>
           </Link>
           <div className={styles.navLinks}>

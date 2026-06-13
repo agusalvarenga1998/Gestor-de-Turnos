@@ -35,8 +35,9 @@
   color: white;
 }
 
-.smallLogo {
-  height: 45px;
+.logoIcon {
+  color: white;
+  font-size: 28px !important;
 }
 
 .navLinks {
