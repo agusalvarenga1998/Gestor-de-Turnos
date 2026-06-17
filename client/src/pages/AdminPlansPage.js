@@ -20,7 +20,14 @@ export default function AdminPlansPage() {
     price_period: '',
     features: [],
     is_popular: false,
-    is_enabled: true
+    is_enabled: true,
+    allow_google_calendar: true,
+    allow_mercadopago: true,
+    allow_telemedicine: true,
+    allow_reminders: true,
+    allow_insurance: true,
+    max_patients: '',
+    max_appointments_monthly: ''
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -57,7 +64,14 @@ export default function AdminPlansPage() {
       price_period: plan.price_period || '',
       features: [...(plan.features || [])],
       is_popular: plan.is_popular || false,
-      is_enabled: plan.is_enabled !== false
+      is_enabled: plan.is_enabled !== false,
+      allow_google_calendar: plan.allow_google_calendar !== false,
+      allow_mercadopago: plan.allow_mercadopago !== false,
+      allow_telemedicine: plan.allow_telemedicine !== false,
+      allow_reminders: plan.allow_reminders !== false,
+      allow_insurance: plan.allow_insurance !== false,
+      max_patients: plan.max_patients !== null && plan.max_patients !== undefined ? plan.max_patients : '',
+      max_appointments_monthly: plan.max_appointments_monthly !== null && plan.max_appointments_monthly !== undefined ? plan.max_appointments_monthly : ''
     });
     setSuccessMsg('');
     setError('');
@@ -73,7 +87,14 @@ export default function AdminPlansPage() {
       price_period: '',
       features: [],
       is_popular: false,
-      is_enabled: true
+      is_enabled: true,
+      allow_google_calendar: true,
+      allow_mercadopago: true,
+      allow_telemedicine: true,
+      allow_reminders: true,
+      allow_insurance: true,
+      max_patients: '',
+      max_appointments_monthly: ''
     });
     setSuccessMsg('');
     setError('');
@@ -153,14 +174,18 @@ export default function AdminPlansPage() {
       const cleanFeatures = editFormData.features.filter(f => f.trim() !== '');
 
       let response;
+      const payload = {
+        ...editFormData,
+        features: cleanFeatures,
+        max_patients: editFormData.max_patients === '' ? null : parseInt(editFormData.max_patients),
+        max_appointments_monthly: editFormData.max_appointments_monthly === '' ? null : parseInt(editFormData.max_appointments_monthly)
+      };
+
       if (selectedPlan.isNew) {
         // CREAR PLAN NUEVO
         response = await axios.post(
           `${API_BASE_URL}/api/admin/plans`,
-          {
-            ...editFormData,
-            features: cleanFeatures
-          },
+          payload,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -169,10 +194,7 @@ export default function AdminPlansPage() {
         // ACTUALIZAR PLAN EXISTENTE
         response = await axios.put(
           `${API_BASE_URL}/api/admin/plans/${selectedPlan.id}`,
-          {
-            ...editFormData,
-            features: cleanFeatures
-          },
+          payload,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -246,6 +268,16 @@ export default function AdminPlansPage() {
                       </li>
                     ))}
                   </ul>
+
+                  <div className={styles.technicalLimits}>
+                    <div><strong>Google Calendar:</strong> {plan.allow_google_calendar ? 'Habilitado' : 'Bloqueado'}</div>
+                    <div><strong>Mercado Pago:</strong> {plan.allow_mercadopago ? 'Habilitado' : 'Bloqueado'}</div>
+                    <div><strong>Telemedicina (Meet):</strong> {plan.allow_telemedicine ? 'Habilitado' : 'Bloqueado'}</div>
+                    <div><strong>Remisiones Email:</strong> {plan.allow_reminders ? 'Habilitadas' : 'Bloqueadas'}</div>
+                    <div><strong>Convenios OS:</strong> {plan.allow_insurance ? 'Habilitados' : 'Bloqueados'}</div>
+                    <div><strong>Pacientes Máx:</strong> {plan.max_patients || 'Ilimitados'}</div>
+                    <div><strong>Turnos/Mes Máx:</strong> {plan.max_appointments_monthly || 'Ilimitados'}</div>
+                  </div>
 
                   <div className={styles.cardActions}>
                     <button 
@@ -350,6 +382,80 @@ export default function AdminPlansPage() {
                       />
                       Habilitar y mostrar este plan en la Web
                     </label>
+
+                    <label className={styles.checkboxLabel}>
+                      <input 
+                        type="checkbox" 
+                        name="allow_google_calendar" 
+                        checked={editFormData.allow_google_calendar} 
+                        onChange={handleInputChange} 
+                      />
+                      Sincronización con Google Calendar
+                    </label>
+
+                    <label className={styles.checkboxLabel}>
+                      <input 
+                        type="checkbox" 
+                        name="allow_mercadopago" 
+                        checked={editFormData.allow_mercadopago} 
+                        onChange={handleInputChange} 
+                      />
+                      Integración con Mercado Pago
+                    </label>
+
+                    <label className={styles.checkboxLabel}>
+                      <input 
+                        type="checkbox" 
+                        name="allow_telemedicine" 
+                        checked={editFormData.allow_telemedicine} 
+                        onChange={handleInputChange} 
+                      />
+                      Consultas Online (Videollamadas Meet)
+                    </label>
+
+                    <label className={styles.checkboxLabel}>
+                      <input 
+                        type="checkbox" 
+                        name="allow_reminders" 
+                        checked={editFormData.allow_reminders} 
+                        onChange={handleInputChange} 
+                      />
+                      Recordatorios Automáticos de Turnos (Email)
+                    </label>
+
+                    <label className={styles.checkboxLabel}>
+                      <input 
+                        type="checkbox" 
+                        name="allow_insurance" 
+                        checked={editFormData.allow_insurance} 
+                        onChange={handleInputChange} 
+                      />
+                      Convenios y Obras Sociales (Módulo OS)
+                    </label>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Límite de Pacientes Activos (vacío = ilimitado)</label>
+                    <input 
+                      type="number" 
+                      name="max_patients" 
+                      value={editFormData.max_patients} 
+                      onChange={handleInputChange} 
+                      placeholder="Ej: 50"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Límite de Turnos por Mes (vacío = ilimitado)</label>
+                    <input 
+                      type="number" 
+                      name="max_appointments_monthly" 
+                      value={editFormData.max_appointments_monthly} 
+                      onChange={handleInputChange} 
+                      placeholder="Ej: 200"
+                      min="0"
+                    />
                   </div>
 
                   <div className={styles.formGroup}>

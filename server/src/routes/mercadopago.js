@@ -37,7 +37,7 @@ const getRedirectUri = (req) => {
 };
 
 // 1. Redirigir al portal de autorización de Mercado Pago
-router.get('/oauth/auth', (req, res) => {
+router.get('/oauth/auth', async (req, res) => {
   try {
     const token = req.query.token;
 
@@ -62,6 +62,21 @@ router.get('/oauth/auth', (req, res) => {
     }
 
     const doctorId = decoded.id;
+
+    // Verificar si el plan del doctor permite Mercado Pago
+    const doctorPlanResult = await query(
+      'SELECT p.allow_mercadopago FROM doctors d LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id WHERE d.id = $1',
+      [doctorId]
+    );
+
+    if (doctorPlanResult.rows.length > 0 && doctorPlanResult.rows[0].allow_mercadopago === false) {
+      return res.status(403).json({
+        success: false,
+        planRestricted: true,
+        message: 'Tu plan actual no incluye la integración con Mercado Pago.'
+      });
+    }
+
     const clientId = getClientId();
     const redirectUri = getRedirectUri(req);
 

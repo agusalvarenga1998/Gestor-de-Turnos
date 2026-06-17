@@ -256,3 +256,45 @@
   .statusSection { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
   .connectBtn, .disconnectBtn { width: 100%; justify-content: center; padding: 1rem; }
 }
+
+.planRestricted {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  max-width: 400px;
+  text-align: right;
+}
+
+.disabledBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-weight: 700;
+  cursor: not-allowed;
+}
+
+.upgradeNotice {
+  font-size: 0.775rem;
+  color: #ef4444;
+  margin: 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .planRestricted {
+    align-items: flex-start;
+    text-align: left;
+    max-width: 100%;
+    width: 100%;
+  }
+  .disabledBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

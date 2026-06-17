@@ -1,6 +1,8 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { verifyToken } from '../middleware/auth.js';
+import { checkPlanFeature } from '../middleware/checkPlanFeature.js';
+import { query } from '../db/config.js';
 import * as googleCalendarService from '../services/googleCalendarService.js';
 import dotenv from 'dotenv';
 
@@ -41,9 +43,28 @@ router.get('/auth', (req, res) => {
 
     const doctorId = decoded.id;
 
-    const authUrl = googleCalendarService.getAuthUrl(doctorId);
-    console.log('Redirigiendo a Google...');
-    res.redirect(authUrl);
+    // Verificar si el plan del doctor permite Google Calendar antes de iniciar el flujo
+    query(
+      'SELECT p.allow_google_calendar FROM doctors d LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id WHERE d.id = $1',
+      [doctorId]
+    ).then((doctorPlan) => {
+      if (doctorPlan.rows.length > 0 && doctorPlan.rows[0].allow_google_calendar === false) {
+        return res.status(403).json({
+          success: false,
+          planRestricted: true,
+          message: 'Tu plan actual no incluye la sincronización con Google Calendar.'
+        });
+      }
+      
+      const authUrl = googleCalendarService.getAuthUrl(doctorId);
+      console.log('Redirigiendo a Google...');
+      res.redirect(authUrl);
+    }).catch((dbErr) => {
+      console.error('Error al verificar plan:', dbErr);
+      const authUrl = googleCalendarService.getAuthUrl(doctorId);
+      console.log('Redirigiendo a Google (con error en verificación de plan)...');
+      res.redirect(authUrl);
+    });
   } catch (error) {
     console.error('Error generando URL de autenticación:', error.message);
     console.error('Stack:', error.stack);
@@ -89,7 +110,7 @@ router.get('/callback', async (req, res) => {
 });
 
 // Obtener estado de conexión
-router.get('/status', verifyToken, async (req, res) => {
+router.get('/status', verifyToken, checkPlanFeature('allow_google_calendar'), async (req, res) => {
   try {
     const doctorId = req.user.id;
     console.log('GET /status - Doctor ID:', doctorId);

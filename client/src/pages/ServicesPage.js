@@ -9,7 +9,7 @@ import styles from './ServicesPage.module.css';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5002';
 
 export default function ServicesPage() {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,12 +51,16 @@ export default function ServicesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        is_online: user?.plan?.allow_telemedicine === false ? false : formData.is_online
+      };
       if (editingService) {
-        await axios.put(`${API_BASE_URL}/api/services/${editingService.id}`, formData, {
+        await axios.put(`${API_BASE_URL}/api/services/${editingService.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await axios.post(`${API_BASE_URL}/api/services`, formData, {
+        await axios.post(`${API_BASE_URL}/api/services`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -65,7 +69,7 @@ export default function ServicesPage() {
       setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30, code: '', is_online: false });
       fetchServices();
     } catch (err) {
-      alert('Error al guardar el servicio');
+      alert('Error al guardar el servicio: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -267,19 +271,26 @@ export default function ServicesPage() {
                   />
                   <p className={styles.helpText}>Al cliente se le sumará el 3% de comisión del sistema sobre el precio total.</p>
                 </div>
-                <div className={styles.onlineToggle}>
+                <div className={`${styles.onlineToggle} ${user?.plan?.allow_telemedicine === false ? styles.toggleDisabled : ''}`}>
                   <label className={styles.toggleLabel}>
                     <span>🎥 Servicio Online (videollamada)</span>
-                    <div className={styles.toggleSwitch}>
-                      <input 
-                        type="checkbox" 
-                        checked={formData.is_online}
-                        onChange={e => setFormData({...formData, is_online: e.target.checked})}
-                      />
-                      <span className={styles.toggleSlider}></span>
-                    </div>
+                    {user?.plan?.allow_telemedicine === false ? (
+                      <span className={styles.upgradeBadge}>🔒 Requiere Plan Superior</span>
+                    ) : (
+                      <div className={styles.toggleSwitch}>
+                        <input 
+                          type="checkbox" 
+                          checked={formData.is_online}
+                          onChange={e => setFormData({...formData, is_online: e.target.checked})}
+                        />
+                        <span className={styles.toggleSlider}></span>
+                      </div>
+                    )}
                   </label>
-                  {formData.is_online && (
+                  {user?.plan?.allow_telemedicine === false && (
+                    <p className={styles.restrictedHint}>Esta característica no está incluida en tu plan actual (<strong>{user?.plan?.name || 'Plan Básico'}</strong>). Contacta al administrador para solicitar Consultas Online.</p>
+                  )}
+                  {formData.is_online && user?.plan?.allow_telemedicine !== false && (
                     <p className={styles.onlineHint}>⚡ Al confirmar el turno se generará un link de Google Meet automáticamente (requiere Google Calendar conectado).</p>
                   )}
                 </div>

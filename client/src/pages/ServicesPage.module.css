@@ -382,3 +382,29 @@
   border-radius: 8px;
   border-left: 3px solid #2563eb;
 }
+
+.toggleDisabled {
+  background: #f8fafc;
+  opacity: 0.8;
+}
+
+.upgradeBadge {
+  background: #fee2e2;
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #fca5a5;
+}
+
+.restrictedHint {
+  margin: 10px 0 0 0;
+  font-size: 0.82rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
+  line-height: 1.4;
+}

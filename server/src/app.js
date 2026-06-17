@@ -177,6 +177,13 @@ httpServer.listen(PORT, HOST, async () => {
         features TEXT[] DEFAULT '{}',
         is_popular BOOLEAN DEFAULT false,
         is_enabled BOOLEAN DEFAULT true,
+        allow_google_calendar BOOLEAN DEFAULT TRUE,
+        allow_mercadopago BOOLEAN DEFAULT TRUE,
+        allow_telemedicine BOOLEAN DEFAULT TRUE,
+        allow_reminders BOOLEAN DEFAULT TRUE,
+        allow_insurance BOOLEAN DEFAULT TRUE,
+        max_patients INTEGER DEFAULT NULL,
+        max_appointments_monthly INTEGER DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -184,11 +191,17 @@ httpServer.listen(PORT, HOST, async () => {
 
     // Poblar planes por defecto si no existen
     await query(`
-      INSERT INTO pricing_plans (key, name, description, price, price_period, features, is_popular, is_enabled)
+      INSERT INTO pricing_plans (key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance)
       VALUES 
-      ('commission', 'Plan Comisión', 'Ideal para quienes recién comienzan', '3%', 'por turno efectivo', ARRAY['Todas las funcionalidades', 'Pacientes ilimitados', 'Soporte estándar', 'Pagas solo si trabajas'], false, true),
-      ('monthly', 'Plan Mensual', 'Para profesionales establecidos', 'Consultar', 'mes fijo', ARRAY['Funcionalidades avanzadas', 'Soporte prioritario 24/7', 'Integraciones personalizadas', 'Sin cobros por comisión'], true, true)
+      ('commission', 'Plan Comisión', 'Ideal para quienes recién comienzan', '3%', 'por turno efectivo', ARRAY['Todas las funcionalidades', 'Pacientes ilimitados', 'Soporte estándar', 'Pagas solo si trabajas'], false, true, true, true, true, true, true),
+      ('monthly', 'Plan Mensual', 'Para profesionales establecidos', 'Consultar', 'mes fijo', ARRAY['Funcionalidades avanzadas', 'Soporte prioritario 24/7', 'Integraciones personalizadas', 'Sin cobros por comisión'], true, true, true, true, true, true, true)
       ON CONFLICT (key) DO NOTHING
+    `);
+
+    // Asegurar que doctors tenga la relación pricing_plan_id
+    await query(`
+      ALTER TABLE doctors 
+      ADD COLUMN IF NOT EXISTS pricing_plan_id UUID REFERENCES pricing_plans(id) ON DELETE SET NULL
     `);
 
     // Crear tabla de planes de obras sociales si no existe

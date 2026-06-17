@@ -64,6 +64,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Nombre y duración son requeridos' });
     }
 
+    if (is_online === true || is_online === 'true') {
+      const planRes = await query('SELECT p.allow_telemedicine FROM doctors d LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id WHERE d.id = $1', [doctorId]);
+      if (planRes.rows.length > 0 && planRes.rows[0].allow_telemedicine === false) {
+        return res.status(403).json({ error: 'Tu plan actual no permite crear servicios online (videollamadas).' });
+      }
+    }
+
     const result = await query(
       `INSERT INTO services (doctor_id, name, description, price, duration_minutes, booking_fee, code, is_online)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -84,6 +91,13 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { name, description, price, duration_minutes, is_active, booking_fee, code, is_online } = req.body;
     const doctorId = req.user.id;
+
+    if (is_online === true || is_online === 'true') {
+      const planRes = await query('SELECT p.allow_telemedicine FROM doctors d LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id WHERE d.id = $1', [doctorId]);
+      if (planRes.rows.length > 0 && planRes.rows[0].allow_telemedicine === false) {
+        return res.status(403).json({ error: 'Tu plan actual no permite configurar servicios online (videollamadas).' });
+      }
+    }
 
     const result = await query(
       `UPDATE services 
@@ -160,6 +174,14 @@ router.post('/import', upload.single('file'), async (req, res) => {
         if (!name) {
           errors.push(`Fila con código ${code || 'sin código'} omitida: Falta nombre`);
           continue;
+        }
+
+        if (isOnline === true || isOnline === 'true') {
+          const planRes = await query('SELECT p.allow_telemedicine FROM doctors d LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id WHERE d.id = $1', [doctorId]);
+          if (planRes.rows.length > 0 && planRes.rows[0].allow_telemedicine === false) {
+            errors.push(`Fila "${name}" omitida: Tu plan actual no permite servicios online.`);
+            continue;
+          }
         }
 
         await query(

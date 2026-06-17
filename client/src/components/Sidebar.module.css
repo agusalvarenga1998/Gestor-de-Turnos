@@ -182,3 +182,118 @@
     margin-right: var(--spacing-lg);
   }
 }
+
+.lockedItem {
+  opacity: 0.75;
+}
+
+.lockedItem:hover {
+  background-color: var(--light-gray) !important;
+  color: var(--gray) !important;
+  cursor: not-allowed;
+}
+
+.lockBadge {
+  margin-left: auto;
+  font-size: 0.85rem;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.modalContent {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 440px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modalHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.modalLockIcon {
+  font-size: 3rem !important;
+  color: #6366f1;
+  background: #f5f3ff;
+  padding: 1rem;
+  border-radius: 50%;
+}
+
+.modalContent h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modalBody {
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.modalBody strong {
+  color: #0f172a;
+}
+
+.modalInstruction {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: center;
+}
+
+.upgradeBtn {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 2.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+}
+
+.upgradeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

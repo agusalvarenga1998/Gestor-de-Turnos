@@ -17,11 +17,27 @@ export default function AdminDoctorsPage() {
   const [amount, setAmount] = useState(0);
   const [planType, setPlanType] = useState('monthly');
   const [commissionRate, setCommissionRate] = useState(3);
+  const [selectedPlanId, setSelectedPlanId] = useState('');
+  const [plans, setPlans] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchDoctors();
+    fetchPlans();
   }, []);
+
+  const fetchPlans = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/plans`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setPlans(response.data.plans);
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    }
+  };
 
   const fetchDoctors = async () => {
     try {
@@ -91,7 +107,7 @@ export default function AdminDoctorsPage() {
         case 'change-plan':
           response = await axios.patch(
             `${API_BASE_URL}/api/admin/doctors/${doctorId}/plan`,
-            { plan_type: planType, commission_rate: parseFloat(commissionRate) || 3 },
+            { pricing_plan_id: selectedPlanId, commission_rate: parseFloat(commissionRate) || 3 },
             { headers: { Authorization: `Bearer ${token}` } }
           );
           break;
@@ -197,7 +213,8 @@ export default function AdminDoctorsPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {getSubscriptionStatus(doctor)}
                     <span className={styles.planBadge}>
-                      {doctor.plan_type === 'commission' ? `Comisión (${doctor.commission_rate}%)` : 'Mensualidad'}
+                      {plans.find(p => p.id === doctor.pricing_plan_id)?.name || (doctor.plan_type === 'commission' ? 'Comisión' : 'Mensualidad')}
+                      {doctor.plan_type === 'commission' && ` (${doctor.commission_rate}%)`}
                     </span>
                     <button 
                       className={styles.planBtn}
@@ -205,6 +222,7 @@ export default function AdminDoctorsPage() {
                         setSelectedDoctor(doctor);
                         setPlanType(doctor.plan_type || 'monthly');
                         setCommissionRate(doctor.commission_rate || 3);
+                        setSelectedPlanId(doctor.pricing_plan_id || '');
                         setActionModal('change-plan');
                       }}
                     >
@@ -329,16 +347,27 @@ export default function AdminDoctorsPage() {
 
             {actionModal === 'change-plan' && (
               <div className={styles.formGroup}>
-                <label htmlFor="plan_type">Tipo de Plan:</label>
+                <label htmlFor="pricing_plan_id">Plan Comercial:</label>
                 <select
-                  id="plan_type"
-                  value={planType}
-                  onChange={(e) => setPlanType(e.target.value)}
+                  id="pricing_plan_id"
+                  value={selectedPlanId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedPlanId(val);
+                    const matchedPlan = plans.find(p => p.id === val);
+                    if (matchedPlan) {
+                      setPlanType(matchedPlan.key === 'commission' ? 'commission' : 'monthly');
+                    }
+                  }}
                   className={styles.select}
                   disabled={actionLoading}
                 >
-                  <option value="monthly">Mensualidad (Fija)</option>
-                  <option value="commission">Comisión (Por Turno)</option>
+                  <option value="" disabled>Seleccione un plan</option>
+                  {plans.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} (${p.price} / {p.price_period === 'monthly' ? 'mes' : p.price_period})
+                    </option>
+                  ))}
                 </select>
               </div>
             )}

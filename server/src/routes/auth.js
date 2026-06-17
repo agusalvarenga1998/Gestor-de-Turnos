@@ -11,6 +11,59 @@ const router = express.Router();
 // URL del frontend (puede ser localhost o ngrok)
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
+// Helper para obtener el perfil completo con plan
+export async function getDoctorProfileWithPlan(doctorId) {
+  const result = await query(
+    `SELECT 
+      d.id, d.email, d.name, d.specialization, d.clinic_name, d.license_number, 
+      d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, 
+      d.status, d.subscription_status, d.trial_ends_at, d.subscription_expires_at, 
+      d.mp_connected, d.plan_type, d.pricing_plan_id,
+      p.name as plan_name, p.key as plan_key, p.allow_google_calendar, 
+      p.allow_mercadopago, p.allow_telemedicine, p.allow_reminders, p.allow_insurance,
+      p.max_patients, p.max_appointments_monthly
+     FROM doctors d
+     LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+     WHERE d.id = $1`,
+    [doctorId]
+  );
+  if (result.rows.length === 0) return null;
+  
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    specialization: row.specialization,
+    clinic_name: row.clinic_name,
+    license_number: row.license_number,
+    phone: row.phone,
+    address: row.address,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    booking_fee: row.booking_fee || 0,
+    appointment_price: row.appointment_price || 0,
+    status: row.status,
+    subscription_status: row.subscription_status,
+    trial_ends_at: row.trial_ends_at,
+    subscription_expires_at: row.subscription_expires_at,
+    mp_connected: row.mp_connected || false,
+    plan_type: row.plan_type,
+    pricing_plan_id: row.pricing_plan_id,
+    plan: {
+      name: row.plan_name || (row.plan_type === 'commission' ? 'Plan Comisión' : 'Plan Mensual'),
+      key: row.plan_key || row.plan_type || 'monthly',
+      allow_google_calendar: row.allow_google_calendar !== false,
+      allow_mercadopago: row.allow_mercadopago !== false,
+      allow_telemedicine: row.allow_telemedicine !== false,
+      allow_reminders: row.allow_reminders !== false,
+      allow_insurance: row.allow_insurance !== false,
+      max_patients: row.max_patients,
+      max_appointments_monthly: row.max_appointments_monthly
+    }
+  };
+}
+
 // Registro de doctor (auto-aprobado con 30 días de prueba gratis)
 router.post('/register', async (req, res) => {
   try {
@@ -44,12 +97,16 @@ router.post('/register', async (req, res) => {
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + 30);
 
+    // Buscar ID del plan mensual por defecto
+    const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key = 'monthly' LIMIT 1");
+    const defaultPlanId = defaultPlanResult.rows[0]?.id || null;
+
     // Crear doctor auto-aprobado con 30 días de prueba gratis
     const result = await query(
-      `INSERT INTO doctors (email, password_hash, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at)
-       VALUES ($1, $2, $3, $4, $5, 'approved', 'trial', $6, $6, CURRENT_TIMESTAMP)
+      `INSERT INTO doctors (email, password_hash, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at, pricing_plan_id, plan_type)
+       VALUES ($1, $2, $3, $4, $5, 'approved', 'trial', $6, $6, CURRENT_TIMESTAMP, $7, 'monthly')
        RETURNING id, email, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at`,
-      [email, hashedPassword, name, specialization, clinic_name, trialEndsAt]
+      [email, hashedPassword, name, specialization, clinic_name, trialEndsAt, defaultPlanId]
     );
 
     const doctor = result.rows[0];
@@ -61,24 +118,17 @@ router.post('/register', async (req, res) => {
       [doctor.id, trialEndsAt]
     );
 
+    // Obtener el perfil completo con plan para el token y la respuesta
+    const doctorProfile = await getDoctorProfileWithPlan(doctor.id);
+
     // Generar token - el usuario puede usar la app inmediatamente
-    const token = generateToken(doctor);
+    const token = generateToken(doctorProfile);
 
     res.status(201).json({
       success: true,
       message: '¡Cuenta creada! Tienes 30 días de prueba gratis.',
       token,
-      doctor: {
-        id: doctor.id,
-        email: doctor.email,
-        name: doctor.name,
-        specialization: doctor.specialization,
-        clinic_name: doctor.clinic_name,
-        status: doctor.status,
-        subscription_status: doctor.subscription_status,
-        trial_ends_at: doctor.trial_ends_at,
-        subscription_expires_at: doctor.subscription_expires_at
-      }
+      doctor: doctorProfile
     });
   } catch (error) {
     console.error('Error en registro:', error);
@@ -171,35 +221,20 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Obtener el perfil completo con plan para el token y la respuesta
+    const doctorProfile = await getDoctorProfileWithPlan(doctor.id);
+    
+    // Sobrescribir status de suscripción actualizado si fue necesario
+    doctorProfile.subscription_status = subscriptionStatus;
+
     // Generar token
-    const token = generateToken({
-      ...doctor,
-      subscription_status: subscriptionStatus
-    });
+    const token = generateToken(doctorProfile);
 
     res.json({
       success: true,
       message: 'Login exitoso',
       token,
-      doctor: {
-        id: doctor.id,
-        email: doctor.email,
-        name: doctor.name,
-        specialization: doctor.specialization,
-        clinic_name: doctor.clinic_name,
-        license_number: doctor.license_number,
-        phone: doctor.phone,
-        address: doctor.address,
-        latitude: doctor.latitude,
-        longitude: doctor.longitude,
-        booking_fee: doctor.booking_fee || 0,
-        appointment_price: doctor.appointment_price || 0,
-        status: doctor.status,
-        subscription_status: subscriptionStatus,
-        trial_ends_at: doctor.trial_ends_at,
-        subscription_expires_at: doctor.subscription_expires_at,
-        mp_connected: doctor.mp_connected || false
-      }
+      doctor: doctorProfile
     });
   } catch (error) {
     console.error('Error en login:', error);
@@ -213,36 +248,30 @@ router.post('/login', async (req, res) => {
 // Verificar token
 router.get('/verify', verifyToken, async (req, res) => {
   try {
-    const doctor = await query(
-      `SELECT id, email, name, specialization, clinic_name, license_number, phone, address, latitude, longitude, booking_fee, appointment_price, status, subscription_status, trial_ends_at, subscription_expires_at, mp_connected
-       FROM doctors WHERE id = $1`,
-      [req.user.id]
-    );
+    const doctorProfile = await getDoctorProfileWithPlan(req.user.id);
 
-    if (doctor.rows.length === 0) {
+    if (!doctorProfile) {
       return res.status(404).json({
         success: false,
         message: 'Doctor no encontrado'
       });
     }
 
-    const doctorData = doctor.rows[0];
     const now = new Date();
-    let subscriptionStatus = doctorData.subscription_status;
+    let subscriptionStatus = doctorProfile.subscription_status;
 
     // Actualizar estado de suscripción basado en fechas
-    if (subscriptionStatus === 'trial' && doctorData.trial_ends_at && new Date(doctorData.trial_ends_at) < now) {
+    if (subscriptionStatus === 'trial' && doctorProfile.trial_ends_at && new Date(doctorProfile.trial_ends_at) < now) {
       subscriptionStatus = 'expired';
-    } else if (subscriptionStatus === 'active' && doctorData.subscription_expires_at && new Date(doctorData.subscription_expires_at) < now) {
+    } else if (subscriptionStatus === 'active' && doctorProfile.subscription_expires_at && new Date(doctorProfile.subscription_expires_at) < now) {
       subscriptionStatus = 'expired';
     }
 
+    doctorProfile.subscription_status = subscriptionStatus;
+
     res.json({
       success: true,
-      doctor: {
-        ...doctorData,
-        subscription_status: subscriptionStatus
-      }
+      doctor: doctorProfile
     });
   } catch (error) {
     console.error('Error al verificar token:', error);
@@ -330,10 +359,12 @@ router.put('/profile', verifyToken, async (req, res) => {
       });
     }
 
+    const doctorProfile = await getDoctorProfileWithPlan(doctorId);
+
     res.json({
       success: true,
       message: 'Perfil actualizado correctamente con geolocalización',
-      doctor: result.rows[0]
+      doctor: doctorProfile
     });
   } catch (error) {
     console.error('Error actualizando perfil:', error);

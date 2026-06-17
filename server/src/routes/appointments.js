@@ -288,15 +288,39 @@ router.post('/public/create', async (req, res) => {
       }
     }
 
-    // Verificar doctor
+    // Verificar doctor y obtener sus límites de plan comercial
     const doctorCheck = await query(
-      `SELECT id, name, email, booking_fee, appointment_price, accumulated_debt, plan_type, commission_rate
-       FROM doctors WHERE id = $1 AND status = 'approved' AND subscription_status IN ('active', 'trial')`,
+      `SELECT d.id, d.name, d.email, d.booking_fee, d.appointment_price, d.accumulated_debt, d.plan_type, d.commission_rate, p.max_appointments_monthly
+       FROM doctors d 
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+       WHERE d.id = $1 AND d.status = 'approved' AND d.subscription_status IN ('active', 'trial')`,
       [doctorId]
     );
 
     if (doctorCheck.rows.length === 0) return res.status(404).json({ success: false, message: 'Doctor no disponible' });
     const doctor = doctorCheck.rows[0];
+
+    // Verificar si el plan del doctor restringe el número de turnos mensuales
+    if (doctor.max_appointments_monthly !== null && doctor.max_appointments_monthly !== undefined) {
+      const countRes = await query(
+        `SELECT COUNT(*) as count 
+         FROM appointments 
+         WHERE doctor_id = $1 
+           AND status != 'cancelled' 
+           AND EXTRACT(MONTH FROM appointment_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+           AND EXTRACT(YEAR FROM appointment_date) = EXTRACT(YEAR FROM CURRENT_DATE)`,
+        [doctorId]
+      );
+      const currentCount = parseInt(countRes.rows[0]?.count || 0);
+
+      if (currentCount >= doctor.max_appointments_monthly) {
+        return res.status(403).json({
+          success: false,
+          planRestricted: true,
+          message: 'El profesional seleccionado ha alcanzado el límite de turnos mensuales para su plan actual.'
+        });
+      }
+    }
 
     if (!serviceId) fullPrice = parseFloat(doctor.appointment_price) || 0;
     const bookingFee = serviceBookingFee !== null ? serviceBookingFee : (parseFloat(doctor.booking_fee) || 0);

@@ -1,5 +1,6 @@
 import express from 'express';
 import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
+import { checkPlanFeature } from '../middleware/checkPlanFeature.js';
 import * as insuranceController from '../controllers/insuranceController.js';
 import multer from 'multer';
 
@@ -9,8 +10,8 @@ const router = express.Router();
 // Ruta pública para pacientes
 router.get('/public/doctor/:doctorId', insuranceController.getPublicInsurances);
 
-// Todas las rutas siguientes requieren autenticación de doctor y suscripción activa
-router.use(verifyToken, verifyDoctorRole, checkSubscription);
+// Todas las rutas siguientes requieren autenticación de doctor, suscripción activa y permisos de plan
+router.use(verifyToken, verifyDoctorRole, checkSubscription, checkPlanFeature('allow_insurance'));
 
 // Rutas de Exportación/Importación
 router.get('/export', insuranceController.exportInsuranceCoverages);

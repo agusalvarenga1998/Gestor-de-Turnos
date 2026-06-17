@@ -31,6 +31,38 @@ export const createAppointment = async (req, res) => {
       });
     }
 
+    // Verificar si el plan del doctor restringe el número de turnos mensuales
+    const planRes = await query(
+      `SELECT p.max_appointments_monthly 
+       FROM doctors d 
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id 
+       WHERE d.id = $1`,
+      [doctorId]
+    );
+    const maxAppointments = planRes.rows[0]?.max_appointments_monthly;
+
+    if (maxAppointments !== null && maxAppointments !== undefined) {
+      // Contar turnos creados/agendados por este doctor para el mes actual
+      const countRes = await query(
+        `SELECT COUNT(*) as count 
+         FROM appointments 
+         WHERE doctor_id = $1 
+           AND status != 'cancelled' 
+           AND EXTRACT(MONTH FROM appointment_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+           AND EXTRACT(YEAR FROM appointment_date) = EXTRACT(YEAR FROM CURRENT_DATE)`,
+        [doctorId]
+      );
+      const currentCount = parseInt(countRes.rows[0]?.count || 0);
+
+      if (currentCount >= maxAppointments) {
+        return res.status(403).json({
+          success: false,
+          planRestricted: true,
+          message: `Límite de turnos mensuales alcanzado. Tu plan actual permite un máximo de ${maxAppointments} turnos por mes.`
+        });
+      }
+    }
+
     // Obtener información del servicio si existe
     let duration = 30;
     let servicePrice = null;

@@ -96,6 +96,7 @@ router.get('/doctors', verifyAdmin, async (req, res) => {
         approved_at,
         accumulated_debt,
         plan_type,
+        pricing_plan_id,
         commission_rate,
         created_at
       FROM doctors
@@ -363,19 +364,33 @@ router.get('/subscriptions', verifyAdmin, async (req, res) => {
 router.patch('/doctors/:id/plan', verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { plan_type, commission_rate } = req.body;
+    const { pricing_plan_id, commission_rate } = req.body;
 
-    if (!plan_type || !['monthly', 'commission'].includes(plan_type)) {
-      return res.status(400).json({ error: 'Invalid plan type' });
+    if (!pricing_plan_id) {
+      return res.status(400).json({ error: 'pricing_plan_id is required' });
     }
+
+    // Buscar el plan para obtener su key
+    const planResult = await query(
+      'SELECT id, key FROM pricing_plans WHERE id = $1',
+      [pricing_plan_id]
+    );
+
+    if (planResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan comercial no encontrado' });
+    }
+
+    const plan = planResult.rows[0];
+    const plan_type = plan.key === 'commission' ? 'commission' : 'monthly';
 
     const result = await query(
       `UPDATE doctors
-       SET plan_type = $1,
-           commission_rate = COALESCE($2, commission_rate)
-       WHERE id = $3
-       RETURNING id, name, plan_type, commission_rate`,
-      [plan_type, commission_rate, id]
+       SET pricing_plan_id = $1,
+           plan_type = $2,
+           commission_rate = COALESCE($3, commission_rate)
+       WHERE id = $4
+       RETURNING id, name, plan_type, pricing_plan_id, commission_rate`,
+      [pricing_plan_id, plan_type, commission_rate, id]
     );
 
     if (result.rows.length === 0) {
@@ -384,7 +399,7 @@ router.patch('/doctors/:id/plan', verifyAdmin, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Plan actualizado correctamente',
+      message: 'Plan comercial asignado correctamente',
       doctor: result.rows[0]
     });
   } catch (error) {
@@ -412,7 +427,7 @@ router.get('/public/plans', async (req, res) => {
 router.get('/plans', verifyAdmin, async (req, res) => {
   try {
     const result = await query(
-      'SELECT id, key, name, description, price, price_period, features, is_popular, is_enabled, created_at FROM pricing_plans ORDER BY created_at ASC'
+      'SELECT id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, max_patients, max_appointments_monthly, created_at FROM pricing_plans ORDER BY created_at ASC'
     );
     res.json({ success: true, plans: result.rows });
   } catch (error) {
@@ -425,7 +440,11 @@ router.get('/plans', verifyAdmin, async (req, res) => {
 router.put('/plans/:id', verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, price_period, features, is_popular, is_enabled } = req.body;
+    const { 
+      name, description, price, price_period, features, is_popular, is_enabled,
+      allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance,
+      max_patients, max_appointments_monthly
+    } = req.body;
 
     if (!name || !price) {
       return res.status(400).json({ error: 'Name and price are required' });
@@ -440,10 +459,23 @@ router.put('/plans/:id', verifyAdmin, async (req, res) => {
            features = $5,
            is_popular = $6,
            is_enabled = $7,
+           allow_google_calendar = $8,
+           allow_mercadopago = $9,
+           allow_telemedicine = $10,
+           allow_reminders = $11,
+           allow_insurance = $12,
+           max_patients = $13,
+           max_appointments_monthly = $14,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $8
-       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled`,
-      [name, description, price, price_period, features || [], is_popular, is_enabled, id]
+       WHERE id = $15
+       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, max_patients, max_appointments_monthly`,
+      [
+        name, description, price, price_period, features || [], is_popular, is_enabled,
+        allow_google_calendar !== false, allow_mercadopago !== false, allow_telemedicine !== false, allow_reminders !== false, allow_insurance !== false,
+        max_patients === '' || max_patients === null ? null : parseInt(max_patients),
+        max_appointments_monthly === '' || max_appointments_monthly === null ? null : parseInt(max_appointments_monthly),
+        id
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -464,17 +496,30 @@ router.put('/plans/:id', verifyAdmin, async (req, res) => {
 // Create a new plan (Admin endpoint - protected)
 router.post('/plans', verifyAdmin, async (req, res) => {
   try {
-    const { key, name, description, price, price_period, features, is_popular, is_enabled } = req.body;
+    const { 
+      key, name, description, price, price_period, features, is_popular, is_enabled,
+      allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance,
+      max_patients, max_appointments_monthly
+    } = req.body;
 
     if (!key || !name || !price) {
       return res.status(400).json({ error: 'Key, Name, and Price are required' });
     }
 
     const result = await query(
-      `INSERT INTO pricing_plans (key, name, description, price, price_period, features, is_popular, is_enabled)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled`,
-      [key.trim().toLowerCase(), name, description, price, price_period, features || [], is_popular, is_enabled]
+      `INSERT INTO pricing_plans (
+        key, name, description, price, price_period, features, is_popular, is_enabled,
+        allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance,
+        max_patients, max_appointments_monthly
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, max_patients, max_appointments_monthly`,
+      [
+        key.trim().toLowerCase(), name, description, price, price_period, features || [], is_popular, is_enabled,
+        allow_google_calendar !== false, allow_mercadopago !== false, allow_telemedicine !== false, allow_reminders !== false, allow_insurance !== false,
+        max_patients === '' || max_patients === null ? null : parseInt(max_patients),
+        max_appointments_monthly === '' || max_appointments_monthly === null ? null : parseInt(max_appointments_monthly)
+      ]
     );
 
     res.status(201).json({

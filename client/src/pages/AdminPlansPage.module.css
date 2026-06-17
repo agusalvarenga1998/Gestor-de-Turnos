@@ -367,3 +367,24 @@
 .cancelBtn:hover {
   background: var(--bg-primary);
 }
+
+.technicalLimits {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+  font-size: 0.8rem;
+  color: var(--gray);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.technicalLimits div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.technicalLimits strong {
+  color: var(--dark-gray);
+}

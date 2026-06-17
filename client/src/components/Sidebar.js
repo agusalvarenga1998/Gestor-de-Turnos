@@ -7,6 +7,7 @@ import styles from './Sidebar.module.css';
 export default function Sidebar({ isMobile, isOpen, onClose }) {
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const menuItems = [
     { icon: 'home', label: 'Dashboard', path: '/dashboard' },
@@ -23,70 +24,106 @@ export default function Sidebar({ isMobile, isOpen, onClose }) {
   };
 
   return (
-    <aside className={`
-      ${styles.sidebar} 
-      ${isCollapsed ? styles.collapsed : ''} 
-      ${isOpen ? styles.open : ''}
-    `}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.logo}>
-          <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
-          {(!isCollapsed || isOpen) && <span className={styles.logoText}>TurnoHub</span>}
-        </div>
-        
-        {/* Botón colapsar (solo escritorio) */}
-        {!isOpen && (
-          <button
-            className={styles.collapseBtn}
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            title={isCollapsed ? 'Expandir' : 'Contraer'}
-          >
-            {isCollapsed ? '›' : '‹'}
-          </button>
-        )}
-
-        {/* Botón cerrar (solo móvil) */}
-        {isOpen && (
-          <button className={styles.closeBtn} onClick={onClose}>
-            <Icon name="x" size={24} color="currentColor" />
-          </button>
-        )}
-      </div>
-
-      {/* Menu items */}
-      <nav className={styles.nav}>
-        {menuItems.map(item => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
-            title={isCollapsed ? item.label : ''}
-            onClick={isOpen ? onClose : undefined}
-          >
-            <Icon name={item.icon} size={20} color="currentColor" />
-            {(!isCollapsed || isOpen) && <span className={styles.label}>{item.label}</span>}
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* Footer con usuario */}
-      <div className={styles.footer}>
-        {(!isCollapsed || isOpen) && user && (
-          <div className={styles.userInfo}>
-            <div className={styles.userName}>{user.name || 'Profesional'}</div>
-            <div className={styles.userEmail}>{user.email}</div>
+    <>
+      <aside className={`
+        ${styles.sidebar} 
+        ${isCollapsed ? styles.collapsed : ''} 
+        ${isOpen ? styles.open : ''}
+      `}>
+        {/* Header */}
+        <div className={styles.header}>
+          <div className={styles.logo}>
+            <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
+            {(!isCollapsed || isOpen) && <span className={styles.logoText}>TurnoHub</span>}
           </div>
-        )}
-        <button
-          className={styles.logoutBtn}
-          onClick={handleLogout}
-          title="Cerrar sesión"
-        >
-          <Icon name="logout" size={20} color="currentColor" />
-          {(!isCollapsed || isOpen) && <span>Salir</span>}
-        </button>
-      </div>
-    </aside>
+          
+          {/* Botón colapsar (solo escritorio) */}
+          {!isOpen && (
+            <button
+              className={styles.collapseBtn}
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              title={isCollapsed ? 'Expandir' : 'Contraer'}
+            >
+              {isCollapsed ? '›' : '‹'}
+            </button>
+          )}
+
+          {/* Botón cerrar (solo móvil) */}
+          {isOpen && (
+            <button className={styles.closeBtn} onClick={onClose}>
+              <Icon name="x" size={24} color="currentColor" />
+            </button>
+          )}
+        </div>
+
+        {/* Menu items */}
+        <nav className={styles.nav}>
+          {menuItems.map(item => {
+            const isLocked = item.path === '/insurance' && user?.plan && user.plan.allow_insurance === false;
+            return (
+              <NavLink
+                key={item.path}
+                to={isLocked ? '#' : item.path}
+                className={({ isActive }) => 
+                  `${styles.navItem} ${isActive && !isLocked ? styles.active : ''} ${isLocked ? styles.lockedItem : ''}`
+                }
+                title={isCollapsed ? item.label : ''}
+                onClick={(e) => {
+                  if (isLocked) {
+                    e.preventDefault();
+                    setShowUpgradeModal(true);
+                  } else if (isOpen) {
+                    onClose();
+                  }
+                }}
+              >
+                <Icon name={item.icon} size={20} color="currentColor" />
+                {(!isCollapsed || isOpen) && <span className={styles.label}>{item.label}</span>}
+                {isLocked && (!isCollapsed || isOpen) && <span className={styles.lockBadge}>🔒</span>}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Footer con usuario */}
+        <div className={styles.footer}>
+          {(!isCollapsed || isOpen) && user && (
+            <div className={styles.userInfo}>
+              <div className={styles.userName}>{user.name || 'Profesional'}</div>
+              <div className={styles.userEmail}>{user.email}</div>
+            </div>
+          )}
+          <button
+            className={styles.logoutBtn}
+            onClick={handleLogout}
+            title="Cerrar sesión"
+          >
+            <Icon name="logout" size={20} color="currentColor" />
+            {(!isCollapsed || isOpen) && <span>Salir</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Upgrade Modal overlay */}
+      {showUpgradeModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowUpgradeModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <span className={`material-symbols-outlined ${styles.modalLockIcon}`}>lock</span>
+              <h3>Funcionalidad Exclusiva</h3>
+            </div>
+            <div className={styles.modalBody}>
+              <p>El acceso al módulo de <strong>Convenios y Obras Sociales</strong> no está habilitado en tu plan actual (<strong>{user?.plan?.name || 'Plan Básico'}</strong>).</p>
+              <p className={styles.modalInstruction}>Contacta al administrador del sistema para solicitar un ascenso de plan.</p>
+            </div>
+            <div className={styles.modalActions}>
+              <button className={styles.upgradeBtn} onClick={() => setShowUpgradeModal(false)}>
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

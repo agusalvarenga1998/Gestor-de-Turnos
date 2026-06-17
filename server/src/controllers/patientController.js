@@ -1,4 +1,5 @@
 import * as patientService from '../services/patientService.js';
+import { query } from '../db/config.js';
 
 // Crear un nuevo paciente
 export const createPatient = async (req, res) => {
@@ -15,6 +16,33 @@ export const createPatient = async (req, res) => {
         success: false,
         message: 'El nombre del paciente es requerido'
       });
+    }
+
+    // Verificar si el plan del doctor restringe el número de pacientes
+    const planRes = await query(
+      `SELECT p.max_patients 
+       FROM doctors d 
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id 
+       WHERE d.id = $1`,
+      [doctorId]
+    );
+    const maxPatients = planRes.rows[0]?.max_patients;
+
+    if (maxPatients !== null && maxPatients !== undefined) {
+      // Contar pacientes activos actuales del doctor
+      const countRes = await query(
+        `SELECT COUNT(*) as count FROM patients WHERE doctor_id = $1 AND is_active = true`,
+        [doctorId]
+      );
+      const currentCount = parseInt(countRes.rows[0]?.count || 0);
+
+      if (currentCount >= maxPatients) {
+        return res.status(403).json({
+          success: false,
+          planRestricted: true,
+          message: `Límite de pacientes alcanzado. Tu plan actual permite un máximo de ${maxPatients} pacientes activos.`
+        });
+      }
     }
 
     const patient = await patientService.createPatient(doctorId, {

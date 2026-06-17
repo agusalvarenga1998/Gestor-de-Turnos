@@ -5,12 +5,20 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Usamos el DATABASE_URL de Render si existe, sino usamos las variables individuales
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+const poolConfig = process.env.DATABASE_URL 
+  ? { 
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    }
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      database: process.env.DB_NAME || 'consultorio_medico',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || '',
+    };
+
+const pool = new Pool(poolConfig);
 
 async function migrate() {
   let client;
@@ -84,7 +92,49 @@ async function migrate() {
       ADD COLUMN IF NOT EXISTS code VARCHAR(50);
     `);
 
+    // 8. Control de planes y restricciones por profesional
+    console.log('➕ Verificando campos de control de planes...');
+    // A. Agregar columnas a pricing_plans
+    await client.query(`
+      ALTER TABLE pricing_plans
+      ADD COLUMN IF NOT EXISTS allow_google_calendar BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS allow_mercadopago BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS allow_telemedicine BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS allow_reminders BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS allow_insurance BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS max_patients INTEGER DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS max_appointments_monthly INTEGER DEFAULT NULL;
+    `);
 
+    // B. Agregar pricing_plan_id a doctors
+    await client.query(`
+      ALTER TABLE doctors
+      ADD COLUMN IF NOT EXISTS pricing_plan_id UUID REFERENCES pricing_plans(id) ON DELETE SET NULL;
+    `);
+
+    // C. Migrar asociaciones existentes de planes a los doctores actuales
+    const planCommissionResult = await client.query("SELECT id FROM pricing_plans WHERE key = 'commission' LIMIT 1");
+    const planMonthlyResult = await client.query("SELECT id FROM pricing_plans WHERE key = 'monthly' LIMIT 1");
+
+    const commissionPlanId = planCommissionResult.rows[0]?.id;
+    const monthlyPlanId = planMonthlyResult.rows[0]?.id;
+
+    if (commissionPlanId) {
+      await client.query(`
+        UPDATE doctors 
+        SET pricing_plan_id = $1 
+        WHERE pricing_plan_id IS NULL AND plan_type = 'commission';
+      `, [commissionPlanId]);
+    }
+
+    if (monthlyPlanId) {
+      await client.query(`
+        UPDATE doctors 
+        SET pricing_plan_id = $1 
+        WHERE pricing_plan_id IS NULL AND (plan_type = 'monthly' OR plan_type IS NULL);
+      `, [monthlyPlanId]);
+    }
+    console.log('✓ Campos de control de planes verificados y migración de datos completada.\n');
 
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);

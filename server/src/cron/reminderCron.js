@@ -27,10 +27,12 @@ export const initReminderCron = () => {
         FROM appointments a
         JOIN patients p ON a.patient_id = p.id
         JOIN doctors d ON a.doctor_id = d.id
+        LEFT JOIN pricing_plans p_plan ON d.pricing_plan_id = p_plan.id
         WHERE a.appointment_date = CURRENT_DATE + INTERVAL '1 day'
           AND a.status IN ('scheduled', 'confirmed', 'pending')
           AND a.reminder_sent = false
           AND p.email IS NOT NULL
+          AND COALESCE(p_plan.allow_reminders, true) = true
       `);
 
       console.log(`📋 Se encontraron ${result.rows.length} recordatorios pendientes.`);

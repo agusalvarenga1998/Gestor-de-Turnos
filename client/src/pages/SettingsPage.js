@@ -302,6 +302,16 @@ export default function SettingsPage() {
                   >
                     {disconnecting ? 'Desconectando...' : 'Desconectar'}
                   </button>
+                ) : user?.plan?.allow_google_calendar === false ? (
+                  <div className={styles.planRestricted}>
+                    <button className={styles.disabledBtn} disabled>
+                      <Icon name="lock" size={18} color="currentColor" />
+                      Google Calendar Bloqueado
+                    </button>
+                    <p className={styles.upgradeNotice}>
+                      Tu plan actual (<strong>{user.plan.name}</strong>) no incluye sincronización con Google Calendar. Contacta al administrador para solicitar esta funcionalidad.
+                    </p>
+                  </div>
                 ) : (
                   <button
                     className={styles.connectBtn}
@@ -363,6 +373,19 @@ export default function SettingsPage() {
                 >
                   Desvincular Cuenta
                 </button>
+              ) : user?.plan?.allow_mercadopago === false ? (
+                <div className={styles.planRestricted}>
+                  <button
+                    className={styles.disabledBtn}
+                    disabled
+                  >
+                    <Icon name="lock" size={18} color="currentColor" />
+                    Mercado Pago Bloqueado
+                  </button>
+                  <p className={styles.upgradeNotice}>
+                    Tu plan actual (<strong>{user.plan.name}</strong>) no incluye integración con Mercado Pago. Contacta al administrador para solicitar esta funcionalidad.
+                  </p>
+                </div>
               ) : (
                 <button
                   className={styles.connectBtn}
