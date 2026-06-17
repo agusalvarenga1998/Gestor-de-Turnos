@@ -92,6 +92,21 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Ruta raíz para evitar errores 404 cuando Google o navegadores acceden al subdominio de la API
+app.get('/', (req, res) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  res.json({
+    message: 'TurnoHub API Server is running',
+    status: 'active'
+  });
+});
+
+// Ruta robots.txt para indicar a todos los buscadores que no rastreen la API
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nDisallow: /');
+});
+
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
