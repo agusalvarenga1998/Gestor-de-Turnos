@@ -27,12 +27,14 @@ router.get('/public/specializations', async (req, res) => {
     console.log('🔓 Obtener especialidades públicas');
 
     const result = await query(
-      `SELECT DISTINCT TRIM(INITCAP(specialization)) as specialization
-       FROM doctors
-       WHERE status = 'approved'
-       AND subscription_status IN ('active', 'trial')
-       AND specialization IS NOT NULL
-       AND specialization != ''
+      `SELECT DISTINCT TRIM(INITCAP(d.specialization)) as specialization
+       FROM doctors d
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+       WHERE d.status = 'approved'
+       AND d.subscription_status IN ('active', 'trial')
+       AND COALESCE(p.allow_patient_booking, true) = true
+       AND d.specialization IS NOT NULL
+       AND d.specialization != ''
        ORDER BY specialization ASC`
     );
 
