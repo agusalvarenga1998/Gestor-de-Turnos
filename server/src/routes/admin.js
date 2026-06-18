@@ -364,10 +364,17 @@ router.get('/subscriptions', verifyAdmin, async (req, res) => {
 router.patch('/doctors/:id/plan', verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { pricing_plan_id, commission_rate } = req.body;
+    let { pricing_plan_id, commission_rate } = req.body;
 
     if (!pricing_plan_id) {
-      return res.status(400).json({ error: 'pricing_plan_id is required' });
+      const defaultPlanResult = await query(
+        "SELECT id FROM pricing_plans WHERE key = 'monthly' LIMIT 1"
+      );
+      if (defaultPlanResult.rows.length > 0) {
+        pricing_plan_id = defaultPlanResult.rows[0].id;
+      } else {
+        return res.status(400).json({ error: 'pricing_plan_id is required' });
+      }
     }
 
     // Buscar el plan para obtener su key
