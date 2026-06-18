@@ -20,7 +20,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
       d.status, d.subscription_status, d.trial_ends_at, d.subscription_expires_at, 
       d.mp_connected, d.plan_type, d.pricing_plan_id,
       p.name as plan_name, p.key as plan_key, p.allow_google_calendar, 
-      p.allow_mercadopago, p.allow_telemedicine, p.allow_reminders, p.allow_insurance,
+      p.allow_mercadopago, p.allow_telemedicine, p.allow_reminders, p.allow_insurance, p.allow_patient_booking,
       p.max_patients, p.max_appointments_monthly
      FROM doctors d
      LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
@@ -58,6 +58,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
       allow_telemedicine: row.allow_telemedicine !== false,
       allow_reminders: row.allow_reminders !== false,
       allow_insurance: row.allow_insurance !== false,
+      allow_patient_booking: row.allow_patient_booking !== false,
       max_patients: row.max_patients,
       max_appointments_monthly: row.max_appointments_monthly
     }

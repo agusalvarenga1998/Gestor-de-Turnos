@@ -26,6 +26,7 @@ export default function AdminPlansPage() {
     allow_telemedicine: true,
     allow_reminders: true,
     allow_insurance: true,
+    allow_patient_booking: true,
     max_patients: '',
     max_appointments_monthly: ''
   });
@@ -70,6 +71,7 @@ export default function AdminPlansPage() {
       allow_telemedicine: plan.allow_telemedicine !== false,
       allow_reminders: plan.allow_reminders !== false,
       allow_insurance: plan.allow_insurance !== false,
+      allow_patient_booking: plan.allow_patient_booking !== false,
       max_patients: plan.max_patients !== null && plan.max_patients !== undefined ? plan.max_patients : '',
       max_appointments_monthly: plan.max_appointments_monthly !== null && plan.max_appointments_monthly !== undefined ? plan.max_appointments_monthly : ''
     });
@@ -93,6 +95,7 @@ export default function AdminPlansPage() {
       allow_telemedicine: true,
       allow_reminders: true,
       allow_insurance: true,
+      allow_patient_booking: true,
       max_patients: '',
       max_appointments_monthly: ''
     });
@@ -275,6 +278,7 @@ export default function AdminPlansPage() {
                     <div><strong>Telemedicina (Meet):</strong> {plan.allow_telemedicine ? 'Habilitado' : 'Bloqueado'}</div>
                     <div><strong>Remisiones Email:</strong> {plan.allow_reminders ? 'Habilitadas' : 'Bloqueadas'}</div>
                     <div><strong>Convenios OS:</strong> {plan.allow_insurance ? 'Habilitados' : 'Bloqueados'}</div>
+                    <div><strong>Auto-reserva Pacientes:</strong> {plan.allow_patient_booking ? 'Habilitada' : 'Bloqueada'}</div>
                     <div><strong>Pacientes Máx:</strong> {plan.max_patients || 'Ilimitados'}</div>
                     <div><strong>Turnos/Mes Máx:</strong> {plan.max_appointments_monthly || 'Ilimitados'}</div>
                   </div>
@@ -431,6 +435,16 @@ export default function AdminPlansPage() {
                         onChange={handleInputChange} 
                       />
                       Convenios y Obras Sociales (Módulo OS)
+                    </label>
+
+                    <label className={styles.checkboxLabel}>
+                      <input 
+                        type="checkbox" 
+                        name="allow_patient_booking" 
+                        checked={editFormData.allow_patient_booking} 
+                        onChange={handleInputChange} 
+                      />
+                      Permitir auto-agendamiento de pacientes
                     </label>
                   </div>
 

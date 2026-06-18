@@ -58,18 +58,20 @@ router.get('/public/all-doctors', async (req, res) => {
   try {
     console.log('🔓 Obtener todos los médicos aprobados');
     const result = await query(
-      `SELECT id, name, specialization, clinic_name, phone, address, latitude, longitude, booking_fee, appointment_price, plan_type
-       FROM doctors
-       WHERE status = 'approved'
-       AND subscription_status IN ('active', 'trial')
-       ORDER BY name ASC`
+      `SELECT d.id, d.name, d.specialization, d.clinic_name, d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, d.plan_type
+       FROM doctors d
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+       WHERE d.status = 'approved'
+       AND d.subscription_status IN ('active', 'trial')
+       AND COALESCE(p.allow_patient_booking, true) = true
+       ORDER BY d.name ASC`
     );
     res.json({
       success: true,
       doctors: result.rows
     });
   } catch (error) {
-    console.error('Error obteniendo todos los médicos:', error);
+    console.error('Error obtaining all doctors:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener médicos'
@@ -85,17 +87,19 @@ router.get('/public/doctors/:specialization', async (req, res) => {
     console.log('🔓 Obtener médicos de especialidad:', specialization);
 
     const result = await query(
-      `SELECT id, name, specialization, clinic_name, phone, address, latitude, longitude, booking_fee, appointment_price, plan_type
-       FROM doctors
-       WHERE status = 'approved'
-       AND subscription_status IN ('active', 'trial')
+      `SELECT d.id, d.name, d.specialization, d.clinic_name, d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, d.plan_type
+       FROM doctors d
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+       WHERE d.status = 'approved'
+       AND d.subscription_status IN ('active', 'trial')
+       AND COALESCE(p.allow_patient_booking, true) = true
        AND (
-         TRIM(LOWER(specialization)) = TRIM(LOWER($1))
+         TRIM(LOWER(d.specialization)) = TRIM(LOWER($1))
          OR 
-         REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(specialization), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u') = 
+         REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(d.specialization), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u') = 
          REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER($1), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u')
        )
-       ORDER BY name ASC`,
+       ORDER BY d.name ASC`,
       [specialization]
     );
 
@@ -118,6 +122,18 @@ router.get('/public/doctors/:specialization', async (req, res) => {
 router.get('/public/doctor/:doctorId/availability', async (req, res) => {
   try {
     const { doctorId } = req.params;
+
+    // Verificar si el plan del doctor permite auto-agendamiento
+    const planCheck = await query(
+      `SELECT p.allow_patient_booking 
+       FROM doctors d
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+       WHERE d.id = $1`,
+      [doctorId]
+    );
+    if (planCheck.rows.length > 0 && planCheck.rows[0].allow_patient_booking === false) {
+      return res.status(403).json({ success: false, message: 'Online booking is disabled for this professional' });
+    }
     
     // Obtener días de atención
     const workingDaysResult = await query(
@@ -149,6 +165,18 @@ router.get('/public/available-slots/:doctorId/:date', async (req, res) => {
   try {
     const { doctorId, date } = req.params;
     const duration = parseInt(req.query.duration) || 30;
+
+    // Verificar si el plan del doctor permite auto-agendamiento
+    const planCheck = await query(
+      `SELECT p.allow_patient_booking 
+       FROM doctors d
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+       WHERE d.id = $1`,
+      [doctorId]
+    );
+    if (planCheck.rows.length > 0 && planCheck.rows[0].allow_patient_booking === false) {
+      return res.json({ success: true, slots: [] });
+    }
 
     console.log(`🔓 Slots: Doctor ${doctorId}, Fecha ${date}, Duración ${duration}min`);
 
@@ -290,7 +318,7 @@ router.post('/public/create', async (req, res) => {
 
     // Verificar doctor y obtener sus límites de plan comercial
     const doctorCheck = await query(
-      `SELECT d.id, d.name, d.email, d.booking_fee, d.appointment_price, d.accumulated_debt, d.plan_type, d.commission_rate, p.max_appointments_monthly
+      `SELECT d.id, d.name, d.email, d.booking_fee, d.appointment_price, d.accumulated_debt, d.plan_type, d.commission_rate, p.max_appointments_monthly, p.allow_patient_booking
        FROM doctors d 
        LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
        WHERE d.id = $1 AND d.status = 'approved' AND d.subscription_status IN ('active', 'trial')`,
@@ -299,6 +327,14 @@ router.post('/public/create', async (req, res) => {
 
     if (doctorCheck.rows.length === 0) return res.status(404).json({ success: false, message: 'Doctor no disponible' });
     const doctor = doctorCheck.rows[0];
+
+    // Verificar si el plan del doctor restringe que los pacientes se agenden solos
+    if (doctor.allow_patient_booking === false) {
+      return res.status(403).json({
+        success: false,
+        message: 'Este profesional no tiene habilitado el auto-agendamiento de turnos en línea. Por favor contacta al consultorio directamente.'
+      });
+    }
 
     // Verificar si el plan del doctor restringe el número de turnos mensuales
     if (doctor.max_appointments_monthly !== null && doctor.max_appointments_monthly !== undefined) {

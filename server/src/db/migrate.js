@@ -102,6 +102,7 @@ async function migrate() {
       ADD COLUMN IF NOT EXISTS allow_telemedicine BOOLEAN DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS allow_reminders BOOLEAN DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS allow_insurance BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS allow_patient_booking BOOLEAN DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS max_patients INTEGER DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS max_appointments_monthly INTEGER DEFAULT NULL;
     `);
