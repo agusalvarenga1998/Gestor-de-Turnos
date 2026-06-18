@@ -222,7 +222,16 @@ export default function AdminDoctorsPage() {
                         setSelectedDoctor(doctor);
                         setPlanType(doctor.plan_type || 'monthly');
                         setCommissionRate(doctor.commission_rate || 3);
-                        setSelectedPlanId(doctor.pricing_plan_id || '');
+                        
+                        // Si el profesional no tiene plan ID, pre-seleccionamos el plan correspondiente según su plan_type
+                        let initialPlanId = doctor.pricing_plan_id || '';
+                        if (!initialPlanId && plans.length > 0) {
+                          const matchedPlan = plans.find(p => p.key === (doctor.plan_type || 'monthly'));
+                          if (matchedPlan) {
+                            initialPlanId = matchedPlan.id;
+                          }
+                        }
+                        setSelectedPlanId(initialPlanId);
                         setActionModal('change-plan');
                       }}
                     >
@@ -438,7 +447,10 @@ export default function AdminDoctorsPage() {
                     : styles.confirmBtn
                 }
                 onClick={() => handleAction(actionModal)}
-                disabled={actionLoading}
+                disabled={
+                  actionLoading ||
+                  (actionModal === 'change-plan' && !selectedPlanId)
+                }
               >
                 {actionLoading ? 'Procesando...' : 'Confirmar'}
               </button>

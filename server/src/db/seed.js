@@ -19,9 +19,13 @@ async function seedDatabase() {
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + 15); // 15 días de prueba
 
+    // Buscar ID del plan mensual por defecto
+    const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key = 'monthly' LIMIT 1");
+    const defaultPlanId = defaultPlanResult.rows[0]?.id || null;
+
     const doctorResult = await query(
-      `INSERT INTO doctors (email, password_hash, name, specialization, phone, clinic_name, clinic_address, status, subscription_status, trial_ends_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'approved', 'trial', $8)
+      `INSERT INTO doctors (email, password_hash, name, specialization, phone, clinic_name, clinic_address, status, subscription_status, trial_ends_at, pricing_plan_id, plan_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'approved', 'trial', $8, $9, 'monthly')
        RETURNING id, email, name`,
       [
         'doctor@example.com',
@@ -31,7 +35,8 @@ async function seedDatabase() {
         '+56912345678',
         'Clínica La Salud',
         'Calle Principal 123, Santiago',
-        trialEndsAt
+        trialEndsAt,
+        defaultPlanId
       ]
     );
 

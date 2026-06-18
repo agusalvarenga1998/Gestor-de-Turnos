@@ -457,16 +457,20 @@ router.get('/google/callback', async (req, res) => {
         doctor = updateResult.rows[0];
       }
     } else {
+      // Buscar ID del plan mensual por defecto
+      const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key = 'monthly' LIMIT 1");
+      const defaultPlanId = defaultPlanResult.rows[0]?.id || null;
+
       // Crear nuevo doctor auto-aprobado con 30 días de prueba
       console.log('➕ Creando nuevo doctor con Google (auto-aprobado)...');
       const newDoctorId = uuidv4();
       const trialEndsAt = new Date();
       trialEndsAt.setDate(trialEndsAt.getDate() + 30);
       const insertResult = await query(
-        `INSERT INTO doctors (id, google_id, email, name, google_access_token, google_refresh_token, google_calendar_connected, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at)
-         VALUES ($1, $2, $3, $4, $5, $6, true, 'approved', 'trial', $7, $7, CURRENT_TIMESTAMP)
+        `INSERT INTO doctors (id, google_id, email, name, google_access_token, google_refresh_token, google_calendar_connected, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at, pricing_plan_id, plan_type)
+         VALUES ($1, $2, $3, $4, $5, $6, true, 'approved', 'trial', $7, $7, CURRENT_TIMESTAMP, $8, 'monthly')
          RETURNING *`,
-        [newDoctorId, userInfo.id, userInfo.email, userInfo.name, userInfo.tokens.access_token, userInfo.tokens.refresh_token, trialEndsAt]
+        [newDoctorId, userInfo.id, userInfo.email, userInfo.name, userInfo.tokens.access_token, userInfo.tokens.refresh_token, trialEndsAt, defaultPlanId]
       );
       doctor = insertResult.rows[0];
 
