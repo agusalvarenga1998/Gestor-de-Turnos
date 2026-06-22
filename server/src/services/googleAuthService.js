@@ -32,7 +32,7 @@ export const getAuthUrl = () => {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: scopes,
-    include_granted_scopes: true,
+    include_granted_scopes: false,
     prompt: 'consent'
   });
 };

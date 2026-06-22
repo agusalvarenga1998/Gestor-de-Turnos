@@ -30,7 +30,7 @@ export function getAuthUrl(doctorId) {
     scope: scopes,
     state: doctorId,
     prompt: 'consent',
-    include_granted_scopes: true
+    include_granted_scopes: false
   });
 
   return authUrl;
