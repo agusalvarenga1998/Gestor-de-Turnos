@@ -27,6 +27,10 @@ export default function PatientPortalHomePage() {
   const [selectedSpecialization, setSelectedSpecialization] = useState('');
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState('');
+  const [initialDoctorId, setInitialDoctorId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('doctor') || '';
+  });
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
   const [appointmentDate, setAppointmentDate] = useState('');
@@ -92,9 +96,26 @@ export default function PatientPortalHomePage() {
   }, []);
 
   useEffect(() => {
+    if (allDoctors.length > 0 && initialDoctorId) {
+      const doc = allDoctors.find(d => d.id === initialDoctorId);
+      if (doc) {
+        setActiveTab('book');
+        setSelectedSpecialization(doc.specialization);
+      } else {
+        setInitialDoctorId('');
+      }
+    }
+  }, [allDoctors, initialDoctorId]);
+
+  useEffect(() => {
     if (selectedSpecialization) {
       setDoctors([]); // Limpiar lista anterior
-      setSelectedDoctor(''); // Limpiar selección anterior
+      if (initialDoctorId) {
+        setSelectedDoctor(initialDoctorId);
+        setTimeout(() => setInitialDoctorId(''), 100);
+      } else {
+        setSelectedDoctor('');
+      }
       loadDoctors(selectedSpecialization);
     }
   }, [selectedSpecialization]);

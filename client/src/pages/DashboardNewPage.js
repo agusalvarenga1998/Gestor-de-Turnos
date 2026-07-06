@@ -206,6 +206,28 @@ export default function DashboardNewPage() {
           </div>
         </header>
 
+        {user?.plan?.allow_patient_booking !== false && (
+          <div className={styles.shareLinkBanner}>
+            <div className={styles.bannerIcon}>
+              <Icon name="link" size={20} color="#2563eb" />
+            </div>
+            <div className={styles.bannerText}>
+              <span className={styles.bannerTitle}>Tu Link de Reservas Online para Pacientes:</span>
+              <span className={styles.bannerUrl}>{`${window.location.origin}/patient?doctor=${user?.id}`}</span>
+            </div>
+            <button
+              className={styles.copyBtn}
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/patient?doctor=${user?.id}`);
+                alert('✓ Link de reservas copiado al portapapeles');
+              }}
+            >
+              <Icon name="copy" size={16} />
+              Copiar Link
+            </button>
+          </div>
+        )}
+
 
 
         <div className={styles.dashboardGrid}>
