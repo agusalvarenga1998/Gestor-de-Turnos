@@ -193,7 +193,7 @@ export const getDashboard = async (req, res) => {
     let upcomingBirthdays = [];
     try {
       const birthdaysResult = await db.query(
-        `SELECT DISTINCT p.id, p.name, p.date_of_birth
+        `SELECT p.id, p.name, p.date_of_birth
          FROM patients p
          JOIN appointments a ON p.id = a.patient_id
          WHERE a.doctor_id = $1
@@ -206,6 +206,7 @@ export const getDashboard = async (req, res) => {
              AND EXTRACT(DAY FROM p.date_of_birth) <= EXTRACT(DAY FROM ($2::date + INTERVAL '7 days'))
              AND EXTRACT(MONTH FROM $2::date) != EXTRACT(MONTH FROM ($2::date + INTERVAL '7 days'))
            )
+         GROUP BY p.id, p.name, p.date_of_birth
          ORDER BY EXTRACT(MONTH FROM p.date_of_birth), EXTRACT(DAY FROM p.date_of_birth)`,
         [doctorId, targetDate]
       );
