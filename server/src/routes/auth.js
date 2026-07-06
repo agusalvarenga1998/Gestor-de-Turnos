@@ -78,10 +78,12 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Verificar que el email no exista
     const existingDoctor = await query(
       'SELECT id FROM doctors WHERE email = $1',
-      [email]
+      [normalizedEmail]
     );
 
     if (existingDoctor.rows.length > 0) {
@@ -107,7 +109,7 @@ router.post('/register', async (req, res) => {
       `INSERT INTO doctors (email, password_hash, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at, pricing_plan_id, plan_type)
        VALUES ($1, $2, $3, $4, $5, 'approved', 'trial', $6, $6, CURRENT_TIMESTAMP, $7, 'monthly')
        RETURNING id, email, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at`,
-      [email, hashedPassword, name, specialization, clinic_name, trialEndsAt, defaultPlanId]
+      [normalizedEmail, hashedPassword, name, specialization, clinic_name, trialEndsAt, defaultPlanId]
     );
 
     const doctor = result.rows[0];
@@ -153,10 +155,12 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Buscar doctor
     const result = await query(
       'SELECT * FROM doctors WHERE email = $1',
-      [email]
+      [normalizedEmail]
     );
 
     if (result.rows.length === 0) {
@@ -415,9 +419,10 @@ router.get('/google/callback', async (req, res) => {
 
     // Buscar doctor existente por google_id o email
     console.log('🔍 Buscando doctor existente...');
+    const normalizedGoogleEmail = userInfo.email ? userInfo.email.trim().toLowerCase() : '';
     const result = await query(
       `SELECT * FROM doctors WHERE google_id = $1 OR email = $2`,
-      [userInfo.id, userInfo.email]
+      [userInfo.id, normalizedGoogleEmail]
     );
 
     let doctor;
@@ -470,7 +475,7 @@ router.get('/google/callback', async (req, res) => {
         `INSERT INTO doctors (id, google_id, email, name, google_access_token, google_refresh_token, google_calendar_connected, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at, pricing_plan_id, plan_type)
          VALUES ($1, $2, $3, $4, $5, $6, true, 'approved', 'trial', $7, $7, CURRENT_TIMESTAMP, $8, 'monthly')
          RETURNING *`,
-        [newDoctorId, userInfo.id, userInfo.email, userInfo.name, userInfo.tokens.access_token, userInfo.tokens.refresh_token, trialEndsAt, defaultPlanId]
+        [newDoctorId, userInfo.id, normalizedGoogleEmail, userInfo.name, userInfo.tokens.access_token, userInfo.tokens.refresh_token, trialEndsAt, defaultPlanId]
       );
       doctor = insertResult.rows[0];
 

@@ -137,6 +137,14 @@ async function migrate() {
     }
     console.log('✓ Campos de control de planes verificados y migración de datos completada.\n');
 
+    // 9. Unicidad de email insensible a mayúsculas
+    console.log('➕ Asegurando unicidad de email insensible a mayúsculas en doctors...');
+    await client.query(`
+      ALTER TABLE doctors DROP CONSTRAINT IF EXISTS doctors_email_key;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_doctors_email_lower ON doctors (LOWER(email));
+    `);
+    console.log('✓ Índice único insensible a mayúsculas configurado.\n');
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {
