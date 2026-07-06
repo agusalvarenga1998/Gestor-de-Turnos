@@ -364,7 +364,7 @@ export default function AppointmentsPage() {
       }
     } catch (err) {
       console.error('Error creando cita:', err);
-      alert('Error al crear la cita');
+      alert(err.response?.data?.message || 'Error al crear la cita');
     } finally {
       setFormSubmitting(false);
     }

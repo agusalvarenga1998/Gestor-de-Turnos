@@ -184,7 +184,7 @@ export default function PatientsPage() {
       }
     } catch (err) {
       console.error('Error guardando paciente:', err);
-      alert('Error al guardar el paciente');
+      alert(err.response?.data?.message || 'Error al guardar el paciente');
     }
   };
 
