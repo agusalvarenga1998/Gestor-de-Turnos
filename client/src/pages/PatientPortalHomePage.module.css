@@ -1061,3 +1061,15 @@
 button:active, a:active, .menuCard:active, .serviceOption:active {
   transform: scale(0.98);
 }
+
+.formGridThree {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .formGridThree {
+    grid-template-columns: 1fr;
+  }
+}

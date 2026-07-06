@@ -15,7 +15,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 export async function getDoctorProfileWithPlan(doctorId) {
   const result = await query(
     `SELECT 
-      d.id, d.email, d.name, d.specialization, d.clinic_name, d.license_number, 
+      d.id, d.email, d.name, d.specialization, d.rubro, d.clinic_name, d.license_number, 
       d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, 
       d.status, d.subscription_status, d.trial_ends_at, d.subscription_expires_at, 
       d.mp_connected, d.plan_type, d.pricing_plan_id,
@@ -35,6 +35,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
     email: row.email,
     name: row.name,
     specialization: row.specialization,
+    rubro: row.rubro,
     clinic_name: row.clinic_name,
     license_number: row.license_number,
     phone: row.phone,
@@ -68,7 +69,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
 // Registro de doctor (auto-aprobado con 30 días de prueba gratis)
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, specialization, clinic_name } = req.body;
+    const { email, password, name, specialization, clinic_name, rubro } = req.body;
 
     // Validación básica
     if (!email || !password || !name) {
@@ -106,10 +107,10 @@ router.post('/register', async (req, res) => {
 
     // Crear doctor auto-aprobado con 30 días de prueba gratis
     const result = await query(
-      `INSERT INTO doctors (email, password_hash, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at, pricing_plan_id, plan_type)
-       VALUES ($1, $2, $3, $4, $5, 'approved', 'trial', $6, $6, CURRENT_TIMESTAMP, $7, 'monthly')
-       RETURNING id, email, name, specialization, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at`,
-      [normalizedEmail, hashedPassword, name, specialization, clinic_name, trialEndsAt, defaultPlanId]
+      `INSERT INTO doctors (email, password_hash, name, specialization, rubro, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at, pricing_plan_id, plan_type)
+       VALUES ($1, $2, $3, $4, $5, $6, 'approved', 'trial', $7, $7, CURRENT_TIMESTAMP, $8, 'monthly')
+       RETURNING id, email, name, specialization, rubro, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at`,
+      [normalizedEmail, hashedPassword, name, specialization, rubro, clinic_name, trialEndsAt, defaultPlanId]
     );
 
     const doctor = result.rows[0];
@@ -298,7 +299,7 @@ router.post('/logout', verifyToken, (req, res) => {
 // Actualizar perfil del doctor
 router.put('/profile', verifyToken, async (req, res) => {
   try {
-    const { specialization, clinic_name, license_number, phone, address, latitude: reqLat, longitude: reqLng, booking_fee, appointment_price, mp_connected, mp_access_token } = req.body;
+    const { specialization, rubro, clinic_name, license_number, phone, address, latitude: reqLat, longitude: reqLng, booking_fee, appointment_price, mp_connected, mp_access_token } = req.body;
     const doctorId = req.user.id;
 
     let latitude = null;
@@ -351,10 +352,11 @@ router.put('/profile', verifyToken, async (req, res) => {
            appointment_price = COALESCE($12, appointment_price),
            mp_connected = COALESCE($10, mp_connected),
            mp_access_token = COALESCE($11, mp_access_token),
+           rubro = COALESCE($13, rubro),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $9
-       RETURNING id, email, name, specialization, clinic_name, license_number, phone, address, latitude, longitude, booking_fee, appointment_price, mp_connected`,
-      [specialization, clinic_name, license_number, phone, address, latitude, longitude, booking_fee, doctorId, mp_connected, mp_access_token, appointment_price]
+       RETURNING id, email, name, specialization, rubro, clinic_name, license_number, phone, address, latitude, longitude, booking_fee, appointment_price, mp_connected`,
+      [specialization, clinic_name, license_number, phone, address, latitude, longitude, booking_fee, doctorId, mp_connected, mp_access_token, appointment_price, rubro]
     );
 
     if (result.rows.length === 0) {

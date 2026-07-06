@@ -145,6 +145,13 @@ async function migrate() {
     `);
     console.log('✓ Índice único insensible a mayúsculas configurado.\n');
 
+    // 10. Rubro/Categoría de Doctor
+    console.log('➕ Asegurando columna rubro en doctors...');
+    await client.query(`
+      ALTER TABLE doctors ADD COLUMN IF NOT EXISTS rubro VARCHAR(255);
+    `);
+    console.log('✓ Columna rubro configurada.\n');
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {

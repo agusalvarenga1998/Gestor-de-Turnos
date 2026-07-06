@@ -152,9 +152,18 @@ export const appointmentAPI = {
     return response.data;
   },
 
-  getPublicSpecializations: async () => {
+  getPublicRubros: async () => {
+    // Obtener rubros disponibles (sin autenticación)
+    const response = await axios.get(`${API_BASE_URL}/api/appointments/public/rubros`);
+    return response.data;
+  },
+
+  getPublicSpecializations: async (rubro) => {
     // Obtener especialidades disponibles (sin autenticación)
-    const response = await axios.get(`${API_BASE_URL}/api/appointments/public/specializations`);
+    const url = rubro
+      ? `${API_BASE_URL}/api/appointments/public/specializations?rubro=${encodeURIComponent(rubro)}`
+      : `${API_BASE_URL}/api/appointments/public/specializations`;
+    const response = await axios.get(url);
     return response.data;
   },
 

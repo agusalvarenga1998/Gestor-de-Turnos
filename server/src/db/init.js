@@ -41,6 +41,7 @@ async function initDatabase(retries = 3) {
         address TEXT,
         name VARCHAR(255) NOT NULL,
         specialization VARCHAR(255),
+        rubro VARCHAR(255),
         phone VARCHAR(20),
         clinic_name VARCHAR(255),
         clinic_address TEXT,

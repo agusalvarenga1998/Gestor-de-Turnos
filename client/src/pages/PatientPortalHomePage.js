@@ -23,6 +23,8 @@ export default function PatientPortalHomePage() {
   const [loading, setLoading] = useState(false);
 
   // Booking states
+  const [rubros, setRubros] = useState([]);
+  const [selectedRubro, setSelectedRubro] = useState('');
   const [specializations, setSpecializations] = useState([]);
   const [selectedSpecialization, setSelectedSpecialization] = useState('');
   const [doctors, setDoctors] = useState([]);
@@ -91,7 +93,7 @@ export default function PatientPortalHomePage() {
   }, [activeTab]);
 
   useEffect(() => {
-    loadSpecializations();
+    loadRubros();
     loadAllDoctors();
   }, []);
 
@@ -100,12 +102,36 @@ export default function PatientPortalHomePage() {
       const doc = allDoctors.find(d => d.id === initialDoctorId);
       if (doc) {
         setActiveTab('book');
-        setSelectedSpecialization(doc.specialization);
+        setSelectedRubro(doc.rubro);
       } else {
         setInitialDoctorId('');
       }
     }
   }, [allDoctors, initialDoctorId]);
+
+  useEffect(() => {
+    if (selectedRubro) {
+      setSpecializations([]);
+      if (initialDoctorId) {
+        const doc = allDoctors.find(d => d.id === initialDoctorId);
+        if (doc) {
+          setSelectedSpecialization(doc.specialization);
+        } else {
+          setSelectedSpecialization('');
+        }
+      } else {
+        setSelectedSpecialization('');
+      }
+      setDoctors([]);
+      setSelectedDoctor('');
+      loadSpecializations(selectedRubro);
+    } else {
+      setSpecializations([]);
+      setSelectedSpecialization('');
+      setDoctors([]);
+      setSelectedDoctor('');
+    }
+  }, [selectedRubro]);
 
   useEffect(() => {
     if (selectedSpecialization) {
@@ -254,9 +280,16 @@ export default function PatientPortalHomePage() {
     } catch (err) { setDoctorInsurances([]); }
   };
 
-  const loadSpecializations = async () => {
+  const loadRubros = async () => {
     try {
-      const response = await appointmentAPI.getPublicSpecializations();
+      const response = await appointmentAPI.getPublicRubros();
+      if (response.success) setRubros(response.rubros);
+    } catch (err) { }
+  };
+
+  const loadSpecializations = async (rubro) => {
+    try {
+      const response = await appointmentAPI.getPublicSpecializations(rubro);
       if (response.success) setSpecializations(response.specializations);
     } catch (err) { }
   };
@@ -790,18 +823,35 @@ export default function PatientPortalHomePage() {
                       ) : (
                         <form onSubmit={handleBookAppointment}>
                           <h2>Reserva de Turno</h2>
-                          <div className={styles.sectionTitle}>1. Rubro / Categoría</div>
-                          <div className={styles.formGrid}>
+                          <div className={styles.sectionTitle}>1. Rubro, Especialidad y Profesional</div>
+                          <div className={styles.formGridThree}>
                             <div className={styles.formGroup}>
-                              <label>RUBRO / CATEGORÍA</label>
-                              <select onChange={(e) => setSelectedSpecialization(e.target.value)} value={selectedSpecialization} required>
+                              <label>RUBRO (CATEGORÍA)</label>
+                              <select onChange={(e) => setSelectedRubro(e.target.value)} value={selectedRubro} required>
+                                <option value="">Selecciona...</option>
+                                {rubros.map(r => <option key={r} value={r}>{r}</option>)}
+                              </select>
+                            </div>
+                            <div className={styles.formGroup}>
+                              <label>ESPECIALIDAD</label>
+                              <select 
+                                onChange={(e) => setSelectedSpecialization(e.target.value)} 
+                                value={selectedSpecialization} 
+                                disabled={!selectedRubro}
+                                required
+                              >
                                 <option value="">Selecciona...</option>
                                 {specializations.map(s => <option key={s} value={s}>{s}</option>)}
                               </select>
                             </div>
                             <div className={styles.formGroup}>
-                              <label>PROFESIONAL / LOCAL</label>
-                              <select onChange={(e) => { setSelectedDoctor(e.target.value); setSelectedService(null); }} value={selectedDoctor} disabled={!selectedSpecialization} required>
+                              <label>PROFESIONAL</label>
+                              <select 
+                                onChange={(e) => { setSelectedDoctor(e.target.value); setSelectedService(null); }} 
+                                value={selectedDoctor} 
+                                disabled={!selectedSpecialization} 
+                                required
+                              >
                                 <option value="">Selecciona...</option>
                                 {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                               </select>

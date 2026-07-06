@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Icon from '../components/Icon';
+import { RUBROS_ESPECIALIDADES } from '../constants/categories';
 import styles from './RegisterPage.module.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
@@ -15,33 +16,46 @@ export default function RegisterPage() {
     confirmPassword: '',
     name: '',
     phone: '',
+    rubro: '',
     specialization: '',
     clinic_name: ''
   });
   const [localError, setLocalError] = useState('');
-  const [existingSpecializations, setExistingSpecializations] = useState([]);
-
-  React.useEffect(() => {
-    const fetchSpecializations = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/appointments/public/specializations`);
-        const data = await response.json();
-        if (data.success) {
-          setExistingSpecializations(data.specializations);
-        }
-      } catch (err) {
-        console.error('Error cargando especialidades:', err);
-      }
-    };
-    fetchSpecializations();
-  }, []);
+  const [customSpecialty, setCustomSpecialty] = useState('');
+  const [isCustomSpecialty, setIsCustomSpecialty] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'rubro') {
+      setFormData(prev => ({
+        ...prev,
+        rubro: value,
+        specialization: ''
+      }));
+      setIsCustomSpecialty(false);
+      setCustomSpecialty('');
+    } else if (name === 'specialization') {
+      if (value === '__custom__') {
+        setIsCustomSpecialty(true);
+        setFormData(prev => ({
+          ...prev,
+          specialization: '__custom__'
+        }));
+      } else {
+        setIsCustomSpecialty(false);
+        setFormData(prev => ({
+          ...prev,
+          specialization: value
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    
     setLocalError('');
     setError(null);
   };
@@ -50,8 +64,14 @@ export default function RegisterPage() {
     e.preventDefault();
 
     // Validaciones
-    if (!formData.email || !formData.password || !formData.name) {
-      setLocalError('Por favor completa los campos requeridos');
+    if (!formData.email || !formData.password || !formData.name || !formData.rubro) {
+      setLocalError('Por favor completa los campos requeridos (Nombre, Email, Contraseña y Rubro)');
+      return;
+    }
+
+    const finalSpecialization = isCustomSpecialty ? customSpecialty.trim() : formData.specialization;
+    if (!finalSpecialization) {
+      setLocalError('Por favor selecciona o escribe tu especialidad');
       return;
     }
 
@@ -70,7 +90,8 @@ export default function RegisterPage() {
       password: formData.password,
       name: formData.name,
       phone: formData.phone,
-      specialization: formData.specialization,
+      rubro: formData.rubro,
+      specialization: finalSpecialization,
       clinic_name: formData.clinic_name
     });
 
@@ -151,33 +172,65 @@ export default function RegisterPage() {
 
             <div className={styles.row}>
               <div className={styles.formGroup}>
-                <label>RUBRO / ACTIVIDAD</label>
-                <input
-                  type="text"
-                  name="specialization"
-                  list="specialization-list"
-                  value={formData.specialization}
+                <label>RUBRO (CATEGORÍA) *</label>
+                <select
+                  name="rubro"
+                  value={formData.rubro}
                   onChange={handleChange}
-                  placeholder="Ej: Estética, Barbería, Abogados, etc."
                   disabled={loading}
-                />
-                <datalist id="specialization-list">
-                  {existingSpecializations.map((spec, index) => (
-                    <option key={index} value={spec} />
+                  required
+                >
+                  <option value="">Selecciona un rubro...</option>
+                  {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
+                    <option key={rub} value={rub}>{rub}</option>
                   ))}
-                </datalist>
-                <small style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
-                  Elegí una existente o escribí tu propio rubro.
-                </small>
+                </select>
               </div>
               <div className={styles.formGroup}>
+                <label>ESPECIALIDAD *</label>
+                <select
+                  name="specialization"
+                  value={formData.specialization}
+                  onChange={handleChange}
+                  disabled={loading || !formData.rubro}
+                  required
+                >
+                  <option value="">Selecciona una especialidad...</option>
+                  {formData.rubro && RUBROS_ESPECIALIDADES[formData.rubro]?.map(spec => (
+                    <option key={spec} value={spec}>{spec}</option>
+                  ))}
+                  {formData.rubro && (
+                    <option value="__custom__">+ Otra (Agregar nueva especialidad...)</option>
+                  )}
+                </select>
+              </div>
+            </div>
+
+            {isCustomSpecialty && (
+              <div className={styles.row}>
+                <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
+                  <label>ESCRIBE TU ESPECIALIDAD PERSONALIZADA *</label>
+                  <input
+                    type="text"
+                    value={customSpecialty}
+                    onChange={(e) => setCustomSpecialty(e.target.value)}
+                    placeholder="Ej: Neuropediatría, Microblading Avanzado, etc."
+                    disabled={loading}
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className={styles.row}>
+              <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
                 <label>NEGOCIO / LOCAL</label>
                 <input
                   type="text"
                   name="clinic_name"
                   value={formData.clinic_name}
                   onChange={handleChange}
-                  placeholder="Nombre de tu negocio"
+                  placeholder="Nombre de tu negocio o consultorio"
                   disabled={loading}
                 />
               </div>

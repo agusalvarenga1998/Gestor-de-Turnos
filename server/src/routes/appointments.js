@@ -19,25 +19,64 @@ const generateShortCode = () => {
   return `MH-${code}`;
 };
 
-// ===== RUTAS PÚBLICAS =====
-
-// Obtener especialidades disponibles
-router.get('/public/specializations', async (req, res) => {
+// Obtener rubros disponibles
+router.get('/public/rubros', async (req, res) => {
   try {
-    console.log('🔓 Obtener especialidades públicas');
+    console.log('🔓 Obtener rubros públicos');
 
     const result = await query(
-      `SELECT DISTINCT TRIM(INITCAP(d.specialization)) as specialization
+      `SELECT DISTINCT TRIM(INITCAP(d.rubro)) as rubro
        FROM doctors d
        LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
        WHERE d.status = 'approved'
        AND d.subscription_status IN ('active', 'trial')
        AND COALESCE(p.allow_patient_booking, true) = true
-       AND d.specialization IS NOT NULL
-       AND d.specialization != ''
-       ORDER BY specialization ASC`
+       AND d.rubro IS NOT NULL
+       AND d.rubro != ''
+       ORDER BY rubro ASC`
     );
 
+    const rubros = result.rows.map(row => row.rubro).filter(Boolean);
+
+    console.log('✓ Rubros encontrados:', rubros);
+
+    res.json({
+      success: true,
+      rubros
+    });
+  } catch (error) {
+    console.error('Error obteniendo rubros:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener rubros'
+    });
+  }
+});
+
+// Obtener especialidades disponibles
+router.get('/public/specializations', async (req, res) => {
+  try {
+    const { rubro } = req.query;
+    console.log('🔓 Obtener especialidades públicas' + (rubro ? ` para rubro: ${rubro}` : ''));
+
+    let queryStr = `
+      SELECT DISTINCT TRIM(INITCAP(d.specialization)) as specialization
+      FROM doctors d
+      LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+      WHERE d.status = 'approved'
+      AND d.subscription_status IN ('active', 'trial')
+      AND COALESCE(p.allow_patient_booking, true) = true
+      AND d.specialization IS NOT NULL
+      AND d.specialization != ''
+    `;
+    const params = [];
+    if (rubro) {
+      queryStr += ` AND TRIM(LOWER(d.rubro)) = TRIM(LOWER($1))`;
+      params.push(rubro);
+    }
+    queryStr += ` ORDER BY specialization ASC`;
+
+    const result = await query(queryStr, params);
     const specializations = result.rows.map(row => row.specialization).filter(Boolean);
 
     console.log('✓ Especialidades encontradas:', specializations);

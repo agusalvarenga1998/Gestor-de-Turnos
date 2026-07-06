@@ -5,6 +5,7 @@ import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
 import apiClient, { googleAPI } from '../services/api';
+import { RUBROS_ESPECIALIDADES } from '../constants/categories';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -32,6 +33,7 @@ export default function SettingsPage() {
   const [disconnecting, setDisconnecting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [profileData, setProfileData] = useState({
+    rubro: '',
     specialization: '',
     clinic_name: '',
     license_number: '',
@@ -45,7 +47,8 @@ export default function SettingsPage() {
   });
   const [mapCenter, setMapCenter] = useState([-34.6037, -58.3816]);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [existingSpecializations, setExistingSpecializations] = useState([]);
+  const [customSpecialty, setCustomSpecialty] = useState('');
+  const [isCustomSpecialty, setIsCustomSpecialty] = useState(false);
 
   // Componente para manejar clics en el mapa
   function LocationMarker() {
@@ -89,12 +92,16 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchGoogleStatus();
-    fetchSpecializations();
 
     // Cargar datos del usuario
     if (user) {
+      const rub = user.rubro || '';
+      const spec = user.specialization || '';
+      const isCustom = rub && spec && (!RUBROS_ESPECIALIDADES[rub] || !RUBROS_ESPECIALIDADES[rub].includes(spec));
+
       setProfileData({
-        specialization: user.specialization || '',
+        rubro: rub,
+        specialization: isCustom ? '__custom__' : spec,
         clinic_name: user.clinic_name || '',
         license_number: user.license_number || '',
         phone: user.phone || '',
@@ -105,6 +112,9 @@ export default function SettingsPage() {
         appointment_price: user.appointment_price || 0,
         mp_connected: user.mp_connected || false
       });
+      setIsCustomSpecialty(isCustom);
+      setCustomSpecialty(isCustom ? spec : '');
+      
       if (user.latitude && user.longitude) {
         setMapCenter([user.latitude, user.longitude]);
       }
@@ -146,15 +156,31 @@ export default function SettingsPage() {
     }
   };
 
-  const fetchSpecializations = async () => {
-    try {
-      // Usamos el endpoint existente que ya devuelve especialidades únicas
-      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL || ''}/api/appointments/public/specializations`);
-      if (response.data.success) {
-        setExistingSpecializations(response.data.specializations);
-      }
-    } catch (err) {
-      console.error('Error cargando especialidades:', err);
+  const handleRubroChange = (e) => {
+    const val = e.target.value;
+    setProfileData(prev => ({
+      ...prev,
+      rubro: val,
+      specialization: ''
+    }));
+    setIsCustomSpecialty(false);
+    setCustomSpecialty('');
+  };
+
+  const handleSpecializationChange = (e) => {
+    const val = e.target.value;
+    if (val === '__custom__') {
+      setIsCustomSpecialty(true);
+      setProfileData(prev => ({
+        ...prev,
+        specialization: '__custom__'
+      }));
+    } else {
+      setIsCustomSpecialty(false);
+      setProfileData(prev => ({
+        ...prev,
+        specialization: val
+      }));
     }
   };
 
@@ -227,9 +253,20 @@ export default function SettingsPage() {
     e.preventDefault();
     try {
       setSavingProfile(true);
+      
+      const finalSpecialization = isCustomSpecialty ? customSpecialty.trim() : profileData.specialization;
+      if (!profileData.rubro || !finalSpecialization) {
+        setSuccessMessage('✗ Rubro y Especialidad son obligatorios');
+        setTimeout(() => setSuccessMessage(''), 5000);
+        return;
+      }
+
       const response = await apiClient.put(
         '/api/auth/profile',
-        profileData
+        {
+          ...profileData,
+          specialization: finalSpecialization
+        }
       );
 
       if (response.data.success) {
@@ -421,26 +458,62 @@ export default function SettingsPage() {
 
           <div className={styles.card}>
             <form onSubmit={handleSaveProfile} className={styles.form}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="specialization">Especialidad / Rubro</label>
-                  <input
-                    type="text"
-                    id="specialization"
-                    name="specialization"
-                    list="specialization-list"
-                    value={profileData.specialization}
-                    onChange={handleProfileChange}
-                    placeholder="Ej: Estética, Barbería, Abogados, etc."
-                    disabled={savingProfile}
-                  />
-                  <datalist id="specialization-list">
-                    {existingSpecializations.map((spec, index) => (
-                      <option key={index} value={spec} />
-                    ))}
-                  </datalist>
-                  <small>Elegí una existente o escribí tu propio rubro.</small>
+              <div className={styles.formRow} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+                  <div className={styles.formGroup} style={{ flex: 1 }}>
+                    <label htmlFor="rubro">Rubro (Categoría Principal) *</label>
+                    <select
+                      id="rubro"
+                      name="rubro"
+                      value={profileData.rubro}
+                      onChange={handleRubroChange}
+                      disabled={savingProfile}
+                      required
+                      style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
+                    >
+                      <option value="">Selecciona un rubro...</option>
+                      {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
+                        <option key={rub} value={rub}>{rub}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.formGroup} style={{ flex: 1 }}>
+                    <label htmlFor="specialization">Especialidad *</label>
+                    <select
+                      id="specialization"
+                      name="specialization"
+                      value={profileData.specialization}
+                      onChange={handleSpecializationChange}
+                      disabled={savingProfile || !profileData.rubro}
+                      required
+                      style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
+                    >
+                      <option value="">Selecciona una especialidad...</option>
+                      {profileData.rubro && RUBROS_ESPECIALIDADES[profileData.rubro]?.map(spec => (
+                        <option key={spec} value={spec}>{spec}</option>
+                      ))}
+                      {profileData.rubro && (
+                        <option value="__custom__">+ Otra / Agregar nueva especialidad...</option>
+                      )}
+                    </select>
+                  </div>
                 </div>
+
+                {isCustomSpecialty && (
+                  <div className={styles.formGroup} style={{ width: '100%' }}>
+                    <label htmlFor="customSpecialty">Escribe tu Especialidad Personalizada *</label>
+                    <input
+                      type="text"
+                      id="customSpecialty"
+                      value={customSpecialty}
+                      onChange={(e) => setCustomSpecialty(e.target.value)}
+                      placeholder="Ej: Neuropediatría, Microblading Avanzado, etc."
+                      disabled={savingProfile}
+                      required
+                    />
+                  </div>
+                )}
+              </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="license_number">Número de Matrícula</label>
                   <input

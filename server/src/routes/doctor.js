@@ -16,7 +16,7 @@ router.use(checkSubscription);
 router.get('/profile', async (req, res) => {
   try {
     const result = await query(
-      `SELECT id, email, name, specialization, phone, clinic_name, clinic_address, profile_image_url, latitude, longitude, booking_fee
+      `SELECT id, email, name, specialization, rubro, phone, clinic_name, clinic_address, profile_image_url, latitude, longitude, booking_fee
        FROM doctors WHERE id = $1`,
       [req.user.id]
     );
@@ -44,7 +44,7 @@ router.get('/profile', async (req, res) => {
 // Actualizar perfil del doctor
 router.patch('/profile', async (req, res) => {
   try {
-    const { name, specialization, phone, clinic_name, clinic_address, latitude, longitude, booking_fee } = req.body;
+    const { name, specialization, rubro, phone, clinic_name, clinic_address, latitude, longitude, booking_fee } = req.body;
 
     const result = await query(
       `UPDATE doctors
@@ -56,10 +56,11 @@ router.patch('/profile', async (req, res) => {
            latitude = COALESCE($6, latitude),
            longitude = COALESCE($7, longitude),
            booking_fee = COALESCE($8, booking_fee),
+           rubro = COALESCE($10, rubro),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $9
-       RETURNING id, email, name, specialization, phone, clinic_name, clinic_address, latitude, longitude, booking_fee`,
-      [name, specialization, phone, clinic_name, clinic_address, latitude, longitude, booking_fee, req.user.id]
+       RETURNING id, email, name, specialization, rubro, phone, clinic_name, clinic_address, latitude, longitude, booking_fee`,
+      [name, specialization, phone, clinic_name, clinic_address, latitude, longitude, booking_fee, req.user.id, rubro]
     );
 
     if (result.rows.length === 0) {
