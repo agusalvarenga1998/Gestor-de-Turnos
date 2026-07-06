@@ -458,62 +458,62 @@ export default function SettingsPage() {
 
           <div className={styles.card}>
             <form onSubmit={handleSaveProfile} className={styles.form}>
-              <div className={styles.formRow} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
-                  <div className={styles.formGroup} style={{ flex: 1 }}>
-                    <label htmlFor="rubro">Rubro (Categoría Principal) *</label>
-                    <select
-                      id="rubro"
-                      name="rubro"
-                      value={profileData.rubro}
-                      onChange={handleRubroChange}
-                      disabled={savingProfile}
-                      required
-                      style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
-                    >
-                      <option value="">Selecciona un rubro...</option>
-                      {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
-                        <option key={rub} value={rub}>{rub}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className={styles.formGroup} style={{ flex: 1 }}>
-                    <label htmlFor="specialization">Especialidad *</label>
-                    <select
-                      id="specialization"
-                      name="specialization"
-                      value={profileData.specialization}
-                      onChange={handleSpecializationChange}
-                      disabled={savingProfile || !profileData.rubro}
-                      required
-                      style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
-                    >
-                      <option value="">Selecciona una especialidad...</option>
-                      {profileData.rubro && RUBROS_ESPECIALIDADES[profileData.rubro]?.map(spec => (
-                        <option key={spec} value={spec}>{spec}</option>
-                      ))}
-                      {profileData.rubro && (
-                        <option value="__custom__">+ Otra / Agregar nueva especialidad...</option>
-                      )}
-                    </select>
-                  </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="rubro">Rubro (Categoría Principal) *</label>
+                  <select
+                    id="rubro"
+                    name="rubro"
+                    value={profileData.rubro}
+                    onChange={handleRubroChange}
+                    disabled={savingProfile}
+                    required
+                    style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
+                  >
+                    <option value="">Selecciona un rubro...</option>
+                    {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
+                      <option key={rub} value={rub}>{rub}</option>
+                    ))}
+                  </select>
                 </div>
-
-                {isCustomSpecialty && (
-                  <div className={styles.formGroup} style={{ width: '100%' }}>
-                    <label htmlFor="customSpecialty">Escribe tu Especialidad Personalizada *</label>
-                    <input
-                      type="text"
-                      id="customSpecialty"
-                      value={customSpecialty}
-                      onChange={(e) => setCustomSpecialty(e.target.value)}
-                      placeholder="Ej: Neuropediatría, Microblading Avanzado, etc."
-                      disabled={savingProfile}
-                      required
-                    />
-                  </div>
-                )}
+                <div className={styles.formGroup}>
+                  <label htmlFor="specialization">Especialidad *</label>
+                  <select
+                    id="specialization"
+                    name="specialization"
+                    value={profileData.specialization}
+                    onChange={handleSpecializationChange}
+                    disabled={savingProfile || !profileData.rubro}
+                    required
+                    style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
+                  >
+                    <option value="">Selecciona una especialidad...</option>
+                    {profileData.rubro && RUBROS_ESPECIALIDADES[profileData.rubro]?.map(spec => (
+                      <option key={spec} value={spec}>{spec}</option>
+                    ))}
+                    {profileData.rubro && (
+                      <option value="__custom__">+ Otra / Agregar nueva especialidad...</option>
+                    )}
+                  </select>
+                </div>
               </div>
+
+              {isCustomSpecialty && (
+                <div className={styles.formGroup} style={{ marginBottom: '1.5rem' }}>
+                  <label htmlFor="customSpecialty">Escribe tu Especialidad Personalizada *</label>
+                  <input
+                    type="text"
+                    id="customSpecialty"
+                    value={customSpecialty}
+                    onChange={(e) => setCustomSpecialty(e.target.value)}
+                    placeholder="Ej: Neuropediatría, Microblading Avanzado, etc."
+                    disabled={savingProfile}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="license_number">Número de Matrícula</label>
                   <input
@@ -526,6 +526,7 @@ export default function SettingsPage() {
                     disabled={savingProfile}
                   />
                 </div>
+                <div className={styles.formGroup}></div>
               </div>
 
 
