@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { query } from '../db/config.js';
 import { generateToken, verifyToken } from '../middleware/auth.js';
 import * as googleAuthService from '../services/googleAuthService.js';
+import { copyTemplateServicesToDoctor } from '../services/templateService.js';
 
 const router = express.Router();
 
@@ -121,6 +122,15 @@ router.post('/register', async (req, res) => {
        VALUES ($1, 0, 'approved', CURRENT_TIMESTAMP, $2)`,
       [doctor.id, trialEndsAt]
     );
+
+    // Copiar servicios base si existen para esta especialidad
+    if (specialization) {
+      try {
+        await copyTemplateServicesToDoctor(doctor.id, specialization);
+      } catch (copyErr) {
+        console.error('Error al precargar servicios base para el doctor:', copyErr);
+      }
+    }
 
     // Obtener el perfil completo con plan para el token y la respuesta
     const doctorProfile = await getDoctorProfileWithPlan(doctor.id);
@@ -306,8 +316,9 @@ router.put('/profile', verifyToken, async (req, res) => {
     let longitude = null;
 
     // Obtener datos actuales para comparar
-    const currentDoctor = await query('SELECT address, latitude, longitude FROM doctors WHERE id = $1', [doctorId]);
+    const currentDoctor = await query('SELECT address, latitude, longitude, specialization FROM doctors WHERE id = $1', [doctorId]);
     const oldAddress = currentDoctor.rows[0]?.address;
+    const oldSpecialization = currentDoctor.rows[0]?.specialization;
 
     // Si se envían coordenadas directas, usarlas. 
     // De lo contrario, si la dirección cambió o no tiene coordenadas, geocodificar.
@@ -364,6 +375,15 @@ router.put('/profile', verifyToken, async (req, res) => {
         success: false,
         message: 'Doctor no encontrado'
       });
+    }
+
+    // Si la especialización cambió, copiar los servicios base correspondientes
+    if (specialization && specialization !== oldSpecialization) {
+      try {
+        await copyTemplateServicesToDoctor(doctorId, specialization);
+      } catch (copyErr) {
+        console.error('Error al precargar servicios base tras actualización de especialidad:', copyErr);
+      }
     }
 
     const doctorProfile = await getDoctorProfileWithPlan(doctorId);

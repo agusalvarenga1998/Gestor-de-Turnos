@@ -31,6 +31,11 @@ export default function AdminSidebar() {
       path: '/admin/plans'
     },
     {
+      label: 'Servicios Base',
+      icon: '💼',
+      path: '/admin/template-services'
+    },
+    {
       label: 'Reportes',
       icon: '📊',
       path: '/admin/reports'

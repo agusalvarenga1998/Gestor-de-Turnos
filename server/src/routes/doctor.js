@@ -4,6 +4,7 @@ import { query, transaction } from '../db/config.js';
 import { getAppointmentsForToday, getAppointmentsByDoctor } from '../services/appointmentService.js';
 import { getPatientsByDoctor } from '../services/patientService.js';
 import { getDashboard } from '../controllers/doctorController.js';
+import { copyTemplateServicesToDoctor } from '../services/templateService.js';
 
 const router = express.Router();
 
@@ -46,6 +47,9 @@ router.patch('/profile', async (req, res) => {
   try {
     const { name, specialization, rubro, phone, clinic_name, clinic_address, latitude, longitude, booking_fee } = req.body;
 
+    const oldDoctorRes = await query('SELECT specialization FROM doctors WHERE id = $1', [req.user.id]);
+    const oldSpecialization = oldDoctorRes.rows[0]?.specialization;
+
     const result = await query(
       `UPDATE doctors
        SET name = COALESCE($1, name),
@@ -68,6 +72,15 @@ router.patch('/profile', async (req, res) => {
         success: false,
         message: 'Doctor no encontrado'
       });
+    }
+
+    // Si la especialización cambió, copiar los servicios base correspondientes
+    if (specialization && specialization !== oldSpecialization) {
+      try {
+        await copyTemplateServicesToDoctor(req.user.id, specialization);
+      } catch (copyErr) {
+        console.error('Error al precargar servicios base tras actualizar perfil (PATCH):', copyErr);
+      }
     }
 
     res.json({

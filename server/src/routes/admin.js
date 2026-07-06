@@ -568,4 +568,136 @@ router.delete('/plans/:id', verifyAdmin, async (req, res) => {
   }
 });
 
+// ===== CRUD PARA PLANTILLAS DE SERVICIOS BASE POR ESPECIALIDAD =====
+
+// 1. Obtener todas las plantillas de servicios
+router.get('/template-services', verifyAdmin, async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT * FROM admin_template_services 
+       ORDER BY specialization ASC, name ASC`
+    );
+    res.json({
+      success: true,
+      services: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching admin template services:', error);
+    res.status(500).json({ error: 'Error al obtener las plantillas de servicios' });
+  }
+});
+
+// 2. Crear una nueva plantilla de servicio
+router.post('/template-services', verifyAdmin, async (req, res) => {
+  try {
+    const { specialization, name, description, price, duration_minutes, booking_fee, code, is_online } = req.body;
+
+    if (!specialization || !name || !duration_minutes) {
+      return res.status(400).json({ error: 'Especialidad, nombre y duración son campos obligatorios.' });
+    }
+
+    const result = await query(
+      `INSERT INTO admin_template_services (
+        specialization, name, description, price, duration_minutes, booking_fee, code, is_online
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *`,
+      [
+        specialization.trim(),
+        name.trim(),
+        description || '',
+        parseFloat(price) || 0,
+        parseInt(duration_minutes),
+        parseFloat(booking_fee) || 0,
+        code || null,
+        is_online === true || is_online === 'true'
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Plantilla de servicio creada correctamente',
+      service: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error creating admin template service:', error);
+    res.status(500).json({ error: 'Error al crear la plantilla de servicio' });
+  }
+});
+
+// 3. Actualizar una plantilla de servicio existente
+router.put('/template-services/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { specialization, name, description, price, duration_minutes, booking_fee, code, is_online } = req.body;
+
+    if (!specialization || !name || !duration_minutes) {
+      return res.status(400).json({ error: 'Especialidad, nombre y duración son campos obligatorios.' });
+    }
+
+    const result = await query(
+      `UPDATE admin_template_services 
+       SET specialization = $1,
+           name = $2,
+           description = $3,
+           price = $4,
+           duration_minutes = $5,
+           booking_fee = $6,
+           code = $7,
+           is_online = $8,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $9
+       RETURNING *`,
+      [
+        specialization.trim(),
+        name.trim(),
+        description || '',
+        parseFloat(price) || 0,
+        parseInt(duration_minutes),
+        parseFloat(booking_fee) || 0,
+        code || null,
+        is_online === true || is_online === 'true',
+        id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plantilla de servicio no encontrada' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Plantilla de servicio actualizada correctamente',
+      service: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating admin template service:', error);
+    res.status(500).json({ error: 'Error al actualizar la plantilla de servicio' });
+  }
+});
+
+// 4. Eliminar una plantilla de servicio
+router.delete('/template-services/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      'DELETE FROM admin_template_services WHERE id = $1 RETURNING id, name',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plantilla de servicio no encontrada' });
+    }
+
+    res.json({
+      success: true,
+      message: `Plantilla de servicio "${result.rows[0].name}" eliminada correctamente`
+    });
+  } catch (error) {
+    console.error('Error deleting admin template service:', error);
+    res.status(500).json({ error: 'Error al eliminar la plantilla de servicio' });
+  }
+});
+
 export default router;

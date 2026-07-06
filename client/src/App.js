@@ -31,6 +31,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminDoctorsPage from './pages/AdminDoctorsPage';
 import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage';
 import AdminPlansPage from './pages/AdminPlansPage';
+import AdminTemplateServicesPage from './pages/AdminTemplateServicesPage';
 
 // Páginas - Info / Landing
 import LandingPage from './pages/LandingPage';
@@ -107,6 +108,14 @@ function AppContent() {
         element={
           <ProtectedAdminRoute>
             <AdminPlansPage />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/template-services"
+        element={
+          <ProtectedAdminRoute>
+            <AdminTemplateServicesPage />
           </ProtectedAdminRoute>
         }
       />

@@ -159,6 +159,25 @@ async function migrate() {
     `);
     console.log('✓ Longitud de columna appointment_code modificada.\n');
 
+    // 12. Tabla de Servicios Base (Plantillas)
+    console.log('➕ Asegurando tabla admin_template_services...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_template_services (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        specialization VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) DEFAULT 0,
+        duration_minutes INTEGER NOT NULL,
+        booking_fee DECIMAL(10,2) DEFAULT 0,
+        code VARCHAR(100),
+        is_online BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla admin_template_services configurada.\n');
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {

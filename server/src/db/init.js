@@ -270,7 +270,22 @@ async function initDatabase(retries = 3) {
         period_end TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_template_services (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        specialization VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) DEFAULT 0,
+        duration_minutes INTEGER NOT NULL,
+        booking_fee DECIMAL(10,2) DEFAULT 0,
+        code VARCHAR(100),
+        is_online BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
+    console.log('✓ Tabla admin_template_services creada');
 
     // Crear usuario admin por defecto
     const adminEmail = 'admin@example.com';
