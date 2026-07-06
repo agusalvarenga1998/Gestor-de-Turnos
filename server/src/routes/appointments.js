@@ -10,13 +10,34 @@ import axios from 'axios';
 import * as wss from '../websocket/server.js';
 
 const router = express.Router();
-const generateShortCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Evitamos O, 0, I, 1
-  let code = '';
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+const generateAppointmentCode = (doctorName, doctorId, appointmentDate, appointmentTime) => {
+  const getInitials = (name) => {
+    if (!name) return 'TH';
+    const cleanName = name.replace(/^(dr|dra|lic|prof|ing|escr|cont|profesor|abogado)\.?\s+/i, '');
+    const words = cleanName.trim().split(/\s+/);
+    return words
+      .map(w => w.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 3);
+  };
+
+  const initials = getInitials(doctorName);
+  const partialId = String(doctorId || '').substring(0, 4);
+  
+  let cleanDate = '';
+  if (appointmentDate instanceof Date) {
+    const yyyy = appointmentDate.getFullYear();
+    const mm = String(appointmentDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(appointmentDate.getDate()).padStart(2, '0');
+    cleanDate = `${yyyy}${mm}${dd}`;
+  } else {
+    cleanDate = String(appointmentDate || '').substring(0, 10).replace(/-/g, '');
   }
-  return `MH-${code}`;
+
+  const cleanTime = String(appointmentTime || '').substring(0, 5).replace(/:/g, '');
+
+  return `${initials}${partialId}-${cleanDate}${cleanTime}`;
 };
 
 // Obtener rubros disponibles
@@ -590,7 +611,7 @@ router.post('/public/create', async (req, res) => {
         totalToPayNow,
         systemFee,
         (isCash || totalToPayNow > 0) ? 'pending' : 'paid',
-        generateShortCode(),
+        generateAppointmentCode(doctor?.name, doctorId, appointmentDate, appointmentTime),
         fullPrice,
         (isCash || totalToPayNow > 0) ? 0 : bookingFee,
         insuranceDiscount,

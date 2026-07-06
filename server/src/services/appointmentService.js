@@ -2,13 +2,34 @@ import { query, transaction } from '../db/config.js';
 import { v4 as uuidv4 } from 'uuid';
 import * as googleCalendarService from './googleCalendarService.js';
 import * as emailService from './emailService.js';
-const generateShortCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+const generateAppointmentCode = (doctorName, doctorId, appointmentDate, appointmentTime) => {
+  const getInitials = (name) => {
+    if (!name) return 'TH';
+    const cleanName = name.replace(/^(dr|dra|lic|prof|ing|escr|cont|profesor|abogado)\.?\s+/i, '');
+    const words = cleanName.trim().split(/\s+/);
+    return words
+      .map(w => w.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 3);
+  };
+
+  const initials = getInitials(doctorName);
+  const partialId = String(doctorId || '').substring(0, 4);
+  
+  let cleanDate = '';
+  if (appointmentDate instanceof Date) {
+    const yyyy = appointmentDate.getFullYear();
+    const mm = String(appointmentDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(appointmentDate.getDate()).padStart(2, '0');
+    cleanDate = `${yyyy}${mm}${dd}`;
+  } else {
+    cleanDate = String(appointmentDate || '').substring(0, 10).replace(/-/g, '');
   }
-  return `MH-${code}`;
+
+  const cleanTime = String(appointmentTime || '').substring(0, 5).replace(/:/g, '');
+
+  return `${initials}${partialId}-${cleanDate}${cleanTime}`;
 };
 
 // Crear una cita
@@ -32,7 +53,6 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
 
     const appointmentId = uuidv4();
     const confirmationToken = uuidv4();
-    const appointmentCode = generateShortCode();
 
     // Obtener información del doctor (precio base, plan, nombre y especialidad)
     const doctorInfoResult = await query(
@@ -40,6 +60,7 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
       [doctorId]
     );
     const doctor = doctorInfoResult.rows[0];
+    const appointmentCode = generateAppointmentCode(doctor?.name, doctorId, appointment_date, appointment_time);
 
     // Determinar precio final
     let finalPrice = servicePrice;

@@ -152,6 +152,13 @@ async function migrate() {
     `);
     console.log('✓ Columna rubro configurada.\n');
 
+    // 11. Cambiar longitud de columna appointment_code en appointments
+    console.log('➕ Modificando longitud de columna appointment_code en appointments...');
+    await client.query(`
+      ALTER TABLE appointments ALTER COLUMN appointment_code TYPE VARCHAR(50);
+    `);
+    console.log('✓ Longitud de columna appointment_code modificada.\n');
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {
