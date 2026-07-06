@@ -700,7 +700,9 @@ export default function AppointmentsPage() {
                   >
                     <option value="">Selecciona un cliente</option>
                     {patients.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                      <option key={p.id} value={p.id}>
+                        {p.name} {p.email ? `(${p.email})` : '(Sin email)'}
+                      </option>
                     ))}
                   </select>
                 </div>
