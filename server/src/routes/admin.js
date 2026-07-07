@@ -3,6 +3,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../db/config.js';
 import { sendProfessionalApprovalEmail } from '../services/emailService.js';
+import multer from 'multer';
+import XLSX from 'xlsx';
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
@@ -697,6 +702,67 @@ router.delete('/template-services/:id', verifyAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error deleting admin template service:', error);
     res.status(500).json({ error: 'Error al eliminar la plantilla de servicio' });
+  }
+});
+
+// 5. Importar plantillas de servicios desde Excel
+router.post('/template-services/import', verifyAdmin, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ningún archivo' });
+    }
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    if (data.length === 0) {
+      return res.status(400).json({ error: 'El archivo Excel está vacío' });
+    }
+
+    let importedCount = 0;
+    let errors = [];
+
+    for (const row of data) {
+      try {
+        const specialization = row.Especialidad || row.specialization || row.Especialid || '';
+        const name = row['Nombre del Servicio'] || row.nombre || row.name || row.Nombre || '';
+        const description = row['Descripción'] || row.descripcion || row.description || '';
+        const price = parseFloat(row['Precio Base (ARS)'] || row.precio || row.price || 0);
+        const duration_minutes = parseInt(row['Duración (min)'] || row['Duración'] || row.duracion || row.duration || 30);
+        const booking_fee = parseFloat(row['Comisión Reserva (ARS)'] || row.comision || row.booking_fee || 0);
+        const code = row['Código Interno'] || row.codigo || row.code || null;
+        
+        const isOnlineVal = String(row['Modalidad Online'] || row.online || row.is_online || '').toLowerCase().trim();
+        const is_online = isOnlineVal === 'sí' || isOnlineVal === 'si' || isOnlineVal === 'yes' || isOnlineVal === 'true';
+
+        if (!specialization || !name) {
+          errors.push(`Fila omitida: Falta especialidad o nombre.`);
+          continue;
+        }
+
+        await query(
+          `INSERT INTO admin_template_services (
+            specialization, name, description, price, duration_minutes, booking_fee, code, is_online
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [specialization.trim(), name.trim(), description, price, duration_minutes, booking_fee, code, is_online]
+        );
+        importedCount++;
+      } catch (err) {
+        errors.push(`Error en fila ${row.name || row['Nombre del Servicio'] || ''}: ${err.message}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Se importaron ${importedCount} plantillas correctamente`,
+      importedCount,
+      errors: errors.length > 0 ? errors : null
+    });
+  } catch (error) {
+    console.error('Error importing admin template services:', error);
+    res.status(500).json({ error: 'Error al procesar el archivo Excel' });
   }
 });
 

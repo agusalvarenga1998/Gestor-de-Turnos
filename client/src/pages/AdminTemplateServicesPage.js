@@ -111,6 +111,36 @@ export default function AdminTemplateServicesPage() {
     }));
   };
 
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formDataImport = new FormData();
+    formDataImport.append('file', file);
+
+    try {
+      setLoading(true);
+      setError('');
+      setSuccessMsg('');
+      const response = await axios.post(`${API_BASE_URL}/api/admin/template-services/import`, formDataImport, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      if (response.data.success) {
+        setSuccessMsg(`✓ ${response.data.message}`);
+        fetchServices();
+      }
+    } catch (err) {
+      console.error('Error importing Excel:', err);
+      setError('Error al importar el archivo Excel: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+      e.target.value = '';
+    }
+  };
+
   const handleDeleteClick = async (serviceId, serviceName) => {
     if (!window.confirm(`¿Estás seguro de eliminar el servicio base "${serviceName}"?`)) {
       return;
@@ -178,10 +208,22 @@ export default function AdminTemplateServicesPage() {
             <h1>Servicios Base Precargados</h1>
             <p>Define las plantillas de servicios por especialidad. Al registrarse o actualizar su especialidad, el profesional recibirá de forma automática estos servicios precargados.</p>
           </div>
-          <button className={styles.createBtn} onClick={handleCreateClick}>
-            <Icon name="plus" size={18} color="white" />
-            Nuevo Servicio Base
-          </button>
+          <div className={styles.headerActions}>
+            <label className={styles.importBtn}>
+              <Icon name="upload" size={18} color="#475569" />
+              Importar Excel
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                onChange={handleImportExcel} 
+                style={{ display: 'none' }} 
+              />
+            </label>
+            <button className={styles.createBtn} onClick={handleCreateClick}>
+              <Icon name="plus" size={18} color="white" />
+              Nuevo Servicio Base
+            </button>
+          </div>
         </div>
 
         {error && <div className={styles.errorMessage}>{error}</div>}
