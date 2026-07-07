@@ -13,14 +13,67 @@ const router = express.Router();
 router.get('/doctor/me', verifyToken, verifyDoctorRole, checkSubscription, async (req, res) => {
   try {
     const doctorId = req.user.id;
-    const result = await query(
+    let result = await query(
       'SELECT * FROM services WHERE doctor_id = $1 ORDER BY created_at DESC',
       [doctorId]
     );
+
+    // Si tiene 0 servicios, intentar copiar las plantillas de su especialidad
+    if (result.rows.length === 0) {
+      const docRes = await query('SELECT specialization FROM doctors WHERE id = $1', [doctorId]);
+      const spec = docRes.rows[0]?.specialization;
+      if (spec) {
+        try {
+          const { copyTemplateServicesToDoctor } = await import('../services/templateService.js');
+          const inserted = await copyTemplateServicesToDoctor(doctorId, spec);
+          if (inserted > 0) {
+            result = await query(
+              'SELECT * FROM services WHERE doctor_id = $1 ORDER BY created_at DESC',
+              [doctorId]
+            );
+          }
+        } catch (copyErr) {
+          console.error('Error auto-precargando servicios base:', copyErr);
+        }
+      }
+    }
+
     res.json({ success: true, services: result.rows });
   } catch (error) {
     console.error('Error fetching my services:', error);
     res.status(500).json({ error: 'Error al obtener tus servicios' });
+  }
+});
+
+// Sincronizar/Cargar servicios base de la especialidad bajo demanda
+router.post('/doctor/me/sync-templates', verifyToken, verifyDoctorRole, checkSubscription, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const docRes = await query('SELECT specialization FROM doctors WHERE id = $1', [doctorId]);
+    const spec = docRes.rows[0]?.specialization;
+    
+    if (!spec) {
+      return res.status(400).json({ error: 'No tienes una especialidad configurada en tu perfil.' });
+    }
+
+    const { copyTemplateServicesToDoctor } = await import('../services/templateService.js');
+    const insertedCount = await copyTemplateServicesToDoctor(doctorId, spec);
+
+    const servicesResult = await query(
+      'SELECT * FROM services WHERE doctor_id = $1 ORDER BY created_at DESC',
+      [doctorId]
+    );
+
+    res.json({
+      success: true,
+      message: insertedCount > 0 
+        ? `Se cargaron ${insertedCount} servicios base de tu especialidad.`
+        : 'Tus servicios ya están al día con las plantillas de tu especialidad.',
+      services: servicesResult.rows
+    });
+  } catch (error) {
+    console.error('Error syncing template services:', error);
+    res.status(500).json({ error: 'Error al sincronizar los servicios base' });
   }
 });
 

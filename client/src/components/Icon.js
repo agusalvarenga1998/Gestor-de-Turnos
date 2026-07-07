@@ -61,6 +61,13 @@ export const Icon = ({ name, size = 24, color = 'currentColor' }) => {
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
     ),
+    refresh: (
+      <svg {...iconProps}>
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <polyline points="1 20 1 14 7 14"></polyline>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      </svg>
+    ),
     plus: (
       <svg {...iconProps}>
         <line x1="12" y1="5" x2="12" y2="19"></line>

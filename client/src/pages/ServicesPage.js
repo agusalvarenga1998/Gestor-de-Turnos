@@ -13,6 +13,26 @@ export default function ServicesPage() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncTemplates = async () => {
+    try {
+      setSyncing(true);
+      setError(null);
+      const response = await axios.post(`${API_BASE_URL}/api/services/doctor/me/sync-templates`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setServices(response.data.services);
+        alert(response.data.message);
+      }
+    } catch (err) {
+      console.error('Error syncing template services:', err);
+      alert('No se pudieron sincronizar los servicios base: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setSyncing(false);
+    }
+  };
   
   // Estado para el modal de edición/creación
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -157,6 +177,9 @@ export default function ServicesPage() {
                 style={{ display: 'none' }} 
               />
             </label>
+            <button className={styles.syncBtn} onClick={handleSyncTemplates} disabled={syncing}>
+              <Icon name="refresh" size={18} /> {syncing ? 'Cargando...' : 'Cargar Plantilla'}
+            </button>
             <button className={styles.addBtn} onClick={() => { setEditingService(null); setFormData({ name: '', description: '', price: '', booking_fee: '', duration_minutes: 30, code: '', is_online: false }); setIsModalOpen(true); }}>
               <Icon name="plus" size={18} /> Nuevo Servicio
             </button>
