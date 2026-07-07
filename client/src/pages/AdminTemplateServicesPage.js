@@ -14,6 +14,7 @@ export default function AdminTemplateServicesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
   const [editFormData, setEditFormData] = useState({
+    rubro: '',
     specialization: '',
     name: '',
     description: '',
@@ -27,8 +28,7 @@ export default function AdminTemplateServicesPage() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Listar todas las especialidades predefinidas de forma plana para el dropdown
-  const allPredefinedSpecs = Object.values(RUBROS_ESPECIALIDADES).flat().sort();
+
 
   useEffect(() => {
     fetchServices();
@@ -52,8 +52,18 @@ export default function AdminTemplateServicesPage() {
   };
 
   const handleEditClick = (service) => {
+    // Determinar el rubro a partir de la especialidad guardada
+    let foundRubro = '';
+    for (const [rub, specs] of Object.entries(RUBROS_ESPECIALIDADES)) {
+      if (specs.includes(service.specialization)) {
+        foundRubro = rub;
+        break;
+      }
+    }
+
     setSelectedService(service);
     setEditFormData({
+      rubro: foundRubro,
       specialization: service.specialization,
       name: service.name,
       description: service.description || '',
@@ -70,6 +80,7 @@ export default function AdminTemplateServicesPage() {
   const handleCreateClick = () => {
     setSelectedService({ id: 'new', isNew: true });
     setEditFormData({
+      rubro: '',
       specialization: '',
       name: '',
       description: '',
@@ -88,6 +99,15 @@ export default function AdminTemplateServicesPage() {
     setEditFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleRubroChange = (e) => {
+    const val = e.target.value;
+    setEditFormData(prev => ({
+      ...prev,
+      rubro: val,
+      specialization: ''
     }));
   };
 
@@ -132,7 +152,8 @@ export default function AdminTemplateServicesPage() {
 
       const method = selectedService.isNew ? 'post' : 'put';
 
-      const response = await axios[method](url, editFormData, {
+      const { rubro, ...payload } = editFormData;
+      const response = await axios[method](url, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -178,6 +199,22 @@ export default function AdminTemplateServicesPage() {
             <form onSubmit={handleSave} className={styles.form}>
               <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
+                  <label htmlFor="rubro">Rubro (Categoría Principal) *</label>
+                  <select
+                    id="rubro"
+                    name="rubro"
+                    value={editFormData.rubro}
+                    onChange={handleRubroChange}
+                    required
+                  >
+                    <option value="">Selecciona un rubro...</option>
+                    {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
+                      <option key={rub} value={rub}>{rub}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
                   <label htmlFor="specialization">Especialidad *</label>
                   <input
                     type="text"
@@ -186,11 +223,12 @@ export default function AdminTemplateServicesPage() {
                     list="specialization-list"
                     value={editFormData.specialization}
                     onChange={handleFormChange}
-                    placeholder="Selecciona o escribe una especialidad"
+                    placeholder={editFormData.rubro ? "Selecciona o escribe una especialidad" : "Primero selecciona un rubro..."}
+                    disabled={!editFormData.rubro}
                     required
                   />
                   <datalist id="specialization-list">
-                    {allPredefinedSpecs.map((spec, i) => (
+                    {editFormData.rubro && RUBROS_ESPECIALIDADES[editFormData.rubro]?.map((spec, i) => (
                       <option key={i} value={spec} />
                     ))}
                   </datalist>
