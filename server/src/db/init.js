@@ -270,6 +270,8 @@ async function initDatabase(retries = 3) {
         period_end TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS admin_template_services (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
