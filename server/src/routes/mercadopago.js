@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { query } from '../db/config.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { verifyToken } from '../middleware/auth.js';
 
 dotenv.config();
 
@@ -162,6 +163,74 @@ router.get('/oauth/callback', async (req, res) => {
   } catch (error) {
     console.error('❌ Error en callback de Mercado Pago OAuth:', error.response?.data || error.message);
     res.redirect(`${FRONTEND_URL}/settings?mp_connected=error`);
+  }
+});
+
+// 3. Obtener detalles de la cuenta de Mercado Pago vinculada
+router.get('/oauth/account', verifyToken, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+
+    // Buscar el token de acceso de Mercado Pago en la base de datos
+    const result = await query(
+      'SELECT mp_access_token, mp_connected FROM doctors WHERE id = $1',
+      [doctorId]
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].mp_connected || !result.rows[0].mp_access_token) {
+      return res.json({
+        success: true,
+        connected: false
+      });
+    }
+
+    const mpAccessToken = result.rows[0].mp_access_token;
+
+    // Consultar el endpoint de Mercado Libre para obtener datos del usuario
+    try {
+      const response = await axios.get('https://api.mercadolibre.com/users/me', {
+        headers: {
+          'Authorization': `Bearer ${mpAccessToken}`
+        }
+      });
+
+      const { email, nickname, first_name, last_name, id } = response.data;
+
+      return res.json({
+        success: true,
+        connected: true,
+        account: {
+          id,
+          email,
+          nickname,
+          name: `${first_name || ''} ${last_name || ''}`.trim() || nickname
+        }
+      });
+    } catch (apiError) {
+      console.error('Error fetching details from Mercado Pago API:', apiError.response?.data || apiError.message);
+      
+      if (apiError.response?.status === 401) {
+        return res.json({
+          success: true,
+          connected: true,
+          error: 'Token inválido o expirado'
+        });
+      }
+
+      return res.json({
+        success: true,
+        connected: true,
+        account: {
+          nickname: 'Cuenta vinculada'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error getting Mercado Pago account status:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener estado de Mercado Pago'
+    });
   }
 });
 

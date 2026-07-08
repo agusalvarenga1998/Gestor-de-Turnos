@@ -49,6 +49,8 @@ export default function SettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [customSpecialty, setCustomSpecialty] = useState('');
   const [isCustomSpecialty, setIsCustomSpecialty] = useState(false);
+  const [mpAccount, setMpAccount] = useState(null);
+  const [loadingMp, setLoadingMp] = useState(false);
 
   // Componente para manejar clics en el mapa
   function LocationMarker() {
@@ -143,6 +145,28 @@ export default function SettingsPage() {
       setTimeout(() => setSuccessMessage(''), 5000);
     }
   }, [searchParams, user, refreshUser]);
+
+  useEffect(() => {
+    const fetchMpAccount = async () => {
+      if (!user || !user.mp_connected) {
+        setMpAccount(null);
+        return;
+      }
+      try {
+        setLoadingMp(true);
+        const response = await apiClient.get('/api/mercadopago/oauth/account');
+        if (response.data.success && response.data.connected) {
+          setMpAccount(response.data.account);
+        }
+      } catch (err) {
+        console.error('Error fetching Mercado Pago account:', err);
+      } finally {
+        setLoadingMp(false);
+      }
+    };
+
+    fetchMpAccount();
+  }, [user]);
 
   const fetchGoogleStatus = async () => {
     try {
@@ -395,6 +419,14 @@ export default function SettingsPage() {
                       ? 'Tu cuenta de Mercado Pago está lista para recibir cobros'
                       : 'Vincula tu cuenta para que los pacientes puedan pagar la reserva online'}
                   </p>
+                  {profileData.mp_connected && loadingMp && (
+                    <p className={styles.mpAccountInfo}>Cargando datos de la cuenta...</p>
+                  )}
+                  {profileData.mp_connected && mpAccount && (
+                    <p className={styles.mpAccountInfo}>
+                      Cuenta vinculada: <strong>{mpAccount.email || mpAccount.nickname}</strong> {mpAccount.name && `(${mpAccount.name})`}
+                    </p>
+                  )}
                 </div>
               </div>
 
