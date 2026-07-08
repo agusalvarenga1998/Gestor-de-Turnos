@@ -255,8 +255,8 @@ export default function SettingsPage() {
       setSavingProfile(true);
       
       const finalSpecialization = isCustomSpecialty ? customSpecialty.trim() : profileData.specialization;
-      if (!profileData.rubro || !finalSpecialization) {
-        setSuccessMessage('✗ Rubro y Especialidad son obligatorios');
+      if (!profileData.rubro || !finalSpecialization || !profileData.address) {
+        setSuccessMessage('✗ Rubro, Especialidad y Dirección son obligatorios');
         setTimeout(() => setSuccessMessage(''), 5000);
         return;
       }
@@ -294,6 +294,13 @@ export default function SettingsPage() {
         {successMessage && (
           <div className={styles.successMessage}>
             {successMessage}
+          </div>
+        )}
+
+        {(!user?.rubro || !user?.specialization || !user?.address) && (
+          <div className={styles.warningMessage}>
+            <Icon name="warning" size={24} color="#b45309" />
+            <span>Por favor, completa tu rubro, especialidad y dirección de consultorio (ubicándola en el mapa) para activar tu perfil y comenzar a recibir turnos.</span>
           </div>
         )}
 
@@ -559,7 +566,7 @@ export default function SettingsPage() {
               </div>
 
                <div className={styles.formGroup}>
-                <label htmlFor="address">Dirección del Consultorio</label>
+                <label htmlFor="address">Dirección del Consultorio *</label>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <input
                     type="text"
@@ -570,6 +577,7 @@ export default function SettingsPage() {
                     placeholder="Ej: Calle Principal 123, Ciudad"
                     style={{ flex: 1 }}
                     disabled={savingProfile}
+                    required
                   />
                   <button 
                     type="button" 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
@@ -47,10 +47,17 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import Loading from './components/Loading';
 
 function AppContent() {
-  const { isAuthenticated, loading, isSubscriptionExpired } = useAuth();
+  const location = useLocation();
+  const { isAuthenticated, loading, isSubscriptionExpired, user } = useAuth();
 
   if (loading) {
     return <Loading />;
+  }
+
+  // Redirigir al profesional a la configuración si es su primer ingreso o no completó su perfil
+  const isProfileIncomplete = isAuthenticated && user && (!user.rubro || !user.specialization || !user.address);
+  if (isProfileIncomplete && location.pathname !== '/settings') {
+    return <Navigate to="/settings" replace />;
   }
 
   return (

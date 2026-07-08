@@ -721,6 +721,9 @@ router.post('/template-services/import', verifyAdmin, upload.single('file'), asy
       return res.status(400).json({ error: 'El archivo Excel está vacío' });
     }
 
+    // Limpiar la tabla antes de importar para evitar duplicados
+    await query('DELETE FROM admin_template_services');
+
     let importedCount = 0;
     let errors = [];
 
