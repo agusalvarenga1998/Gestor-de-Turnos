@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DoctorLayout from '../components/DoctorLayout';
 import { useAuth } from '../hooks/useAuth';
 import { useWebSocketContext } from '../hooks/useWebSocketContext';
-import { doctorAPI, appointmentAPI } from '../services/api';
+import { doctorAPI, appointmentAPI, patientAPI } from '../services/api';
 import Icon from '../components/Icon';
 import Loading from '../components/Loading';
 import styles from './DashboardNewPage.module.css';
@@ -36,6 +36,11 @@ export default function DashboardNewPage() {
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
   const [delayMinutes, setDelayMinutes] = useState(15);
   const [copied, setCopied] = useState(false);
+  const [patientDetails, setPatientDetails] = useState(null);
+  const [loadingPatient, setLoadingPatient] = useState(false);
+  const [notesText, setNotesText] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [saveNotesSuccess, setSaveNotesSuccess] = useState(false);
   const { on, off } = useWebSocketContext();
 
   useEffect(() => {
@@ -162,6 +167,56 @@ export default function DashboardNewPage() {
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      if (!selectedAppointment || !selectedAppointment.patient_id) {
+        setPatientDetails(null);
+        return;
+      }
+      try {
+        setLoadingPatient(true);
+        const response = await patientAPI.getPatient(selectedAppointment.patient_id);
+        if (response.success) {
+          setPatientDetails(response.patient);
+        }
+      } catch (err) {
+        console.error('Error fetching patient data:', err);
+      } finally {
+        setLoadingPatient(false);
+      }
+    };
+
+    fetchPatientData();
+  }, [selectedAppointment]);
+
+  useEffect(() => {
+    if (selectedAppointment) {
+      setNotesText(selectedAppointment.notes || '');
+      setSaveNotesSuccess(false);
+    }
+  }, [selectedAppointment]);
+
+  const handleSaveNotes = async () => {
+    if (!selectedAppointment) return;
+    try {
+      setSavingNotes(true);
+      const res = await appointmentAPI.updateAppointment(selectedAppointment.id, {
+        notes: notesText
+      });
+      if (res.success) {
+        setSaveNotesSuccess(true);
+        setSelectedAppointment(prev => ({ ...prev, notes: notesText }));
+        setTodayAppointments(prev => prev.map(a => a.id === selectedAppointment.id ? { ...a, notes: notesText } : a));
+        setTimeout(() => setSaveNotesSuccess(false), 2000);
+      }
+    } catch (err) {
+      console.error('Error saving notes:', err);
+      alert('Error al guardar las notas');
+    } finally {
+      setSavingNotes(false);
+    }
   };
 
   const StatItem = ({ label, value, iconName, color }) => (
@@ -462,7 +517,7 @@ export default function DashboardNewPage() {
       {/* Appointment Detail Modal */}
       {selectedAppointment && (
         <div className={styles.modal}>
-          <div className={styles.modalContent}>
+          <div className={styles.modalContentLarge}>
             <div className={styles.modalHeader}>
               <h2>Detalles del Turno</h2>
               <button
@@ -519,6 +574,62 @@ export default function DashboardNewPage() {
                   </a>
                 </div>
               )}
+
+              {/* Sección de notas clínicas de la cita */}
+              <div className={styles.notesSection}>
+                <label className={styles.sectionLabel}>✍️ Notas de la Sesión / Diagnóstico</label>
+                <textarea
+                  className={styles.notesTextarea}
+                  value={notesText}
+                  onChange={(e) => setNotesText(e.target.value)}
+                  placeholder="Escribe el diagnóstico, tratamiento o evolución del paciente en esta cita..."
+                  disabled={savingNotes}
+                />
+                <div className={styles.notesActions}>
+                  <button
+                    onClick={handleSaveNotes}
+                    className={`${styles.saveNotesBtn} ${saveNotesSuccess ? styles.saveNotesSuccess : ''}`}
+                    disabled={savingNotes}
+                  >
+                    <Icon name={saveNotesSuccess ? "check" : "save"} size={16} />
+                    <span>{savingNotes ? 'Guardando...' : (saveNotesSuccess ? '¡Guardado con éxito!' : 'Guardar Notas')}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Sección de historial de citas anteriores */}
+              <div className={styles.historySection}>
+                <label className={styles.sectionLabel}>📋 Historial de Citas Anteriores</label>
+                {loadingPatient ? (
+                  <div className={styles.loadingHistory}>Cargando historial del paciente...</div>
+                ) : !patientDetails ? (
+                  <div className={styles.errorHistory}>No se pudo cargar el historial.</div>
+                ) : patientDetails.appointments?.filter(appt => appt.id !== selectedAppointment.id).length === 0 ? (
+                  <p className={styles.emptyHistory}>Este es el primer turno del paciente en el consultorio.</p>
+                ) : (
+                  <div className={styles.pastApptsList}>
+                    {patientDetails.appointments?.filter(appt => appt.id !== selectedAppointment.id).map(appt => (
+                      <div key={appt.id} className={styles.pastApptCard}>
+                        <div className={styles.pastApptHeader}>
+                          <span className={styles.pastApptDate}>
+                            📅 {formatDateString(appt.appointment_date)} - {appt.appointment_time} hs
+                          </span>
+                          <span className={`${styles.pastApptStatus} ${appt.status === 'completed' ? styles.pastCompleted : styles.pastOther}`}>
+                            {appt.status === 'completed' ? 'Realizado' : (appt.status === 'cancelled' ? 'Cancelado' : 'Programado')}
+                          </span>
+                        </div>
+                        <p className={styles.pastApptReason}>
+                          <strong>Servicio/Motivo:</strong> {appt.service_name || appt.reason_for_visit || 'Consulta General'}
+                        </p>
+                        <div className={styles.pastApptNotes}>
+                          <strong>Notas clínicas registradas:</strong>
+                          <p>{appt.notes || 'Sin notas registradas en esta sesión.'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className={styles.modalActionsDetail}>
                 <button 

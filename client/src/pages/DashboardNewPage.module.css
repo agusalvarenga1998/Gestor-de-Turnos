@@ -598,11 +598,206 @@
 
 
 /* Appointment Detail Modal Styles */
+.modalContentLarge {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 680px;
+  width: 95%;
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
 .appointmentDetailBody {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 75px);
+}
+
+.notesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #fdfdfd;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.sectionLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.notesTextarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #334155;
+  resize: vertical;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.notesTextarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.notesActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.saveNotesBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.saveNotesBtn:hover {
+  background: #1d4ed8;
+}
+
+.saveNotesSuccess {
+  background: #10b981 !important;
+  color: white !important;
+}
+
+/* History Section */
+.historySection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.loadingHistory {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+}
+
+.errorHistory {
+  color: #ef4444;
+  font-size: 0.9rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.emptyHistory {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  text-align: center;
+  margin: 0;
+}
+
+.pastApptsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.pastApptCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.2s;
+}
+
+.pastApptCard:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.pastApptHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.pastApptDate {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pastApptStatus {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+}
+
+.pastCompleted {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.pastOther {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.pastApptReason {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.pastApptNotes {
+  font-size: 0.85rem;
+  color: #334155;
+  background: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.pastApptNotes strong {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.pastApptNotes p {
+  margin: 0;
+  font-style: italic;
+  white-space: pre-wrap;
 }
 
 .detailSection {
