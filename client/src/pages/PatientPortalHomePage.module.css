@@ -1069,7 +1069,51 @@ button:active, a:active, .menuCard:active, .serviceOption:active {
 }
 
 @media (max-width: 768px) {
+  .formCard {
+    padding: 1.5rem 1.25rem;
+  }
+
   .formGridThree {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    grid-column: span 1;
+  }
+
+  .fullWidth {
+    grid-column: span 1;
+  }
+
+  .patientFormCardsGrid {
+    grid-column: span 1;
+    gap: 1rem;
+  }
+
+  .formCardBox {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  .dniSearchWrapper {
+    flex-direction: column;
+    align-items: stretch;
+    grid-column: span 1;
+    gap: 10px;
+  }
+
+  .dniSearchBtn {
+    width: 100%;
+    height: auto;
+    padding: 12px;
+    margin-top: 4px;
   }
 }
