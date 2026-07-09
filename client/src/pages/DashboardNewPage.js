@@ -35,6 +35,7 @@ export default function DashboardNewPage() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
   const [delayMinutes, setDelayMinutes] = useState(15);
+  const [copied, setCopied] = useState(false);
   const { on, off } = useWebSocketContext();
 
   useEffect(() => {
@@ -156,6 +157,13 @@ export default function DashboardNewPage() {
     }
   };
 
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/patient?doctor=${user?.id}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const StatItem = ({ label, value, iconName, color }) => (
     <div className={`${styles.statItem} ${styles[color]}`}>
       <div className={styles.statIcon}>
@@ -207,24 +215,46 @@ export default function DashboardNewPage() {
         </header>
 
         {user?.plan?.allow_patient_booking !== false && (
-          <div className={styles.shareLinkBanner}>
-            <div className={styles.bannerIcon}>
-              <Icon name="link" size={20} color="#2563eb" />
+          <div className={styles.shareCard}>
+            <div className={styles.shareCardHeader}>
+              <div className={styles.shareCardIcon}>
+                <span className="material-symbols-outlined">share</span>
+              </div>
+              <div className={styles.shareCardText}>
+                <h3>Portal de Reservas Online</h3>
+                <p>Comparte este enlace con tus pacientes para que puedan reservar turnos de manera autónoma.</p>
+              </div>
             </div>
-            <div className={styles.bannerText}>
-              <span className={styles.bannerTitle}>Tu Link de Reservas Online para Pacientes:</span>
-              <span className={styles.bannerUrl}>{`${window.location.origin}/patient?doctor=${user?.id}`}</span>
+            <div className={styles.shareInputGroup}>
+              <div className={styles.shareInputWrapper}>
+                <span className={`material-symbols-outlined ${styles.linkInputIcon}`}>link</span>
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/patient?doctor=${user?.id}`}
+                  className={styles.shareInput}
+                  onClick={(e) => e.target.select()}
+                />
+              </div>
+              <div className={styles.shareActions}>
+                <button
+                  className={`${styles.copyLinkBtn} ${copied ? styles.copied : ''}`}
+                  onClick={handleCopyLink}
+                >
+                  <Icon name={copied ? 'check' : 'copy'} size={16} />
+                  {copied ? '¡Copiado!' : 'Copiar Enlace'}
+                </button>
+                <a
+                  href={`${window.location.origin}/patient?doctor=${user?.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.viewPortalBtn}
+                >
+                  <Icon name="eye" size={16} />
+                  Ver Portal
+                </a>
+              </div>
             </div>
-            <button
-              className={styles.copyBtn}
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/patient?doctor=${user?.id}`);
-                alert('✓ Link de reservas copiado al portapapeles');
-              }}
-            >
-              <Icon name="copy" size={16} />
-              Copiar Link
-            </button>
           </div>
         )}
 
