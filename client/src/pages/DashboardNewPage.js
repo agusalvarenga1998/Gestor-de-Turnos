@@ -186,6 +186,9 @@ export default function DashboardNewPage() {
     return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
   };
 
+  const pendingAppointments = todayAppointments.filter(appt => appt.status === 'scheduled');
+  const completedAppointments = todayAppointments.filter(appt => appt.status === 'completed');
+
   if (loading) {
     return (
       <DoctorLayout>
@@ -263,54 +266,98 @@ export default function DashboardNewPage() {
         <div className={styles.dashboardGrid}>
           {/* Main Column: Agenda */}
           <main className={styles.agendaColumn}>
-            <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Agenda de hoy</h2>
-              <span className={styles.countBadge}>{todayAppointments.length} turnos</span>
+            {/* Turnos Pendientes Section */}
+            <div className={styles.agendaSection}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Turnos Pendientes de Hoy</h2>
+                <span className={`${styles.countBadge} ${styles.pendingBadge}`}>{pendingAppointments.length} pendientes</span>
+              </div>
+
+              <div className={styles.appointmentList}>
+                {pendingAppointments.length === 0 ? (
+                  <div className={styles.emptyAgendaSmall}>
+                    <Icon name="clock" size={20} />
+                    <p>No tienes turnos pendientes para hoy.</p>
+                  </div>
+                ) : (
+                  pendingAppointments.map((appt) => (
+                    <div key={appt.id} className={styles.apptCard}>
+                      <div className={styles.apptTime}>
+                        <span className={styles.timeValue}>{appt.appointment_time}</span>
+                        <span className={styles.duration}>{appt.duration_minutes || 30}m</span>
+                      </div>
+                      <div className={styles.apptDetails}>
+                        <h3 className={styles.patientName}>{appt.patient_name}</h3>
+                        <p className={styles.apptReason}>{appt.reason_for_visit || 'Consulta general'}</p>
+                      </div>
+                      <div className={styles.apptStatus}>
+                        {getStatusBadge(appt.status)}
+                      </div>
+                      <div className={styles.apptAction}>
+                        <button 
+                          className={styles.viewBtn}
+                          onClick={() => setSelectedAppointment(appt)}
+                        >
+                          Ver
+                        </button>
+                        {appt.status === 'scheduled' && (
+                          <button 
+                            className={styles.delayBtn}
+                            onClick={() => setDelayModal({ show: true, appointmentId: appt.id })}
+                          >
+                            <Icon name="clock" size={16} />
+                            Retrasar
+                          </button>
+                        )}
+                        {appt.delay_minutes > 0 && (
+                          <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
-            <div className={styles.appointmentList}>
-              {todayAppointments.length === 0 ? (
-                <div className={styles.emptyAgenda}>
-                  <Icon name="calendar" size={40} />
-                  <p>No tienes compromisos programados para hoy.</p>
-                </div>
-              ) : (
-                todayAppointments.map((appt, index) => (
-                  <div key={appt.id} className={styles.apptCard}>
-                    <div className={styles.apptTime}>
-                      <span className={styles.timeValue}>{appt.appointment_time}</span>
-                      <span className={styles.duration}>{appt.duration_minutes || 30}m</span>
-                    </div>
-                    <div className={styles.apptDetails}>
-                      <h3 className={styles.patientName}>{appt.patient_name}</h3>
-                      <p className={styles.apptReason}>{appt.reason_for_visit || 'Consulta general'}</p>
-                    </div>
-                    <div className={styles.apptStatus}>
-                      {getStatusBadge(appt.status)}
-                    </div>
-                    <div className={styles.apptAction}>
-                      <button 
-                        className={styles.viewBtn}
-                        onClick={() => setSelectedAppointment(appt)}
-                      >
-                        Ver
-                      </button>
-                      {appt.status === 'scheduled' && (
-                        <button 
-                          className={styles.delayBtn}
-                          onClick={() => setDelayModal({ show: true, appointmentId: appt.id })}
-                        >
-                          <Icon name="clock" size={16} />
-                          Retrasar
-                        </button>
-                      )}
-                      {appt.delay_minutes > 0 && (
-                        <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
-                      )}
-                    </div>
+            {/* Turnos Realizados Section */}
+            <div className={styles.agendaSection} style={{ marginTop: '2rem' }}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Turnos Realizados Hoy</h2>
+                <span className={`${styles.countBadge} ${styles.completedBadge}`}>{completedAppointments.length} realizados</span>
+              </div>
+
+              <div className={styles.appointmentList}>
+                {completedAppointments.length === 0 ? (
+                  <div className={styles.emptyAgendaSmall}>
+                    <Icon name="check-circle" size={20} />
+                    <p>Aún no has completado ningún turno hoy.</p>
                   </div>
-                ))
-              )}
+                ) : (
+                  completedAppointments.map((appt) => (
+                    <div key={appt.id} className={`${styles.apptCard} ${styles.completedCard}`}>
+                      <div className={styles.apptTime}>
+                        <span className={`${styles.timeValue} ${styles.completedTime}`}>{appt.appointment_time}</span>
+                        <span className={styles.duration}>{appt.duration_minutes || 30}m</span>
+                      </div>
+                      <div className={styles.apptDetails}>
+                        <h3 className={`${styles.patientName} ${styles.completedPatient}`}>{appt.patient_name}</h3>
+                        <p className={styles.apptReason}>{appt.reason_for_visit || 'Consulta general'}</p>
+                      </div>
+                      <div className={styles.apptStatus}>
+                        {getStatusBadge(appt.status)}
+                      </div>
+                      <div className={styles.apptAction}>
+                        <button 
+                          className={styles.viewBtn}
+                          onClick={() => setSelectedAppointment(appt)}
+                        >
+                          Ver
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </main>
 
