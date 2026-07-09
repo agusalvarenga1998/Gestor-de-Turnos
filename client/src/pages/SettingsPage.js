@@ -27,7 +27,7 @@ const doctorIcon = new L.Icon({
 
 export default function SettingsPage() {
   const { user, token, refreshUser } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [googleConnected, setGoogleConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState(false);
@@ -125,11 +125,17 @@ export default function SettingsPage() {
     // Detectar si viene del callback de Google
     if (searchParams.get('connected') === 'true') {
       setSuccessMessage('✓ Google Calendar conectado exitosamente');
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('connected');
+      setSearchParams(newParams, { replace: true });
       setTimeout(() => setSuccessMessage(''), 5000);
     }
 
     if (searchParams.get('error') === 'true') {
       setSuccessMessage('✗ Error al conectar Google Calendar');
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('error');
+      setSearchParams(newParams, { replace: true });
       setTimeout(() => setSuccessMessage(''), 5000);
     }
 
@@ -137,14 +143,20 @@ export default function SettingsPage() {
     if (searchParams.get('mp_connected') === 'true') {
       setSuccessMessage('✓ Mercado Pago conectado exitosamente');
       refreshUser();
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('mp_connected');
+      setSearchParams(newParams, { replace: true });
       setTimeout(() => setSuccessMessage(''), 5000);
     }
 
     if (searchParams.get('mp_connected') === 'error') {
       setSuccessMessage('✗ Error al conectar Mercado Pago');
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('mp_connected');
+      setSearchParams(newParams, { replace: true });
       setTimeout(() => setSuccessMessage(''), 5000);
     }
-  }, [searchParams, user, refreshUser]);
+  }, [searchParams, user, refreshUser, setSearchParams]);
 
   useEffect(() => {
     const fetchMpAccount = async () => {
@@ -159,7 +171,10 @@ export default function SettingsPage() {
           setMpAccount(response.data.account);
         }
       } catch (err) {
-        console.error('Error fetching Mercado Pago account:', err);
+        // Silenciar error 404 si el backend en producción no ha sido desplegado con el nuevo endpoint
+        if (err.response?.status !== 404) {
+          console.error('Error fetching Mercado Pago account:', err);
+        }
       } finally {
         setLoadingMp(false);
       }
