@@ -613,3 +613,12 @@
 .versionSelect:focus {
   border-color: #3b82f6;
 }
+
+@media print {
+  .tabsContainer, .backBtn, .addBtn {
+    display: none !important;
+  }
+  .header {
+    margin-bottom: 1rem !important;
+  }
+}

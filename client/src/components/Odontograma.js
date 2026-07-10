@@ -145,6 +145,10 @@ export default function Odontograma({ initialData, onSave, patientName }) {
     });
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -272,14 +276,25 @@ export default function Odontograma({ initialData, onSave, patientName }) {
             <h3>Ficha Clínica y Odontograma</h3>
             <p className={styles.patientSub}>Paciente: <strong>{patientName}</strong></p>
           </div>
-          <button 
-            onClick={handleSave} 
-            className={`${styles.saveBtn} ${savedSuccess ? styles.saveSuccess : ''}`}
-            disabled={isSaving}
-          >
-            <Icon name={savedSuccess ? "check" : "save"} size={16} />
-            <span>{isSaving ? 'Guardando...' : (savedSuccess ? '¡Guardado!' : 'Guardar Odontograma')}</span>
-          </button>
+          <div className={styles.headerBtnGroup}>
+            <button 
+              onClick={handlePrint} 
+              className={styles.printBtn}
+              type="button"
+            >
+              <Icon name="printer" size={16} />
+              <span>Imprimir Ficha</span>
+            </button>
+            <button 
+              onClick={handleSave} 
+              className={`${styles.saveBtn} ${savedSuccess ? styles.saveSuccess : ''}`}
+              disabled={isSaving}
+              type="button"
+            >
+              <Icon name={savedSuccess ? "check" : "save"} size={16} />
+              <span>{isSaving ? 'Guardando...' : (savedSuccess ? '¡Guardado!' : 'Guardar Odontograma')}</span>
+            </button>
+          </div>
         </div>
 
         {/* Toolbar */}
@@ -380,6 +395,47 @@ export default function Odontograma({ initialData, onSave, patientName }) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Print-only Observations view */}
+        <div className={styles.printOnlyNotes}>
+          <h4 className={styles.printLabel}>Observaciones Generales:</h4>
+          <p className={styles.printText}>{generalObservations || 'Sin observaciones registradas.'}</p>
+        </div>
+
+        {/* Print-only list of all tooth notes */}
+        <div className={styles.printOnlyToothNotes}>
+          <h4 className={styles.printLabel}>Detalles por Pieza Dental:</h4>
+          {Object.keys(teeth).filter(tNum => teeth[tNum]?.notes || teeth[tNum]?.ausente || teeth[tNum]?.corona || teeth[tNum]?.implante || teeth[tNum]?.endodoncia || Object.values(teeth[tNum]?.surfaces || {}).some(v => v !== null)).length === 0 ? (
+            <p className={styles.printText}>No se registraron tratamientos ni notas específicas en las piezas dentales.</p>
+          ) : (
+            <div className={styles.printToothList}>
+              {Object.keys(teeth).filter(tNum => teeth[tNum]?.notes || teeth[tNum]?.ausente || teeth[tNum]?.corona || teeth[tNum]?.implante || teeth[tNum]?.endodoncia || Object.values(teeth[tNum]?.surfaces || {}).some(v => v !== null)).map(tNum => {
+                const tData = teeth[tNum];
+                const statusList = [];
+                if (tData.ausente) statusList.push('Ausente/Extracción');
+                if (tData.corona) statusList.push('Corona');
+                if (tData.implante) statusList.push('Implante');
+                if (tData.endodoncia) statusList.push('Tratamiento de Conducto');
+                
+                // Also list surfaces marked
+                const surfacesList = [];
+                if (tData.surfaces.vestibular) surfacesList.push(`Vestibular (${tData.surfaces.vestibular === 'caries' ? 'Caries' : 'Restaurado'})`);
+                if (tData.surfaces.lingual) surfacesList.push(`Lingual (${tData.surfaces.lingual === 'caries' ? 'Caries' : 'Restaurado'})`);
+                if (tData.surfaces.mesial) surfacesList.push(`Mesial (${tData.surfaces.mesial === 'caries' ? 'Caries' : 'Restaurado'})`);
+                if (tData.surfaces.distal) surfacesList.push(`Distal (${tData.surfaces.distal === 'caries' ? 'Caries' : 'Restaurado'})`);
+                if (tData.surfaces.oclusal) surfacesList.push(`Oclusal (${tData.surfaces.oclusal === 'caries' ? 'Caries' : 'Restaurado'})`);
+                
+                const allStates = [...statusList, ...surfacesList];
+
+                return (
+                  <div key={tNum} className={styles.printToothRow}>
+                    <strong>Pieza {tNum}:</strong> {allStates.length > 0 ? `[${allStates.join(', ')}] ` : ''}{tData.notes || ''}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

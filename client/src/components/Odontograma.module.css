@@ -33,19 +33,27 @@
   color: #64748b;
 }
 
-.saveBtn {
+.headerBtnGroup {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.saveBtn, .printBtn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 1.25rem;
-  background: #2563eb;
-  color: white;
-  border: none;
   border-radius: 8px;
   font-weight: 700;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.saveBtn {
+  background: #2563eb;
+  color: white;
+  border: none;
 }
 
 .saveBtn:hover:not(:disabled) {
@@ -57,6 +65,19 @@
 .saveSuccess {
   background: #10b981 !important;
   box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2) !important;
+}
+
+.printBtn {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.printBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
 }
 
 /* Toolbar */
@@ -398,3 +419,128 @@
     grid-template-columns: 1fr;
   }
 }
+
+.printOnlyNotes, .printOnlyToothNotes {
+  display: none;
+}
+
+@media print {
+  /* Hide doctor portal sidebars, topbar, etc */
+  header, 
+  nav, 
+  aside,
+  [class*="sidebar"],
+  [class*="topbar"],
+  [class*="mobileMenuBtn"] {
+    display: none !important;
+  }
+
+  /* Reset layout for full page printing */
+  body, 
+  html,
+  [class*="mainContent"],
+  [class*="content"],
+  [class*="container"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide interactive/editing buttons and toolbar */
+  .saveBtn,
+  .printBtn,
+  .headerBtnGroup,
+  .toolbar,
+  [class*="versionSelectorContainer"] {
+    display: none !important;
+  }
+
+  /* Style dental chart page header */
+  .odontogramaCard {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .odontogramaHeader {
+    border-bottom: 2px solid #000 !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* Style dental arch to be centered and page-fitting */
+  .dentalArch {
+    background: white !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 1.5rem 1rem !important;
+    margin-bottom: 2rem !important;
+    page-break-inside: avoid;
+    border-radius: 12px !important;
+  }
+
+  /* Hide textareas */
+  .observationsBox, .toothNotesBox {
+    display: none !important;
+  }
+
+  /* Show static printed text views */
+  .printOnlyNotes, .printOnlyToothNotes {
+    display: block !important;
+    width: 100% !important;
+    margin-top: 1.5rem !important;
+  }
+
+  .printOnlyToothNotes {
+    page-break-inside: auto;
+  }
+
+  .printLabel {
+    font-size: 0.9rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    margin: 0 0 0.5rem 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  .printText {
+    font-size: 0.875rem !important;
+    color: #334155 !important;
+    margin: 0 0 1.5rem 0 !important;
+    line-height: 1.5 !important;
+    white-space: pre-wrap !important;
+  }
+
+  .printToothList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .printToothRow {
+    font-size: 0.85rem !important;
+    color: #1e293b !important;
+    padding: 0.5rem;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    page-break-inside: avoid;
+  }
+
+  .printToothRow strong {
+    color: #0f172a !important;
+  }
+
+  /* Force exact background/stroke colors to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

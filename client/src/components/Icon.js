@@ -106,6 +106,13 @@ export const Icon = ({ name, size = 24, color = 'currentColor' }) => {
         <polyline points="7 3 7 8 15 8"></polyline>
       </svg>
     ),
+    printer: (
+      <svg {...iconProps}>
+        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+        <rect x="6" y="14" width="12" height="8"></rect>
+      </svg>
+    ),
     x: (
       <svg {...iconProps}>
         <line x1="18" y1="6" x2="6" y2="18"></line>
