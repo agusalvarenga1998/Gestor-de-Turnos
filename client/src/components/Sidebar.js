@@ -14,7 +14,7 @@ export default function Sidebar({ isMobile, isOpen, onClose }) {
     { icon: 'calendar', label: 'Gestión de Turnos', path: '/appointments' },
     { icon: 'users', label: 'Clientes', path: '/patients' },
     { icon: 'briefcase', label: 'Mis Servicios', path: '/services' },
-    { icon: 'shield', label: 'Convenios / Beneficios', path: '/insurance' },
+    { icon: 'shield', label: 'Convenios', path: '/insurance' },
     { icon: 'clock', label: 'Horarios de Trabajo', path: '/working-hours' },
     { icon: 'settings', label: 'Configuración', path: '/settings' },
   ];
