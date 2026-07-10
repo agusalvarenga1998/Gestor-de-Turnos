@@ -186,7 +186,7 @@ export default function Odontograma({ initialData, onSave, patientName }) {
       >
         <span className={styles.toothNumber}>{toothNum}</span>
         <div className={styles.svgContainer}>
-          <svg width="46" height="46" viewBox="0 0 46 46" className={styles.toothSvg}>
+          <svg width="100%" height="100%" viewBox="0 0 46 46" className={styles.toothSvg}>
             {/* Top: Vestibular */}
             <polygon 
               points="3,3 43,3 33,13 13,13" 
@@ -320,37 +320,39 @@ export default function Odontograma({ initialData, onSave, patientName }) {
 
         {/* Teeth Grid */}
         <div className={styles.dentalArch}>
-          <div className={styles.archRow}>
-            <div className={styles.archLabel}>SUPERIOR</div>
-            
-            {/* Upper Right Quadrant (18-11) */}
-            <div className={styles.quadrant}>
-              {UPPER_RIGHT.map(tNum => renderToothSVG(tNum))}
-            </div>
-            
-            <div className={styles.midlineDivider} />
+          <div className={styles.archSection}>
+            <div className={styles.archLabel}>ARCADA SUPERIOR</div>
+            <div className={styles.archRow}>
+              {/* Upper Right Quadrant (18-11) */}
+              <div className={styles.quadrant}>
+                {UPPER_RIGHT.map(tNum => renderToothSVG(tNum))}
+              </div>
+              
+              <div className={styles.midlineDivider} />
 
-            {/* Upper Left Quadrant (21-28) */}
-            <div className={styles.quadrant}>
-              {UPPER_LEFT.map(tNum => renderToothSVG(tNum))}
+              {/* Upper Left Quadrant (21-28) */}
+              <div className={styles.quadrant}>
+                {UPPER_LEFT.map(tNum => renderToothSVG(tNum))}
+              </div>
             </div>
           </div>
 
           <div className={styles.horizontalArchDivider} />
 
-          <div className={styles.archRow}>
-            <div className={styles.archLabel}>INFERIOR</div>
-            
-            {/* Lower Right Quadrant (48-41) */}
-            <div className={styles.quadrant}>
-              {LOWER_RIGHT.map(tNum => renderToothSVG(tNum))}
-            </div>
-            
-            <div className={styles.midlineDivider} />
+          <div className={styles.archSection}>
+            <div className={styles.archLabel}>ARCADA INFERIOR</div>
+            <div className={styles.archRow}>
+              {/* Lower Right Quadrant (48-41) */}
+              <div className={styles.quadrant}>
+                {LOWER_RIGHT.map(tNum => renderToothSVG(tNum))}
+              </div>
+              
+              <div className={styles.midlineDivider} />
 
-            {/* Lower Left Quadrant (31-38) */}
-            <div className={styles.quadrant}>
-              {LOWER_LEFT.map(tNum => renderToothSVG(tNum))}
+              {/* Lower Left Quadrant (31-38) */}
+              <div className={styles.quadrant}>
+                {LOWER_LEFT.map(tNum => renderToothSVG(tNum))}
+              </div>
             </div>
           </div>
         </div>
