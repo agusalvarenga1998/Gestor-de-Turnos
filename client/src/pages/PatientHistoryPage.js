@@ -4,6 +4,8 @@ import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
 import Loading from '../components/Loading';
 import { patientAPI, patientRecordAPI } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
+import Odontograma from '../components/Odontograma';
 import styles from './PatientHistoryPage.module.css';
 
 export default function PatientHistoryPage() {
@@ -13,6 +15,17 @@ export default function PatientHistoryPage() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('timeline'); // 'timeline' or 'odontograma'
+  const [selectedOdontogramVersion, setSelectedOdontogramVersion] = useState('');
+  const [odontogramData, setOdontogramData] = useState(null);
+  
+  const isOdontologo = user?.rubro && (
+    user.rubro.toLowerCase().includes('odontolog') || 
+    user.rubro.toLowerCase().includes('odontología') || 
+    user.rubro.includes('🦷')
+  );
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   
@@ -27,6 +40,7 @@ export default function PatientHistoryPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
   const getAbsoluteUrl = (fileUrl) => {
@@ -66,6 +80,50 @@ export default function PatientHistoryPage() {
       setError('No se pudo cargar la información del paciente');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const odontogramRecords = records.filter(r => r.type === 'odontogram');
+
+  useEffect(() => {
+    if (odontogramRecords.length > 0) {
+      let targetRecord = null;
+      if (selectedOdontogramVersion) {
+        targetRecord = odontogramRecords.find(r => r.id === selectedOdontogramVersion);
+      } else {
+        targetRecord = odontogramRecords[0];
+      }
+
+      if (targetRecord && targetRecord.content) {
+        try {
+          const parsed = JSON.parse(targetRecord.content);
+          setOdontogramData(parsed);
+        } catch (e) {
+          console.error('Error parsing odontogram content:', e);
+          setOdontogramData(null);
+        }
+      }
+    } else {
+      setOdontogramData(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [records, selectedOdontogramVersion]);
+
+  const handleSaveOdontogram = async (data) => {
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('type', 'odontogram');
+      formDataToSend.append('title', `Odontograma Clínico - ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'})}`);
+      formDataToSend.append('content', JSON.stringify(data));
+      
+      const response = await patientRecordAPI.createRecord(patientId, formDataToSend);
+      if (response.success) {
+        setRecords(prev => [response.record, ...prev]);
+        setSelectedOdontogramVersion(response.record.id);
+      }
+    } catch (err) {
+      console.error('Error saving odontogram record:', err);
+      throw err;
     }
   };
 
@@ -120,6 +178,8 @@ export default function PatientHistoryPage() {
     }
   };
 
+  const timelineRecords = records.filter(r => r.type !== 'odontogram');
+
   if (loading) return <DoctorLayout><Loading /></DoctorLayout>;
   if (error) return <DoctorLayout><div className={styles.error}>{error}</div></DoctorLayout>;
 
@@ -140,23 +200,72 @@ export default function PatientHistoryPage() {
               <p>{patient?.document_number ? `DNI: ${patient.document_number}` : 'Sin DNI'} • {patient?.phone}</p>
             </div>
           </div>
-          <button onClick={() => setShowAddModal(true)} className={styles.addBtn}>
-            <Icon name="plus" size={18} />
-            Nuevo Registro
-          </button>
+          {(!isOdontologo || activeTab === 'timeline') && (
+            <button onClick={() => setShowAddModal(true)} className={styles.addBtn}>
+              <Icon name="plus" size={18} />
+              Nuevo Registro
+            </button>
+          )}
         </div>
 
-        <div className={styles.timeline}>
-          {records.length === 0 ? (
-            <div className={styles.empty}>
-              <Icon name="folder-open" size={48} color="#cbd5e1" />
-              <p>No hay registros en el historial de este paciente</p>
-              <button onClick={() => setShowAddModal(true)} className={styles.secondaryBtn}>
-                Comenzar historial
-              </button>
-            </div>
-          ) : (
-            records.map((record) => (
+        {isOdontologo && (
+          <div className={styles.tabsContainer}>
+            <button
+              onClick={() => setActiveTab('timeline')}
+              className={`${styles.tabBtn} ${activeTab === 'timeline' ? styles.activeTab : ''}`}
+            >
+              <Icon name="list" size={16} />
+              <span>Historial de Registros</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('odontograma')}
+              className={`${styles.tabBtn} ${activeTab === 'odontograma' ? styles.activeTab : ''}`}
+            >
+              <Icon name="shield" size={16} />
+              <span>Ficha Odontológica (Odontograma)</span>
+            </button>
+          </div>
+        )}
+
+        {isOdontologo && activeTab === 'odontograma' && (
+          <div className={styles.odontogramaView}>
+            {odontogramRecords.length > 0 && (
+              <div className={styles.versionSelectorContainer}>
+                <label className={styles.versionLabel}>📅 Historial de Fichas:</label>
+                <select
+                  value={selectedOdontogramVersion}
+                  onChange={(e) => setSelectedOdontogramVersion(e.target.value)}
+                  className={styles.versionSelect}
+                >
+                  <option value="">Ficha Más Reciente</option>
+                  {odontogramRecords.map((r, idx) => (
+                    <option key={r.id} value={r.id}>
+                      {idx === 0 ? 'Ficha Actual' : `Ficha del ${new Date(r.created_at).toLocaleString('es-ES')}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <Odontograma
+              initialData={odontogramData}
+              onSave={handleSaveOdontogram}
+              patientName={patient?.name}
+            />
+          </div>
+        )}
+
+        {(!isOdontologo || activeTab === 'timeline') && (
+          <div className={styles.timeline}>
+            {timelineRecords.length === 0 ? (
+              <div className={styles.empty}>
+                <Icon name="folder-open" size={48} color="#cbd5e1" />
+                <p>No hay registros en el historial de este paciente</p>
+                <button onClick={() => setShowAddModal(true)} className={styles.secondaryBtn}>
+                  Comenzar historial
+                </button>
+              </div>
+            ) : (
+              timelineRecords.map((record) => (
               <div key={record.id} className={styles.recordCard}>
                 <div className={styles.recordIcon}>
                   <Icon 
@@ -211,6 +320,7 @@ export default function PatientHistoryPage() {
             ))
           )}
         </div>
+        )}
 
         {/* Modal para añadir registro */}
         {showAddModal && (

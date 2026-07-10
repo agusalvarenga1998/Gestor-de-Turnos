@@ -531,3 +531,85 @@
   .recordCard { flex-direction: column; }
   .recordIcon { align-self: flex-start; }
 }
+
+/* Tabs styling */
+.tabsContainer {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+}
+
+.tabBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.tabBtn:hover {
+  color: #0f172a;
+}
+
+.activeTab {
+  color: #2563eb !important;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #2563eb;
+  border-radius: 2px;
+}
+
+/* Odontograma specific styles inside history page */
+.odontogramaView {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.versionSelectorContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  background: #f8fafc;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  width: fit-content;
+}
+
+.versionLabel {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.versionSelect {
+  padding: 0.4rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none;
+  cursor: pointer;
+  background: white;
+}
+
+.versionSelect:focus {
+  border-color: #3b82f6;
+}
