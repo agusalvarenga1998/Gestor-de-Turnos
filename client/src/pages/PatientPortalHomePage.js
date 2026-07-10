@@ -21,6 +21,15 @@ export default function PatientPortalHomePage() {
   const [appointmentCode, setAppointmentCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Booking states
   const [rubros, setRubros] = useState([]);
@@ -865,6 +874,20 @@ export default function PatientPortalHomePage() {
                             </div>
                           )}
 
+                          {isMobile && selectedSpecialization && (
+                            <div className={styles.mobileMapContainer}>
+                              <h3 className={styles.mobileMapTitle}>Ubicación / Buscar por cercanía</h3>
+                              <div className={styles.mapFrame}>
+                                <DoctorMap
+                                  doctors={doctors}
+                                  onSelectDoctor={setSelectedDoctor}
+                                  userLocation={userLocation}
+                                />
+                              </div>
+                              <p className={styles.mapHint}>* Puedes tocar un marcador en el mapa para seleccionar al profesional.</p>
+                            </div>
+                          )}
+
                           {selectedDoctor && (
                             <>
                               <div className={styles.sectionTitle}>2. Servicio</div>
@@ -1078,19 +1101,21 @@ export default function PatientPortalHomePage() {
                     </div>
                   </div>
 
-                  <div className={styles.bookingMapSide}>
-                    <div className={styles.stickyMap}>
-                      <h3>Buscar por cercanía</h3>
-                      <div className={styles.mapFrame}>
-                        <DoctorMap
-                          doctors={doctors}
-                          onSelectDoctor={setSelectedDoctor}
-                          userLocation={userLocation}
-                        />
+                  {!isMobile && (
+                    <div className={styles.bookingMapSide}>
+                      <div className={styles.stickyMap}>
+                        <h3>Buscar por cercanía</h3>
+                        <div className={styles.mapFrame}>
+                          <DoctorMap
+                            doctors={doctors}
+                            onSelectDoctor={setSelectedDoctor}
+                            userLocation={userLocation}
+                          />
+                        </div>
+                        <p className={styles.mapHint}>* Usa el mapa para ver dónde atiende cada médico de esta especialidad.</p>
                       </div>
-                      <p className={styles.mapHint}>* Usa el mapa para ver dónde atiende cada médico de esta especialidad.</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
