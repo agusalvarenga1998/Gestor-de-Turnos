@@ -492,6 +492,14 @@
     margin-bottom: 2rem !important;
     page-break-inside: avoid;
     border-radius: 12px !important;
+    overflow: hidden !important;
+    width: 100% !important;
+  }
+
+  .archRow {
+    min-width: 0 !important;
+    width: 100% !important;
+    justify-content: center !important;
   }
 
   /* Hide textareas */
@@ -556,7 +564,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .dentalArch {
     overflow-x: auto !important;
   }
