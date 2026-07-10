@@ -241,6 +241,17 @@ export default function DashboardNewPage() {
     return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) {
+      return 'Buen día';
+    } else if (hour >= 12 && hour < 20) {
+      return 'Buenas tardes';
+    } else {
+      return 'Buenas noches';
+    }
+  };
+
   const pendingAppointments = todayAppointments.filter(appt => appt.status === 'scheduled');
   const completedAppointments = todayAppointments.filter(appt => appt.status === 'completed');
 
@@ -258,7 +269,7 @@ export default function DashboardNewPage() {
         {/* Header */}
         <header className={styles.mainHeader}>
           <div className={styles.welcomeInfo}>
-            <h1 className={styles.greeting}>Buen día, {user?.name}</h1>
+            <h1 className={styles.greeting}>{getGreeting()}, {user?.name}</h1>
             <p className={styles.dateDisplay}>
               {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
