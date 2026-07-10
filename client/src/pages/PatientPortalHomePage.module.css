@@ -419,8 +419,15 @@
 
 .formGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
 }
 
 .formGroup {
@@ -430,7 +437,13 @@
 }
 
 .fullWidth {
-  grid-column: span 2;
+  grid-column: span 1;
+}
+
+@media (min-width: 768px) {
+  .fullWidth {
+    grid-column: span 2;
+  }
 }
 
 .formGroup label {
@@ -467,9 +480,17 @@
 
 .formRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  grid-column: span 2;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  grid-column: span 1;
+}
+
+@media (min-width: 768px) {
+  .formRow {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    grid-column: span 2;
+  }
 }
 
 /* DNI Search / Client Type Selector */
@@ -477,11 +498,17 @@
   display: flex;
   gap: 8px;
   margin-bottom: 1rem;
-  grid-column: span 2;
+  grid-column: span 1;
   background: var(--surface-container-low);
   padding: 4px;
   border-radius: 0.75rem;
   border: 1px solid var(--outline-variant);
+}
+
+@media (min-width: 768px) {
+  .customerTypeToggle {
+    grid-column: span 2;
+  }
 }
 
 .toggleBtn {
@@ -508,10 +535,20 @@
 }
 
 .dniSearchWrapper {
-  grid-column: span 2;
+  grid-column: span 1;
   display: flex;
-  gap: 12px;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .dniSearchWrapper {
+    grid-column: span 2;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 12px;
+  }
 }
 
 .dniSearchBtn {
@@ -536,7 +573,7 @@
 }
 
 .autofilledAlert {
-  grid-column: span 2;
+  grid-column: span 1;
   background: #ecfdf5;
   border: 1px solid #10b981;
   color: #065f46;
@@ -549,19 +586,27 @@
   font-weight: 500;
 }
 
+@media (min-width: 768px) {
+  .autofilledAlert {
+    grid-column: span 2;
+  }
+}
+
 /* Cards split for form section */
 .patientFormCardsGrid {
-  grid-column: span 2;
+  grid-column: span 1;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
 
 @media (min-width: 768px) {
   .patientFormCardsGrid {
+    grid-column: span 2;
     grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
   }
 }
 
@@ -1078,36 +1123,9 @@ button:active, a:active, .menuCard:active, .serviceOption:active {
     gap: 1rem;
   }
 
-  .formGrid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .formRow {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    grid-column: span 1;
-  }
-
-  .fullWidth {
-    grid-column: span 1;
-  }
-
-  .patientFormCardsGrid {
-    grid-column: span 1;
-    gap: 1rem;
-  }
-
   .formCardBox {
     padding: 1.25rem;
     gap: 1rem;
-  }
-
-  .dniSearchWrapper {
-    flex-direction: column;
-    align-items: stretch;
-    grid-column: span 1;
-    gap: 10px;
   }
 
   .dniSearchBtn {
