@@ -1,27 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import WebSocketStatus from './WebSocketStatus';
 import TrialCounter from './TrialCounter';
+import OnboardingTourModal from './OnboardingTourModal';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import styles from './DoctorLayout.module.css';
 
 export default function DoctorLayout({ children }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
   // Cerrar el menú móvil cuando cambia la ruta
-  React.useEffect(() => {
+  useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [navigate]);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    await logout();
-    navigate('/login');
-  };
+  // Lanzar el tour si es la primera vez que ingresa
+  useEffect(() => {
+    const tourSeen = localStorage.getItem('turnohub_tour_seen');
+    if (!tourSeen && user) {
+      setIsTourOpen(true);
+    }
+  }, [user]);
+
 
   return (
     <div className={`${styles.layout} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
@@ -46,6 +50,16 @@ export default function DoctorLayout({ children }) {
             </div>
 
             <div className={styles.topbarRight}>
+              {/* Botón de Tutorial */}
+              <button 
+                onClick={() => setIsTourOpen(true)} 
+                className={styles.tourBtn}
+                title="Ver Tutorial de TurnoHub"
+              >
+                <span className="material-symbols-outlined">explore</span>
+                <span className={styles.tourBtnText}>Tutorial</span>
+              </button>
+
               <WebSocketStatus />
               <TrialCounter />
 
@@ -63,6 +77,13 @@ export default function DoctorLayout({ children }) {
           {children}
         </main>
       </div>
+
+      {/* Modal del Tour de Bienvenida */}
+      <OnboardingTourModal 
+        isOpen={isTourOpen} 
+        onClose={() => setIsTourOpen(false)} 
+      />
     </div>
   );
 }
+

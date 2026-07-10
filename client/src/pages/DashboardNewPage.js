@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DoctorLayout from '../components/DoctorLayout';
+import OnboardingChecklist from '../components/OnboardingChecklist';
 import { useAuth } from '../hooks/useAuth';
 import { useWebSocketContext } from '../hooks/useWebSocketContext';
 import { doctorAPI, appointmentAPI, patientAPI } from '../services/api';
@@ -30,7 +31,6 @@ export default function DashboardNewPage() {
     pendingAppointments: 0
   });
   const [todayAppointments, setTodayAppointments] = useState([]);
-  const [error, setError] = useState(null);
   const [delayModal, setDelayModal] = useState({ show: false, appointmentId: null });
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
@@ -99,10 +99,9 @@ export default function DashboardNewPage() {
           setTodayAppointments(todayAppts);
         }
 
-        setError(null);
+        
       } catch (err) {
         console.error('Error cargando dashboard:', err);
-        setError('Error al cargar los datos');
       } finally {
         setLoading(false);
       }
@@ -282,6 +281,9 @@ export default function DashboardNewPage() {
             </div>
           </div>
         </header>
+
+        {/* Asistente de Configuración Inicial (Onboarding Checklist) */}
+        <OnboardingChecklist />
 
         {user?.plan?.allow_patient_booking !== false && (
           <div className={styles.shareCard}>

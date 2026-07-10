@@ -204,3 +204,38 @@
     gap: var(--spacing-sm);
   }
 }
+
+.tourBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0.5rem 1rem;
+  background-color: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.tourBtn:hover {
+  background-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+}
+
+.tourBtn span {
+  font-size: 1.25rem !important;
+}
+
+@media (max-width: 600px) {
+  .tourBtnText {
+    display: none;
+  }
+  .tourBtn {
+    padding: 0.5rem;
+  }
+}
+
