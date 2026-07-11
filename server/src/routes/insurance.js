@@ -17,6 +17,10 @@ router.use(verifyToken, verifyDoctorRole, checkSubscription, checkPlanFeature('a
 router.get('/export', insuranceController.exportInsuranceCoverages);
 router.post('/import', upload.single('file'), insuranceController.importInsuranceCoverages);
 
+// Rutas de Catálogo Base (para importar)
+router.get('/template-catalog', insuranceController.getTemplateCatalog);
+router.post('/template-catalog/import', insuranceController.importFromCatalog);
+
 // Rutas para obras sociales del doctor
 router.get('/', insuranceController.getInsurances);
 router.post('/', insuranceController.createInsurance);

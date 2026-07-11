@@ -36,6 +36,11 @@ export default function AdminSidebar() {
       path: '/admin/template-services'
     },
     {
+      label: 'Convenios Base',
+      icon: '🛡️',
+      path: '/admin/template-insurances'
+    },
+    {
       label: 'Reportes',
       icon: '📊',
       path: '/admin/reports'

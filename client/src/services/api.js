@@ -385,6 +385,14 @@ export const insuranceAPI = {
   deletePlan: async (planId) => {
     const response = await apiClient.delete(`/api/insurance/plans/${planId}`);
     return response.data;
+  },
+  getTemplateCatalog: async () => {
+    const response = await apiClient.get('/api/insurance/template-catalog');
+    return response.data;
+  },
+  importFromCatalog: async (insuranceIds) => {
+    const response = await apiClient.post('/api/insurance/template-catalog/import', { insuranceIds });
+    return response.data;
   }
 };
 

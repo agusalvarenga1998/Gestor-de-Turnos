@@ -178,6 +178,36 @@ async function migrate() {
     `);
     console.log('✓ Tabla admin_template_services configurada.\n');
 
+    // 13. Tabla de Convenios Base (Obras Sociales Plantilla)
+    console.log('➕ Asegurando tabla admin_template_insurances...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_template_insurances (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) UNIQUE NOT NULL,
+        acronym VARCHAR(50),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla admin_template_insurances configurada.\n');
+
+    // 14. Tabla de Planes de Convenios Base
+    console.log('➕ Asegurando tabla admin_template_insurance_plans...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_template_insurance_plans (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        insurance_template_id UUID NOT NULL REFERENCES admin_template_insurances(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        coverage_type VARCHAR(20) DEFAULT 'percentage',
+        coverage_value DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(insurance_template_id, name)
+      );
+    `);
+    console.log('✓ Tabla admin_template_insurance_plans configurada.\n');
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {

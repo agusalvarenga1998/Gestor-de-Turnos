@@ -36,6 +36,14 @@ export default function InsurancePage() {
   const [editingPlanId, setEditingPlanId] = useState(null);
   const [savingPlan, setSavingPlan] = useState(false);
 
+  // Estado para importación de catálogo global
+  const [showCatalogModal, setShowCatalogModal] = useState(false);
+  const [catalog, setCatalog] = useState([]);
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [selectedCatalogIds, setSelectedCatalogIds] = useState([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [importingCatalog, setImportingCatalog] = useState(false);
+
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -73,6 +81,54 @@ export default function InsurancePage() {
     } catch (err) {
       console.error('Error cargando obras sociales:', err);
     }
+  };
+
+  const handleOpenCatalog = async () => {
+    setShowCatalogModal(true);
+    setCatalogSearch('');
+    setSelectedCatalogIds([]);
+    try {
+      setLoadingCatalog(true);
+      const response = await insuranceAPI.getTemplateCatalog();
+      if (response.success) {
+        setCatalog(response.catalog);
+      }
+    } catch (err) {
+      console.error('Error loading template catalog:', err);
+      alert('No se pudo cargar el catálogo de convenios base.');
+    } finally {
+      setLoadingCatalog(false);
+    }
+  };
+
+  const handleImportSelectedCatalog = async () => {
+    if (selectedCatalogIds.length === 0) {
+      alert('Por favor selecciona al menos un convenio para importar');
+      return;
+    }
+
+    try {
+      setImportingCatalog(true);
+      const response = await insuranceAPI.importFromCatalog(selectedCatalogIds);
+      if (response.success) {
+        alert(response.message);
+        setShowCatalogModal(false);
+        fetchInsurances();
+      }
+    } catch (err) {
+      console.error('Error importing from catalog:', err);
+      alert('Error al importar los convenios seleccionados.');
+    } finally {
+      setImportingCatalog(false);
+    }
+  };
+
+  const handleToggleCatalogSelection = (id) => {
+    setSelectedCatalogIds(prev => 
+      prev.includes(id) 
+        ? prev.filter(item => item !== id) 
+        : [...prev, id]
+    );
   };
 
   const handleFormChange = (e) => {
@@ -401,6 +457,28 @@ export default function InsurancePage() {
                 style={{ display: 'none' }} 
               />
             </label>
+            <button
+              onClick={handleOpenCatalog}
+              style={{
+                background: 'white',
+                color: 'var(--primary)',
+                border: '1px solid var(--primary)',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '0.5rem',
+                fontWeight: '600',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+              }}
+              title="Cargar convenios desde el catálogo global de TurnoHub"
+            >
+              <Icon name="globe" size={18} color="currentColor" />
+              Catálogo TurnoHub
+            </button>
             <button
               onClick={() => {
                 resetForm();
@@ -777,6 +855,156 @@ export default function InsurancePage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Modal de Catálogo Global */}
+        {showCatalogModal && (
+          <div className={styles.modal}>
+            <div className={`${styles.modalContent} ${styles.largeModal}`}>
+              <div className={styles.modalHeader}>
+                <div>
+                  <h2>Catálogo de Convenios</h2>
+                  <p className={styles.modalSubtitle}>Selecciona las obras sociales y prepagas que deseas importar a tu lista.</p>
+                </div>
+                <button
+                  onClick={() => setShowCatalogModal(false)}
+                  className={styles.closeBtn}
+                >
+                  <Icon name="x" size={20} color="currentColor" />
+                </button>
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <input
+                  type="text"
+                  placeholder="Buscar obra social o prepaga..."
+                  value={catalogSearch}
+                  onChange={(e) => setCatalogSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 15px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--outline-variant)',
+                    backgroundColor: 'var(--surface-container-lowest)',
+                    fontSize: '0.95rem',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {loadingCatalog ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando catálogo...</div>
+              ) : (() => {
+                const filteredCatalog = catalog.filter(item => 
+                  item.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+                  (item.acronym && item.acronym.toLowerCase().includes(catalogSearch.toLowerCase()))
+                );
+
+                if (filteredCatalog.length === 0) {
+                  return (
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      No hay convenios disponibles para importar en este momento.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--outline-variant)', borderRadius: '8px' }}>
+                    <table className={styles.table} style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th style={{ width: '40px' }}></th>
+                          <th>Convenio</th>
+                          <th>Planes por Defecto</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCatalog.map((item) => (
+                          <tr 
+                            key={item.id} 
+                            onClick={() => handleToggleCatalogSelection(item.id)} 
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <td onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={selectedCatalogIds.includes(item.id)}
+                                onChange={() => handleToggleCatalogSelection(item.id)}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                              />
+                            </td>
+                            <td style={{ fontWeight: '700' }}>
+                              {item.name} {item.acronym ? <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>({item.acronym})</span> : ''}
+                            </td>
+                            <td>
+                              {item.plans && item.plans.length > 0 ? (
+                                item.plans.map(p => (
+                                  <span 
+                                    key={p.id} 
+                                    style={{
+                                      background: 'var(--surface-container-low)',
+                                      color: 'var(--on-surface-variant)',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      fontSize: '0.75rem',
+                                      marginRight: '5px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    {p.name}
+                                  </span>
+                                ))
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Sin planes</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+
+              <div className={styles.modalFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', borderTop: '1px solid var(--outline-variant)', paddingTop: '15px' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                  {selectedCatalogIds.length} seleccionado(s)
+                </span>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => setShowCatalogModal(false)}
+                    className={styles.cancelBtn}
+                    style={{
+                      background: 'none',
+                      border: '1px solid var(--outline-variant)',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleImportSelectedCatalog}
+                    disabled={importingCatalog || selectedCatalogIds.length === 0}
+                    style={{
+                      background: 'var(--primary)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      opacity: selectedCatalogIds.length === 0 ? 0.6 : 1
+                    }}
+                  >
+                    {importingCatalog ? 'Importando...' : 'Importar Seleccionados'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

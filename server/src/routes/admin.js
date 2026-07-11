@@ -769,4 +769,141 @@ router.post('/template-services/import', verifyAdmin, upload.single('file'), asy
   }
 });
 
+// === PLANILLAS DE CONVENIOS (OBRAS SOCIALES) BASE ===
+
+// 1. Obtener todas las obras sociales base del catálogo
+router.get('/template-insurances', verifyAdmin, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT 
+        ti.id, ti.name, ti.acronym, ti.is_active,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', tp.id,
+              'name', tp.name,
+              'coverage_type', tp.coverage_type,
+              'coverage_value', tp.coverage_value
+            )
+          ) FILTER (WHERE tp.id IS NOT NULL),
+          '[]'
+        ) as plans
+      FROM admin_template_insurances ti
+      LEFT JOIN admin_template_insurance_plans tp ON ti.id = tp.insurance_template_id
+      GROUP BY ti.id
+      ORDER BY ti.name ASC
+    `);
+    res.json({ success: true, insurances: result.rows });
+  } catch (error) {
+    console.error('Error fetching admin template insurances:', error);
+    res.status(500).json({ error: 'Error al obtener las obras sociales base' });
+  }
+});
+
+// 2. Importar obras sociales y planes base desde Excel
+router.post('/template-insurances/import', verifyAdmin, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ningún archivo' });
+    }
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    if (data.length === 0) {
+      return res.status(400).json({ error: 'El archivo Excel está vacío' });
+    }
+
+    // Limpiar tabla antes de importar (limpieza en cascada)
+    await query('DELETE FROM admin_template_insurances');
+
+    let importedCount = 0;
+    let errors = [];
+    const insuranceMap = new Map();
+
+    for (const row of data) {
+      try {
+        const convenioName = row.CONVENIO || row.convenio || row['Obra Social'] || row.prepaga || row.Nombre || '';
+        const acronym = row.SIGLA || row.sigla || row.Acronym || '';
+        const planName = row.PLAN || row.plan || '';
+        const typeRaw = row.COBERTURA_TIPO || row.cobertura_tipo || row['Tipo Cobertura'] || 'percentage';
+        const valRaw = row.COBERTURA_VALOR || row.cobertura_valor || row['Valor Cobertura'] || 0;
+
+        if (!convenioName || String(convenioName).trim() === '') {
+          continue;
+        }
+
+        const cleanConvenio = String(convenioName).trim();
+        const cleanAcronym = String(acronym).trim();
+        const cleanPlanName = String(planName).trim();
+
+        // 1. Buscar o crear ID de convenio base
+        let templateId = insuranceMap.get(cleanConvenio.toLowerCase());
+        if (!templateId) {
+          const insRes = await query(
+            `INSERT INTO admin_template_insurances (name, acronym)
+             VALUES ($1, $2)
+             RETURNING id`,
+            [cleanConvenio, cleanAcronym]
+          );
+          templateId = insRes.rows[0].id;
+          insuranceMap.set(cleanConvenio.toLowerCase(), templateId);
+        }
+
+        // 2. Si se especifica un plan, insertarlo
+        if (cleanPlanName) {
+          const cleanType = (String(typeRaw).toLowerCase().includes('fij') || String(typeRaw).toLowerCase().includes('fixed') || String(typeRaw).toLowerCase().includes('monto'))
+            ? 'fixed_amount'
+            : 'percentage';
+          const cleanVal = parseFloat(valRaw) || 0;
+
+          await query(
+            `INSERT INTO admin_template_insurance_plans (insurance_template_id, name, coverage_type, coverage_value)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (insurance_template_id, name) DO NOTHING`,
+            [templateId, cleanPlanName, cleanType, cleanVal]
+          );
+        }
+
+        importedCount++;
+      } catch (err) {
+        errors.push(`Error en fila: ${err.message}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Se procesaron ${importedCount} registros de obras sociales y planes base correctamente`,
+      importedCount,
+      errors: errors.length > 0 ? errors : null
+    });
+  } catch (error) {
+    console.error('Error importing admin template insurances:', error);
+    res.status(500).json({ error: 'Error al procesar el archivo Excel de convenios' });
+  }
+});
+
+// 3. Eliminar una obra social base del catálogo
+router.delete('/template-insurances/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await query(
+      'DELETE FROM admin_template_insurances WHERE id = $1 RETURNING name',
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Obra social base no encontrada' });
+    }
+    res.json({
+      success: true,
+      message: `Obra social base "${result.rows[0].name}" eliminada correctamente`
+    });
+  } catch (error) {
+    console.error('Error deleting admin template insurance:', error);
+    res.status(500).json({ error: 'Error al eliminar la obra social base' });
+  }
+});
+
 export default router;

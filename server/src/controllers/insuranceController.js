@@ -461,3 +461,129 @@ export const deletePlan = async (req, res) => {
   }
 };
 
+// === CATÁLOGO DE PLANTILLAS DE CONVENIOS (PARA MÉDICOS) ===
+
+// 1. Obtener convenios disponibles del catálogo global (no importados aún)
+export const getTemplateCatalog = async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+
+    const result = await query(`
+      SELECT 
+        ti.id, ti.name, ti.acronym,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', tp.id,
+              'name', tp.name,
+              'coverage_type', tp.coverage_type,
+              'coverage_value', tp.coverage_value
+            )
+          ) FILTER (WHERE tp.id IS NOT NULL),
+          '[]'
+        ) as plans
+      FROM admin_template_insurances ti
+      LEFT JOIN admin_template_insurance_plans tp ON ti.id = tp.insurance_template_id
+      WHERE ti.name NOT IN (
+        SELECT name FROM insurance_companies WHERE doctor_id = $1
+      )
+      GROUP BY ti.id
+      ORDER BY ti.name ASC
+    `, [doctorId]);
+
+    res.json({
+      success: true,
+      catalog: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching template catalog:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener el catálogo de convenios' });
+  }
+};
+
+// 2. Importar convenios y planes seleccionados del catálogo al perfil del doctor
+import { v4 as uuidv4 } from 'uuid';
+
+export const importFromCatalog = async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const { insuranceIds } = req.body;
+
+    if (!insuranceIds || !Array.isArray(insuranceIds) || insuranceIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'No se especificaron convenios para importar' });
+    }
+
+    let importedCount = 0;
+
+    await query('BEGIN');
+
+    for (const templateId of insuranceIds) {
+      // 1. Obtener datos de la plantilla
+      const insRes = await query(
+        'SELECT name, acronym FROM admin_template_insurances WHERE id = $1',
+        [templateId]
+      );
+
+      if (insRes.rows.length === 0) {
+        continue;
+      }
+
+      const { name, acronym } = insRes.rows[0];
+
+      // 2. Verificar si el doctor ya lo tiene importado (por nombre)
+      const existingRes = await query(
+        'SELECT id FROM insurance_companies WHERE doctor_id = $1 AND TRIM(LOWER(name)) = TRIM(LOWER($2))',
+        [doctorId, name]
+      );
+
+      let companyId;
+      if (existingRes.rows.length === 0) {
+        // 3. Crear obra social para el doctor
+        companyId = uuidv4();
+        await query(
+          `INSERT INTO insurance_companies (id, doctor_id, name, additional_fee)
+           VALUES ($1, $2, $3, $4)`,
+          [companyId, doctorId, name, 0]
+        );
+        importedCount++;
+      } else {
+        companyId = existingRes.rows[0].id;
+      }
+
+      // 4. Copiar los planes de esta plantilla
+      const plansRes = await query(
+        'SELECT name, coverage_type, coverage_value FROM admin_template_insurance_plans WHERE insurance_template_id = $1',
+        [templateId]
+      );
+
+      for (const plan of plansRes.rows) {
+        // Verificar si ya existe este plan para este convenio del doctor
+        const planExist = await query(
+          'SELECT id FROM insurance_plans WHERE insurance_company_id = $1 AND TRIM(LOWER(name)) = TRIM(LOWER($2))',
+          [companyId, plan.name]
+        );
+
+        if (planExist.rows.length === 0) {
+          await query(
+            `INSERT INTO insurance_plans (id, insurance_company_id, name, coverage_type, coverage_value)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [uuidv4(), companyId, plan.name, plan.coverage_type, plan.coverage_value]
+          );
+        }
+      }
+    }
+
+    await query('COMMIT');
+
+    res.json({
+      success: true,
+      message: `Se importaron ${importedCount} convenios con sus planes correctamente`,
+      importedCount
+    });
+  } catch (error) {
+    await query('ROLLBACK');
+    console.error('Error importing from catalog:', error);
+    res.status(500).json({ success: false, message: 'Error al importar los convenios del catálogo' });
+  }
+};
+
