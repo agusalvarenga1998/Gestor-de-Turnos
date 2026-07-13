@@ -33,6 +33,7 @@ import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage';
 import AdminPlansPage from './pages/AdminPlansPage';
 import AdminTemplateServicesPage from './pages/AdminTemplateServicesPage';
 import AdminTemplateInsurancesPage from './pages/AdminTemplateInsurancesPage';
+import AdminReportsPage from './pages/AdminReportsPage';
 
 // Páginas - Info / Landing
 import LandingPage from './pages/LandingPage';
@@ -132,6 +133,14 @@ function AppContent() {
         element={
           <ProtectedAdminRoute>
             <AdminTemplateInsurancesPage />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedAdminRoute>
+            <AdminReportsPage />
           </ProtectedAdminRoute>
         }
       />
