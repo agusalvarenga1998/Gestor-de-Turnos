@@ -22,6 +22,45 @@ import mercadopagoRoutes from './routes/mercadopago.js';
 import path from 'path';
 import { uploadsDir } from './utils/paths.js';
 import { query } from './db/config.js';
+import webpush from 'web-push';
+
+// Configurar VAPID para notificaciones push
+const configureVapid = () => {
+  let publicKey = process.env.VAPID_PUBLIC_KEY;
+  let privateKey = process.env.VAPID_PRIVATE_KEY;
+  const vapidEmail = process.env.VAPID_EMAIL || 'mailto:admin@turnohub.com.ar';
+
+  if (!publicKey || !privateKey) {
+    console.log('🔑 Generando claves VAPID para notificaciones Push...');
+    const keys = webpush.generateVAPIDKeys();
+    publicKey = keys.publicKey;
+    privateKey = keys.privateKey;
+    
+    // Guardamos en memoria/process.env para que esté disponible inmediatamente
+    process.env.VAPID_PUBLIC_KEY = publicKey;
+    process.env.VAPID_PRIVATE_KEY = privateKey;
+
+    // Intentamos agregarlas al archivo .env
+    try {
+      const envPath = path.resolve(process.cwd(), '.env');
+      if (fs.existsSync(envPath)) {
+        let envContent = fs.readFileSync(envPath, 'utf8');
+        envContent += `\n\n# Web Push VAPID Keys\nVAPID_PUBLIC_KEY="${publicKey}"\nVAPID_PRIVATE_KEY="${privateKey}"\nVAPID_EMAIL="${vapidEmail}"\n`;
+        fs.writeFileSync(envPath, envContent, 'utf8');
+        console.log('✓ Claves VAPID añadidas con éxito al archivo .env');
+      }
+    } catch (e) {
+      console.error('⚠️ No se pudo escribir en el archivo .env, usando claves en memoria:', e.message);
+    }
+  }
+
+  webpush.setVapidDetails(
+    vapidEmail,
+    publicKey,
+    privateKey
+  );
+  console.log('✓ Configuración VAPID establecida correctamente.');
+};
 
 // Imports de middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -159,6 +198,9 @@ httpServer.listen(PORT, HOST, async () => {
   
   // Iniciar tareas programadas
   initReminderCron();
+
+  // Configurar VAPID para notificaciones push
+  configureVapid();
 
   // Auto-migración: agregar columnas nuevas si no existen
   try {

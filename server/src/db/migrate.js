@@ -206,7 +206,26 @@ async function migrate() {
         UNIQUE(insurance_template_id, name)
       );
     `);
-    console.log('✓ Tabla admin_template_insurance_plans configurada.\n');
+    // 15. Tabla de Suscripciones Push para Médicos
+    console.log('➕ Asegurando tabla doctor_push_subscriptions...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS doctor_push_subscriptions (
+        id SERIAL PRIMARY KEY,
+        doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+        endpoint TEXT NOT NULL UNIQUE,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla doctor_push_subscriptions configurada.\n');
+
+    // 16. Columna doctor_push_sent en appointments
+    console.log('➕ Asegurando columna doctor_push_sent en appointments...');
+    await client.query(`
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS doctor_push_sent BOOLEAN DEFAULT false;
+    `);
+    console.log('✓ Columna doctor_push_sent configurada.\n');
 
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);

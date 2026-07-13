@@ -168,4 +168,62 @@ router.post('/working-hours', async (req, res) => {
   }
 });
 
+// Obtener VAPID Public Key
+router.get('/push-subscription/public-key', async (req, res) => {
+  try {
+    const publicKey = process.env.VAPID_PUBLIC_KEY;
+    if (!publicKey) {
+      return res.status(500).json({ success: false, message: 'VAPID public key not generated' });
+    }
+    res.json({ success: true, publicKey });
+  } catch (error) {
+    console.error('Error al obtener la clave pública VAPID:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// Guardar suscripción Push
+router.post('/push-subscription', async (req, res) => {
+  try {
+    const { subscription } = req.body;
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ success: false, message: 'Suscripción inválida' });
+    }
+
+    const { endpoint } = subscription;
+    const p256dh = subscription.keys?.p256dh || '';
+    const auth = subscription.keys?.auth || '';
+
+    // Insertar o actualizar la suscripción
+    await query(`
+      INSERT INTO doctor_push_subscriptions (doctor_id, endpoint, p256dh, auth)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (endpoint) 
+      DO UPDATE SET p256dh = EXCLUDED.p256dh, auth = EXCLUDED.auth, created_at = CURRENT_TIMESTAMP
+    `, [req.user.id, endpoint, p256dh, auth]);
+
+    res.json({ success: true, message: 'Suscripción registrada exitosamente' });
+  } catch (error) {
+    console.error('Error al guardar suscripción push:', error);
+    res.status(500).json({ success: false, message: 'Error interno al guardar suscripción' });
+  }
+});
+
+// Eliminar suscripción Push (dar de baja dispositivo)
+router.post('/push-subscription/unsubscribe', async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) {
+      return res.status(400).json({ success: false, message: 'Endpoint requerido' });
+    }
+
+    await query('DELETE FROM doctor_push_subscriptions WHERE endpoint = $1', [endpoint]);
+
+    res.json({ success: true, message: 'Suscripción eliminada exitosamente' });
+  } catch (error) {
+    console.error('Error al eliminar suscripción push:', error);
+    res.status(500).json({ success: false, message: 'Error interno al eliminar suscripción' });
+  }
+});
+
 export default router;

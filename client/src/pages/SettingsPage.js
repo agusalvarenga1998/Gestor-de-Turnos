@@ -4,7 +4,7 @@ import axios from 'axios';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
-import apiClient, { googleAPI } from '../services/api';
+import apiClient, { googleAPI, doctorAPI } from '../services/api';
 import { RUBROS_ESPECIALIDADES } from '../constants/categories';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -51,6 +51,8 @@ export default function SettingsPage() {
   const [isCustomSpecialty, setIsCustomSpecialty] = useState(false);
   const [mpAccount, setMpAccount] = useState(null);
   const [loadingMp, setLoadingMp] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [loadingPush, setLoadingPush] = useState(false);
 
   // Componente para manejar clics en el mapa
   function LocationMarker() {
@@ -94,6 +96,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchGoogleStatus();
+    checkCurrentPushSubscription();
 
     // Cargar datos del usuario
     if (user) {
@@ -192,6 +195,97 @@ export default function SettingsPage() {
       console.error('Error obteniendo estado de Google:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkCurrentPushSubscription = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return;
+    }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      setPushSubscribed(!!sub);
+    } catch (err) {
+      console.error('Error checking push subscription:', err);
+    }
+  };
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  const handleSubscribePush = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Las notificaciones push no son compatibles con este navegador o dispositivo.');
+      return;
+    }
+
+    setLoadingPush(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert('Permiso de notificaciones rechazado. Actívalo en la configuración de tu navegador.');
+        setLoadingPush(false);
+        return;
+      }
+
+      const reg = await navigator.serviceWorker.ready;
+      const response = await doctorAPI.getPushPublicKey();
+      if (!response.success || !response.publicKey) {
+        throw new Error('No se pudo obtener la clave pública VAPID.');
+      }
+
+      const convertedVapidKey = urlBase64ToUint8Array(response.publicKey);
+
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey
+      });
+
+      const saveResponse = await doctorAPI.savePushSubscription(subscription);
+      if (saveResponse.success) {
+        setPushSubscribed(true);
+        setSuccessMessage('Notificaciones push activadas correctamente en este dispositivo.');
+      } else {
+        throw new Error(saveResponse.message);
+      }
+    } catch (err) {
+      console.error('Error al suscribir a notificaciones push:', err);
+      alert(`Error al activar notificaciones: ${err.message}`);
+    } finally {
+      setLoadingPush(false);
+    }
+  };
+
+  const handleUnsubscribePush = async () => {
+    if (!('serviceWorker' in navigator)) return;
+    setLoadingPush(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await doctorAPI.deletePushSubscription(sub.endpoint);
+        await sub.unsubscribe();
+      }
+      setPushSubscribed(false);
+      setSuccessMessage('Notificaciones desactivadas en este dispositivo.');
+    } catch (err) {
+      console.error('Error al dar de baja notificaciones:', err);
+      alert('Error al desactivar notificaciones.');
+    } finally {
+      setLoadingPush(false);
     }
   };
 
@@ -406,6 +500,57 @@ export default function SettingsPage() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* PWA Push Notifications Section */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.sectionTitle}>
+              <Icon name="download" size={24} color="#10b981" />
+              Notificaciones en el Celular
+            </div>
+            <p className={styles.sectionDescription}>
+              Recibe avisos push nativos 15 minutos antes de cada turno y resúmenes diarios de tu agenda.
+            </p>
+          </div>
+
+          <div className={styles.card}>
+            <div className={styles.statusSection}>
+              <div className={styles.statusIndicator}>
+                <div className={`${styles.statusDot} ${pushSubscribed ? styles.connected : styles.disconnected}`}></div>
+                <div>
+                  <h3 className={styles.statusLabel}>
+                    {pushSubscribed ? 'Notificaciones Activas' : 'Notificaciones Desactivadas'}
+                  </h3>
+                  <p className={styles.statusDescription}>
+                    {pushSubscribed
+                      ? 'Este dispositivo recibirá alertas automáticas sobre tus turnos'
+                      : 'Activa las notificaciones en este navegador/celular para no perderte ningún turno'}
+                  </p>
+                </div>
+              </div>
+
+              {pushSubscribed ? (
+                <button
+                  className={styles.disconnectBtn}
+                  onClick={handleUnsubscribePush}
+                  disabled={loadingPush}
+                >
+                  {loadingPush ? 'Desactivando...' : 'Desactivar Notificaciones'}
+                </button>
+              ) : (
+                <button
+                  className={styles.connectBtn}
+                  onClick={handleSubscribePush}
+                  disabled={loadingPush}
+                  style={{ background: '#10b981' }}
+                >
+                  <Icon name="check" size={18} color="currentColor" />
+                  {loadingPush ? 'Activando...' : 'Activar Notificaciones'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

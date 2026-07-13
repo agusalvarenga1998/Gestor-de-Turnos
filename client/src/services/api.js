@@ -115,6 +115,21 @@ export const doctorAPI = {
   updateWorkingHours: async (workingHours) => {
     const response = await apiClient.post('/api/doctor/working-hours', { availability: workingHours });
     return response.data;
+  },
+
+  getPushPublicKey: async () => {
+    const response = await apiClient.get('/api/doctor/push-subscription/public-key');
+    return response.data;
+  },
+
+  savePushSubscription: async (subscription) => {
+    const response = await apiClient.post('/api/doctor/push-subscription', { subscription });
+    return response.data;
+  },
+
+  deletePushSubscription: async (endpoint) => {
+    const response = await apiClient.post('/api/doctor/push-subscription/unsubscribe', { endpoint });
+    return response.data;
   }
 };
 
