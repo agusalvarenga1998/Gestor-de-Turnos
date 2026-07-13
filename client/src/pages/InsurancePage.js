@@ -885,16 +885,17 @@ export default function InsurancePage() {
                     width: '100%',
                     padding: '10px 15px',
                     borderRadius: '8px',
-                    border: '1px solid var(--outline-variant)',
-                    backgroundColor: 'var(--surface-container-lowest)',
-                    fontSize: '0.95rem',
-                    boxSizing: 'border-box'
+                    border: '1px solid #d1d5db',
+                    backgroundColor: '#ffffff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                    outline: 'none'
                   }}
                 />
               </div>
 
               {loadingCatalog ? (
-                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando catálogo...</div>
+                <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>Cargando catálogo...</div>
               ) : (() => {
                 const filteredCatalog = catalog.filter(item => 
                   item.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
@@ -903,20 +904,20 @@ export default function InsurancePage() {
 
                 if (filteredCatalog.length === 0) {
                   return (
-                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
                       No hay convenios disponibles para importar en este momento.
                     </div>
                   );
                 }
 
                 return (
-                  <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--outline-variant)', borderRadius: '8px' }}>
-                    <table className={styles.table} style={{ margin: 0 }}>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                    <table className={styles.insuranceTable} style={{ margin: 0 }}>
                       <thead>
                         <tr>
-                          <th style={{ width: '40px' }}></th>
-                          <th>Convenio</th>
-                          <th>Planes por Defecto</th>
+                          <th style={{ width: '40px', padding: '10px' }}></th>
+                          <th style={{ padding: '10px' }}>Convenio</th>
+                          <th style={{ padding: '10px' }}>Planes por Defecto</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -926,37 +927,40 @@ export default function InsurancePage() {
                             onClick={() => handleToggleCatalogSelection(item.id)} 
                             style={{ cursor: 'pointer' }}
                           >
-                            <td onClick={(e) => e.stopPropagation()}>
+                            <td onClick={(e) => e.stopPropagation()} style={{ padding: '10px', verticalAlign: 'middle' }}>
                               <input
                                 type="checkbox"
                                 checked={selectedCatalogIds.includes(item.id)}
                                 onChange={() => handleToggleCatalogSelection(item.id)}
-                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer', margin: 0 }}
                               />
                             </td>
-                            <td style={{ fontWeight: '700' }}>
-                              {item.name} {item.acronym ? <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>({item.acronym})</span> : ''}
+                            <td style={{ fontWeight: '700', padding: '10px', verticalAlign: 'middle' }}>
+                              {item.name} {item.acronym ? <span style={{ color: '#6b7280', fontWeight: 'normal', fontSize: '0.85rem' }}>({item.acronym})</span> : ''}
                             </td>
-                            <td>
+                            <td style={{ padding: '10px', verticalAlign: 'middle' }}>
                               {item.plans && item.plans.length > 0 ? (
                                 item.plans.map(p => (
                                   <span 
                                     key={p.id} 
                                     style={{
-                                      background: 'var(--surface-container-low)',
-                                      color: 'var(--on-surface-variant)',
-                                      padding: '2px 6px',
+                                      background: '#f3f4f6',
+                                      color: '#374151',
+                                      padding: '3px 8px',
                                       borderRadius: '4px',
-                                      fontSize: '0.75rem',
+                                      fontSize: '12px',
                                       marginRight: '5px',
-                                      fontWeight: '600'
+                                      fontWeight: '600',
+                                      display: 'inline-block',
+                                      border: '1px solid #e5e7eb',
+                                      marginBottom: '2px'
                                     }}
                                   >
                                     {p.name}
                                   </span>
                                 ))
                               ) : (
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Sin planes</span>
+                                <span style={{ color: '#9ca3af', fontSize: '13px' }}>Sin planes</span>
                               )}
                             </td>
                           </tr>
@@ -967,8 +971,8 @@ export default function InsurancePage() {
                 );
               })()}
 
-              <div className={styles.modalFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', borderTop: '1px solid var(--outline-variant)', paddingTop: '15px' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+              <div className={styles.modalFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
+                <span style={{ fontSize: '14px', color: '#374151', fontWeight: '600' }}>
                   {selectedCatalogIds.length} seleccionado(s)
                 </span>
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -976,8 +980,6 @@ export default function InsurancePage() {
                     onClick={() => setShowCatalogModal(false)}
                     className={styles.cancelBtn}
                     style={{
-                      background: 'none',
-                      border: '1px solid var(--outline-variant)',
                       padding: '10px 20px',
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -989,15 +991,15 @@ export default function InsurancePage() {
                   <button
                     onClick={handleImportSelectedCatalog}
                     disabled={importingCatalog || selectedCatalogIds.length === 0}
+                    className={styles.doneBtn}
                     style={{
-                      background: 'var(--primary)',
+                      background: selectedCatalogIds.length === 0 ? '#93c5fd' : '#2563eb',
                       color: 'white',
                       border: 'none',
                       padding: '10px 20px',
                       borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: '600',
-                      opacity: selectedCatalogIds.length === 0 ? 0.6 : 1
+                      cursor: selectedCatalogIds.length === 0 ? 'not-allowed' : 'pointer',
+                      fontWeight: '600'
                     }}
                   >
                     {importingCatalog ? 'Importando...' : 'Importar Seleccionados'}
