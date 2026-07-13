@@ -1,0 +1,24 @@
+{
+  "short_name": "TurnoHub",
+  "name": "TurnoHub - Sistema de Turnos",
+  "description": "Gestiona y reserva tus turnos médicos de forma rápida y sencilla.",
+  "icons": [
+    {
+      "src": "logo_turnohub.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo_turnohub.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "background_color": "#2563eb",
+  "theme_color": "#2563eb",
+  "display": "standalone",
+  "orientation": "portrait"
+}

@@ -1169,3 +1169,39 @@
     flex: 1;
   }
 }
+
+.installAppBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1);
+  transition: all 0.2s ease;
+}
+
+.installAppBtn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px -1px rgba(37, 99, 235, 0.2);
+}
+
+.installAppBtn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .installAppBtn span {
+    display: none;
+  }
+  .installAppBtn {
+    padding: 0.5rem;
+  }
+}
+

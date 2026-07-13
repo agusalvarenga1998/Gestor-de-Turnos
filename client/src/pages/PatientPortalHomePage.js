@@ -22,14 +22,49 @@ export default function PatientPortalHomePage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 1024);
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+
+    // Detectar iOS y standalone
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const ios = /iphone|ipad|ipod/.test(userAgent);
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    setIsIOS(ios);
+    setIsStandalone(standalone);
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const handleInstallPWA = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA Installation outcome: ${outcome}`);
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    } else if (isIOS) {
+      alert("Para instalar TurnoHub en tu iPhone/iPad: Presiona el botón Compartir (📤) en la barra inferior de Safari y luego selecciona 'Agregar a Inicio' (➕).");
+    }
+  };
 
   // Booking states
   const [rubros, setRubros] = useState([]);
@@ -651,6 +686,17 @@ export default function PatientPortalHomePage() {
               <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
               <span className={styles.logoText}>TurnoHub Turnos</span>
             </Link>
+
+            {/* Botón de instalación PWA */}
+            {(showInstallPrompt || (isIOS && !isStandalone)) && (
+              <button 
+                onClick={handleInstallPWA}
+                className={styles.installAppBtn}
+              >
+                <span className="material-symbols-outlined">download</span>
+                <span>Instalar App</span>
+              </button>
+            )}
           </div>
         </header>
 

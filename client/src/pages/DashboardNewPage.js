@@ -24,6 +24,43 @@ export default function DashboardNewPage() {
   const { user } = useAuth();
   const { isConnected } = useWebSocketContext();
   const [loading, setLoading] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    // Detectar iOS y standalone
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const ios = /iphone|ipad|ipod/.test(userAgent);
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    setIsIOS(ios);
+    setIsStandalone(standalone);
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallPWA = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA Installation outcome: ${outcome}`);
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    } else if (isIOS) {
+      alert("Para instalar TurnoHub en tu iPhone/iPad: Presiona el botón Compartir (📤) en la barra inferior de Safari y luego selecciona 'Agregar a Inicio' (➕).");
+    }
+  };
   const [stats, setStats] = useState({
     appointmentsToday: 0,
     totalPatients: 0,
@@ -275,6 +312,16 @@ export default function DashboardNewPage() {
           </div>
           
           <div className={styles.headerActions}>
+            {(showInstallPrompt || (isIOS && !isStandalone)) && (
+              <button 
+                onClick={handleInstallPWA}
+                className={styles.installAppBtn}
+                style={{ marginRight: '1rem' }}
+              >
+                <Icon name="download" size={16} color="currentColor" />
+                <span>Instalar App</span>
+              </button>
+            )}
             <div className={styles.connectionBadge}>
               <span className={`${styles.dot} ${isConnected ? styles.online : ''}`}></span>
               {isConnected ? 'Sistema en línea' : 'Sin conexión'}
