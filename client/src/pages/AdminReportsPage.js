@@ -308,7 +308,12 @@ export default function AdminReportsPage() {
                         {subscriptions.slice(0, 4).map((sub) => (
                           <tr key={sub.id}>
                             <td style={{ fontWeight: '600' }}>{sub.doctor_name || 'Desconocido'}</td>
-                            <td>{new Date(sub.created_at).toLocaleDateString('es-ES')}</td>
+                            <td>
+                              {(() => {
+                                const d = new Date(sub.created_at);
+                                return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString('es-ES');
+                              })()}
+                            </td>
                             <td>${parseFloat(sub.amount || 0).toLocaleString()}</td>
                             <td>
                               <span className={`${styles.statusBadge} ${
