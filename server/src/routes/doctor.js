@@ -5,6 +5,7 @@ import { getAppointmentsForToday, getAppointmentsByDoctor } from '../services/ap
 import { getPatientsByDoctor } from '../services/patientService.js';
 import { getDashboard } from '../controllers/doctorController.js';
 import { copyTemplateServicesToDoctor } from '../services/templateService.js';
+import webpush from 'web-push';
 
 const router = express.Router();
 
@@ -223,6 +224,50 @@ router.post('/push-subscription/unsubscribe', async (req, res) => {
   } catch (error) {
     console.error('Error al eliminar suscripción push:', error);
     res.status(500).json({ success: false, message: 'Error interno al eliminar suscripción' });
+  }
+});
+
+// Enviar push de prueba
+router.post('/push-subscription/test', async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT endpoint, p256dh, auth FROM doctor_push_subscriptions WHERE doctor_id = $1',
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ success: false, message: 'No tienes ningún dispositivo suscrito. Por favor, activa las notificaciones primero.' });
+    }
+
+    const payload = {
+      title: '¡Funciona! 🎉',
+      body: 'Esta es una notificación de prueba de TurnoHub.',
+      url: '/settings'
+    };
+
+    const notificationsPromises = result.rows.map(sub => {
+      const pushConfig = {
+        endpoint: sub.endpoint,
+        keys: {
+          p256dh: sub.p256dh,
+          auth: sub.auth
+        }
+      };
+
+      return webpush.sendNotification(
+        pushConfig,
+        JSON.stringify(payload)
+      ).catch(err => {
+        console.error(`❌ Error enviando push de prueba al endpoint ${sub.endpoint}:`, err.message);
+        throw err;
+      });
+    });
+
+    await Promise.all(notificationsPromises);
+    res.json({ success: true, message: `Notificación de prueba enviada con éxito a ${result.rows.length} dispositivo(s).` });
+  } catch (error) {
+    console.error('Error al enviar push de prueba:', error);
+    res.status(500).json({ success: false, message: 'Error al enviar notificación: ' + error.message });
   }
 });
 

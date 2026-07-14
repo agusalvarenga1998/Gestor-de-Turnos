@@ -130,6 +130,11 @@ export const doctorAPI = {
   deletePushSubscription: async (endpoint) => {
     const response = await apiClient.post('/api/doctor/push-subscription/unsubscribe', { endpoint });
     return response.data;
+  },
+
+  sendTestPushNotification: async () => {
+    const response = await apiClient.post('/api/doctor/push-subscription/test');
+    return response.data;
   }
 };
 

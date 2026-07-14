@@ -53,6 +53,7 @@ export default function SettingsPage() {
   const [loadingMp, setLoadingMp] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [loadingPush, setLoadingPush] = useState(false);
+  const [loadingTestPush, setLoadingTestPush] = useState(false);
 
   // Componente para manejar clics en el mapa
   function LocationMarker() {
@@ -286,6 +287,25 @@ export default function SettingsPage() {
       alert('Error al desactivar notificaciones.');
     } finally {
       setLoadingPush(false);
+    }
+  };
+
+  const handleSendTestPush = async () => {
+    setLoadingTestPush(true);
+    try {
+      const response = await doctorAPI.sendTestPushNotification();
+      if (response.success) {
+        setSuccessMessage('✓ ' + response.message);
+        setTimeout(() => setSuccessMessage(''), 5000);
+      } else {
+        alert(`Error al enviar prueba: ${response.message}`);
+      }
+    } catch (err) {
+      console.error('Error al enviar push de prueba:', err);
+      const errMsg = err.response?.data?.message || err.message;
+      alert(`Error al enviar push de prueba: ${errMsg}`);
+    } finally {
+      setLoadingTestPush(false);
     }
   };
 
@@ -532,13 +552,23 @@ export default function SettingsPage() {
               </div>
 
               {pushSubscribed ? (
-                <button
-                  className={styles.disconnectBtn}
-                  onClick={handleUnsubscribePush}
-                  disabled={loadingPush}
-                >
-                  {loadingPush ? 'Desactivando...' : 'Desactivar Notificaciones'}
-                </button>
+                <div className={styles.buttonGroup}>
+                  <button
+                    className={styles.testBtn}
+                    onClick={handleSendTestPush}
+                    disabled={loadingTestPush}
+                  >
+                    <Icon name="refresh" size={18} color="currentColor" />
+                    {loadingTestPush ? 'Enviando...' : 'Probar Notificación'}
+                  </button>
+                  <button
+                    className={styles.disconnectBtn}
+                    onClick={handleUnsubscribePush}
+                    disabled={loadingPush}
+                  >
+                    {loadingPush ? 'Desactivando...' : 'Desactivar Notificaciones'}
+                  </button>
+                </div>
               ) : (
                 <button
                   className={styles.connectBtn}
