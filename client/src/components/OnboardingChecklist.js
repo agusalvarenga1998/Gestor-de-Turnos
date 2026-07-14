@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { doctorAPI, serviceAPI, patientAPI, appointmentAPI, insuranceAPI } from '../services/api';
 import styles from './OnboardingChecklist.module.css';
 
-export default function OnboardingChecklist() {
+export default function OnboardingChecklist({ alwaysShow = false }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -13,8 +13,15 @@ export default function OnboardingChecklist() {
     return localStorage.getItem('turnohub_checklist_collapsed') === 'true';
   });
   const [isHidden, setIsHidden] = useState(() => {
+    if (alwaysShow) return false;
     return localStorage.getItem('turnohub_checklist_dismissed') === 'true';
   });
+
+  useEffect(() => {
+    if (alwaysShow) {
+      setIsHidden(false);
+    }
+  }, [alwaysShow]);
 
   const [stepsStatus, setStepsStatus] = useState({
     profile: false,
@@ -152,6 +159,12 @@ export default function OnboardingChecklist() {
   const totalCount = stepsList.length;
   const progressPercent = Math.round((completedCount / totalCount) * 100);
 
+  useEffect(() => {
+    if (!loading && progressPercent === 100) {
+      localStorage.setItem('turnohub_checklist_dismissed', 'true');
+    }
+  }, [progressPercent, loading]);
+
   const toggleCollapse = () => {
     const newVal = !isCollapsed;
     setIsCollapsed(newVal);
@@ -236,7 +249,7 @@ export default function OnboardingChecklist() {
             </span>
           </button>
 
-          {!isAllCompleted && (
+          {!isAllCompleted && !alwaysShow && (
             <button 
               className={styles.iconBtn} 
               onClick={handleDismiss} 

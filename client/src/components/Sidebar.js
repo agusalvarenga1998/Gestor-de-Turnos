@@ -11,6 +11,7 @@ export default function Sidebar({ isMobile, isOpen, onClose }) {
 
   const menuItems = [
     { icon: 'home', label: 'Dashboard', path: '/dashboard' },
+    { icon: 'reports', label: 'Guía de Inicio', path: '/onboarding' },
     { icon: 'calendar', label: 'Gestión de Turnos', path: '/appointments' },
     { icon: 'users', label: 'Clientes', path: '/patients' },
     { icon: 'briefcase', label: 'Mis Servicios', path: '/services' },

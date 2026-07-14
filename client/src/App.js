@@ -17,6 +17,7 @@ import SettingsPage from './pages/SettingsPage';
 import WorkingHoursPage from './pages/WorkingHoursPage';
 import InsurancePage from './pages/InsurancePage';
 import ServicesPage from './pages/ServicesPage';
+import OnboardingPage from './pages/OnboardingPage';
 import PatientPortalHomePage from './pages/PatientPortalHomePage';
 import PatientAppointmentViewPage from './pages/PatientAppointmentViewPage';
 import ConfirmAppointmentPage from './pages/ConfirmAppointmentPage';
@@ -149,6 +150,7 @@ function AppContent() {
       {isAuthenticated && (
         <>
           <Route path="/dashboard" element={<DashboardNewPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/patients" element={<PatientsPage />} />
           <Route path="/patient-history/:patientId" element={<PatientHistoryPage />} />

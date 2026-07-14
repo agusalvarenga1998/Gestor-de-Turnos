@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DoctorLayout from '../components/DoctorLayout';
-import OnboardingChecklist from '../components/OnboardingChecklist';
 import { useAuth } from '../hooks/useAuth';
 import { useWebSocketContext } from '../hooks/useWebSocketContext';
 import { doctorAPI, appointmentAPI, patientAPI } from '../services/api';
@@ -79,6 +78,10 @@ export default function DashboardNewPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [saveNotesSuccess, setSaveNotesSuccess] = useState(false);
   const { on, off } = useWebSocketContext();
+  
+  const isProfileIncomplete = !user?.rubro || !user?.specialization || (!user?.address && !user?.clinic_address);
+  const isChecklistDismissed = localStorage.getItem('turnohub_checklist_dismissed') === 'true';
+  const showOnboardingBanner = isProfileIncomplete || !isChecklistDismissed;
 
   useEffect(() => {
     const handleNewAppointment = (data) => {
@@ -329,8 +332,24 @@ export default function DashboardNewPage() {
           </div>
         </header>
 
-        {/* Asistente de Configuración Inicial (Onboarding Checklist) */}
-        <OnboardingChecklist />
+        {/* Banner de Configuración Pendiente */}
+        {showOnboardingBanner && (
+          <div className={styles.onboardingBanner}>
+            <div className={styles.onboardingBannerLeft}>
+              <div className={styles.onboardingBannerIcon}>
+                <span className="material-symbols-outlined">rocket_launch</span>
+              </div>
+              <div className={styles.onboardingBannerText}>
+                <h3>Configuración pendiente de tu consultorio</h3>
+                <p>Completa los pasos iniciales (perfil, horarios y servicios) para comenzar a recibir reservas online.</p>
+              </div>
+            </div>
+            <button onClick={() => navigate('/onboarding')} className={styles.onboardingBannerBtn}>
+              <span>Ir a la Guía de Inicio</span>
+              <span className="material-symbols-outlined">arrow_forward</span>
+            </button>
+          </div>
+        )}
 
         {user?.plan?.allow_patient_booking !== false && (
           <div className={styles.shareCard}>
