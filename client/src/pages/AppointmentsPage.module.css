@@ -400,17 +400,6 @@
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
-  .appointmentsTable th:nth-child(4),
-  .appointmentsTable td:nth-child(4),
-  .appointmentsTable th:nth-child(5),
-  .appointmentsTable td:nth-child(5),
-  .appointmentsTable th:nth-child(6),
-  .appointmentsTable td:nth-child(6) {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
   .container {
     padding: 1rem;
   }
@@ -419,84 +408,361 @@
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
-    text-align: center;
   }
 
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .viewToggle {
+    flex: 1;
+  }
+  
   .addBtn {
+    flex: 1;
     justify-content: center;
   }
 
-  /* Transformar tabla a Cards */
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .searchBox {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .filters {
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .filters select,
+  .filters input,
+  .filters button {
+    width: 100%;
+    margin: 0;
+  }
+
+  /* Agenda Navigation */
+  .calendarNavContainer {
+    padding: 1rem;
+  }
+  
+  .calendarNavControls {
+    justify-content: center;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .weekLabel {
+    width: 100%;
+    text-align: center;
+    margin: 0.5rem 0;
+  }
+
+  .dayPills {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.35rem;
+  }
+
+  .dayPill {
+    padding: 0.5rem 0.2rem;
+  }
+
+  .dayNum {
+    font-size: 1rem;
+  }
+
+  .dayName {
+    font-size: 0.65rem;
+  }
+
+  /* Transform tables to responsive CSS Grid of cards */
   .tableContainer {
     background: none;
     box-shadow: none;
     overflow: visible;
   }
 
-  .appointmentsTable, 
-  .appointmentsTable thead, 
-  .appointmentsTable tbody, 
-  .appointmentsTable th, 
-  .appointmentsTable td, 
-  .appointmentsTable tr {
+  .appointmentsTable,
+  .agendaTable {
     display: block;
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
-  .appointmentsTable thead {
+  .appointmentsTable thead,
+  .agendaTable thead {
     display: none;
   }
 
-  .appointmentsTable tr {
-    margin-bottom: 1.5rem;
+  .appointmentsTable tbody,
+  .agendaTable tbody {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+    width: 100%;
+  }
+
+  /* Style row as a clean, individual card */
+  .appointmentsTable tr,
+  .agendaTable tr {
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     background: white;
-    padding: 1rem;
+    padding: 1.25rem;
     box-shadow: var(--shadow-sm);
+    gap: 0.6rem;
+    margin-bottom: 0 !important; /* Managed by grid gap */
+    transition: transform 0.2s, box-shadow 0.2s;
   }
 
-  .appointmentsTable td {
-    border: none;
-    padding: 0.75rem 0;
+  .appointmentsTable tr:hover,
+  .agendaTable tr:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Card content details styling */
+  .appointmentsTable td,
+  .agendaTable td {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    text-align: right;
+    border: none;
+    padding: 0.4rem 0;
     width: 100% !important;
+    text-align: right;
+    font-size: 0.9rem;
   }
 
-  .appointmentsTable td::before {
+  .appointmentsTable td::before,
+  .agendaTable td::before {
     content: attr(data-label);
     font-weight: 700;
     color: var(--gray);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     text-align: left;
     margin-right: 1rem;
   }
 
-  .dateTime {
-    border-bottom: 1px solid var(--border-color) !important;
-    margin-bottom: 0.5rem;
+  /* Headers of the card (Time, Date, Patient Name) - Hide generic labels and make clean layout */
+  .dateTime,
+  .timeCell {
+    border-bottom: 1px solid #e2e8f0 !important;
     padding-bottom: 0.75rem !important;
+    margin-bottom: 0.25rem;
+    display: flex !important;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center !important;
+    text-align: left !important;
+    width: 100% !important;
   }
 
-  /* Columna A Cobrar destacada */
+  .dateTime::before,
+  .timeCell::before {
+    display: none !important;
+  }
+
+  .dateTime .date {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--dark-gray);
+  }
+
+  .dateTime .time,
+  .timeCell .timeLabel {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    font-family: monospace;
+  }
+
+  .dateTime .miniCode {
+    background: #f1f5f9;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .patientInfo,
+  .patientCell {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    padding: 0.25rem 0 !important;
+  }
+
+  .patientInfo::before,
+  .patientCell::before {
+    display: none !important;
+  }
+
+  .pName {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--dark-gray);
+  }
+
+  .pPhone {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin-top: 0.15rem;
+  }
+
+  /* Observations & Reasons */
+  .reasonCol,
+  .observationCell {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    background: #f8fafc;
+    padding: 0.75rem !important;
+    border-radius: var(--radius-md);
+    margin: 0.25rem 0;
+    border: 1px solid #f1f5f9;
+  }
+
+  .reasonCol::before,
+  .observationCell::before {
+    content: "Motivo / Servicio" !important;
+    display: block !important;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .reasonCol .reasonText,
+  .observationCell .reasonText {
+    font-size: 0.85rem;
+    color: var(--dark-gray);
+    margin-top: 0.25rem;
+  }
+
+  /* Insurance information */
+  .insuranceCell {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .insuranceBadge {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  /* Amount fields */
+  .amount,
+  .feePaid,
+  .coverage {
+    border-bottom: 1px dashed #f1f5f9 !important;
+    padding: 0.5rem 0 !important;
+  }
+
+  /* A cobrar cell styling */
   .toChargeCell {
-    background: #f0fdf4;
-    margin: 0.5rem -1rem;
-    padding: 1rem !important;
-    border-top: 1px solid #dcfce7 !important;
-    border-bottom: 1px solid #dcfce7 !important;
+    background: #f0fdf4 !important;
+    margin: 0.25rem 0;
+    padding: 0.75rem 1rem !important;
+    border-radius: var(--radius-md);
+    border: 1px solid #dcfce7 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .toChargeCell::before {
+    color: #15803d !important;
+    font-size: 0.8rem !important;
+  }
+
+  .toChargeAmount {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #16a34a;
+  }
+
+  /* Actions column */
+  .actions,
+  .actionsCell {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem !important;
+    border-top: 1px solid #f1f5f9 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .actions::before,
+  .actionsCell::before {
+    display: none !important;
   }
 
   .actionButtons {
     width: 100%;
-    margin-top: 1rem;
-    flex-direction: column;
-    gap: 0.75rem;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: stretch;
   }
 
+  .actionButtons button,
+  .actionButtons select,
+  .statusSelect,
+  .whatsappBtn {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+    padding: 0.75rem 0.5rem !important;
+    font-size: 0.85rem !important;
+    margin: 0 !important;
+  }
+
+  .delayBadge {
+    align-self: flex-start;
+    margin-left: 0;
+    margin-top: 0.4rem;
+  }
+
+  /* Empty / available slots in agenda view */
+  .emptyRow {
+    background: #f8fafc !important;
+    border: 1.5px dashed #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  .emptySlotCell {
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .emptySlotCell::before {
+    display: none !important;
+  }
+
+  .availableSlotBtn {
+    border-style: solid;
+    padding: 0.6rem !important;
+  }
+
+  /* Modal forms */
   .formRow {
     flex-direction: column;
     gap: 0;
@@ -508,6 +774,16 @@
 
   .modalContent {
     max-height: 95vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+  .appointmentsTable tbody,
+  .agendaTable tbody {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -826,110 +1102,4 @@
   display: inline-block;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .dayPill {
-    padding: 0.5rem;
-  }
-  
-  .dayNum {
-    font-size: 1.1rem;
-  }
-}
 
-@media (max-width: 768px) {
-  .calendarNavContainer {
-    padding: 1rem;
-  }
-  
-  .calendarNavControls {
-    justify-content: center;
-  }
-  
-  .dayPills {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.4rem;
-  }
-  
-  .dayPill {
-    padding: 0.4rem 0.2rem;
-  }
-  
-  .dayNum {
-    font-size: 0.95rem;
-  }
-
-  .dayName {
-    font-size: 0.65rem;
-  }
-
-  /* Make Agenda visual scrollable or list-like on mobile */
-  .agendaTable, 
-  .agendaTable thead, 
-  .agendaTable tbody, 
-  .agendaTable th, 
-  .agendaTable td, 
-  .agendaTable tr {
-    display: block;
-  }
-  
-  .agendaTable thead {
-    display: none;
-  }
-  
-  .agendaTable tr {
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    background: white;
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-    box-shadow: var(--shadow-sm);
-  }
-  
-  .agendaTable td {
-    border: none;
-    padding: 0.5rem 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100% !important;
-    text-align: right;
-  }
-  
-  .agendaTable td::before {
-    content: attr(data-label);
-    font-weight: 700;
-    color: var(--gray);
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    text-align: left;
-    margin-right: 1rem;
-  }
-
-  .timeCell {
-    border-bottom: 1px solid var(--border-color) !important;
-    border-right: none !important;
-    background-color: transparent !important;
-    justify-content: center !important;
-    padding-bottom: 0.5rem !important;
-    width: 100% !important;
-  }
-  
-  .timeCell::before {
-    content: "HORA" !important;
-    margin-right: auto;
-  }
-
-  .emptySlotCell {
-    padding: 0 !important;
-    border: none !important;
-  }
-
-  .emptySlotCell::before {
-    display: none !important;
-  }
-  
-  .availableSlotBtn {
-    border-style: solid;
-  }
-}
