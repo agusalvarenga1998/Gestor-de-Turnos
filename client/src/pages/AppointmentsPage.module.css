@@ -510,6 +510,37 @@
     width: 100%;
   }
 
+  /* Ocultar celdas detalladas por defecto cuando el card está colapsado */
+  .appointmentsTable tr:not(.cardExpanded) td:not(.dateTime):not(.patientInfo):not([data-label="Servicio"]):not([data-label="Estado"]) {
+    display: none !important;
+  }
+
+  .agendaTable tr:not(.cardExpanded) td:not(.timeCell):not(.statusCell):not(.patientCell):not([data-label="Observación"]) {
+    display: none !important;
+  }
+
+  /* Chevron animado en mobile */
+  .mobileChevron {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: transform 0.2s ease-in-out;
+    transform: rotate(90deg); /* Apunta hacia abajo por defecto */
+    margin-left: auto; /* Empuja el chevron hacia la derecha */
+  }
+
+  .mobileChevron.rotated {
+    transform: rotate(-90deg); /* Apunta hacia arriba al expandirse */
+  }
+
+  /* Ajustar márgenes/paddings al colapsar para que ocupen muy poco espacio */
+  .appointmentsTable tr:not(.cardExpanded),
+  .agendaTable tr:not(.cardExpanded) {
+    padding: 0.75rem 1rem !important;
+    gap: 0.25rem !important;
+  }
+
   /* Style row as a clean, individual card */
   .appointmentsTable tr,
   .agendaTable tr {

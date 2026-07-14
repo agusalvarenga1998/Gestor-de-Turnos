@@ -39,6 +39,11 @@ export default function AppointmentsPage() {
 
   // New calendar states
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'agenda'
+  const [expandedApptId, setExpandedApptId] = useState(null);
+
+  const toggleExpandAppt = (apptId) => {
+    setExpandedApptId(prev => prev === apptId ? null : apptId);
+  };
   
   const getLocalDateString = (dateObj) => {
     const year = dateObj.getFullYear();
@@ -513,8 +518,14 @@ export default function AppointmentsPage() {
                 }
 
                 return slotAppointments.map((appt, index) => {
+                  const isExpanded = expandedApptId === appt.id;
                   return (
-                    <tr key={`${slot}-${appt.id}`} className={styles.agendaRow}>
+                    <tr 
+                      key={`${slot}-${appt.id}`} 
+                      className={`${styles.agendaRow} ${isExpanded ? styles.cardExpanded : ''}`}
+                      onClick={() => toggleExpandAppt(appt.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       {index === 0 ? (
                         <td className={styles.timeCell} rowSpan={slotAppointments.length}>
                           <span className={styles.timeLabel}>{slot}</span>
@@ -525,6 +536,9 @@ export default function AppointmentsPage() {
                         {appt.delay_minutes > 0 && (
                           <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
                         )}
+                        <div className={`${styles.mobileChevron} ${isExpanded ? styles.rotated : ''}`}>
+                          <Icon name="chevronRight" size={16} />
+                        </div>
                       </td>
                       <td data-label="Paciente" className={styles.patientCell}>
                         <div className={styles.pName}>{appt.patient_name}</div>
@@ -554,7 +568,7 @@ export default function AppointmentsPage() {
                             <>
                               <button
                                 type="button"
-                                onClick={() => handleAcceptAppointment(appt.id)}
+                                onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
                                 className={styles.acceptBtn}
                                 title="Confirmar/Aceptar cita"
                               >
@@ -562,7 +576,7 @@ export default function AppointmentsPage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleRejectAppointment(appt.id)}
+                                onClick={(e) => { e.stopPropagation(); handleRejectAppointment(appt.id); }}
                                 className={styles.rejectBtn}
                                 title="Rechazar cita"
                               >
@@ -573,7 +587,7 @@ export default function AppointmentsPage() {
                             <>
                               <select
                                 value={appt.status}
-                                onChange={(e) => handleStatusChange(appt.id, e.target.value)}
+                                onChange={(e) => { e.stopPropagation(); handleStatusChange(appt.id, e.target.value); }}
                                 className={styles.statusSelect}
                               >
                                 <option value="scheduled">Programado</option>
@@ -582,7 +596,7 @@ export default function AppointmentsPage() {
                               </select>
                               <button
                                 type="button"
-                                onClick={() => setDelayModal({ show: true, appointmentId: appt.id })}
+                                onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
                                 className={styles.delayBtn}
                                 title="Registrar retraso"
                               >
@@ -598,7 +612,7 @@ export default function AppointmentsPage() {
                           {!['cancelled', 'rejected'].includes(appt.status) && (
                             <button
                               type="button"
-                              onClick={() => handleWhatsAppReminder(appt)}
+                              onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
                               className={styles.whatsappBtn}
                               title="Recordar cita por WhatsApp"
                             >
@@ -931,9 +945,14 @@ export default function AppointmentsPage() {
               <tbody>
                 {filteredAppointments.map((appt) => {
                   const toCharge = parseFloat(appt.total_price || 0) - parseFloat(appt.booking_fee_paid || 0) - parseFloat(appt.coverage_amount || 0);
-                  
+                  const isExpanded = expandedApptId === appt.id;
                   return (
-                    <tr key={appt.id}>
+                    <tr 
+                      key={appt.id}
+                      className={`${isExpanded ? styles.cardExpanded : ''}`}
+                      onClick={() => toggleExpandAppt(appt.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <td className={styles.dateTime} data-label="Turno">
                         <div className={styles.date}>
                           {(() => {
@@ -944,6 +963,9 @@ export default function AppointmentsPage() {
                         </div>
                         <div className={styles.time}>{appt.appointment_time}</div>
                         <div className={styles.miniCode}>{appt.appointment_code}</div>
+                        <div className={`${styles.mobileChevron} ${isExpanded ? styles.rotated : ''}`}>
+                          <Icon name="chevronRight" size={16} />
+                        </div>
                       </td>
                       <td className={styles.patientInfo} data-label="Cliente">
                         <div className={styles.pName}>{appt.patient_name}</div>
@@ -983,14 +1005,14 @@ export default function AppointmentsPage() {
                         {['pending', 'pending_payment'].includes(appt.status) ? (
                           <>
                             <button
-                              onClick={() => handleAcceptAppointment(appt.id)}
+                              onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
                               className={styles.acceptBtn}
                               title="Confirmar/Aceptar cita"
                             >
                               ✓ Aceptar
                             </button>
                             <button
-                              onClick={() => handleRejectAppointment(appt.id)}
+                              onClick={(e) => { e.stopPropagation(); handleRejectAppointment(appt.id); }}
                               className={styles.rejectBtn}
                               title="Rechazar cita"
                             >
@@ -1001,7 +1023,7 @@ export default function AppointmentsPage() {
                           <>
                             <select
                               value={appt.status}
-                              onChange={(e) => handleStatusChange(appt.id, e.target.value)}
+                              onChange={(e) => { e.stopPropagation(); handleStatusChange(appt.id, e.target.value); }}
                               className={styles.statusSelect}
                             >
                               <option value="scheduled">Programado</option>
@@ -1009,7 +1031,7 @@ export default function AppointmentsPage() {
                               <option value="cancelled">Cancelado</option>
                             </select>
                             <button
-                              onClick={() => setDelayModal({ show: true, appointmentId: appt.id })}
+                              onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
                               className={styles.delayBtn}
                               title="Registrar retraso"
                             >
@@ -1025,7 +1047,7 @@ export default function AppointmentsPage() {
                         {/* WhatsApp siempre disponible si hay teléfono y no es estado final negativo */}
                         {!['cancelled', 'rejected'].includes(appt.status) && (
                           <button
-                            onClick={() => handleWhatsAppReminder(appt)}
+                            onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
                             className={styles.whatsappBtn}
                             title="Recordar cita por WhatsApp"
                           >
