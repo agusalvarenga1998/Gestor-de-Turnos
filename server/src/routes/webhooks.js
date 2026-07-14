@@ -3,6 +3,7 @@ import { query } from '../db/config.js';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { notifyDoctor } from '../websocket/server.js';
 import { sendNewAppointmentNotificationToDoctor, sendAppointmentConfirmation } from '../services/emailService.js';
+import { sendPushToDoctor } from '../cron/reminderCron.js';
 
 const router = express.Router();
 
@@ -114,6 +115,18 @@ router.post('/mercadopago', async (req, res) => {
             appointmentTime: appointment.appointment_time,
             message: 'Nuevo turno pagado y pendiente de aprobación'
           });
+
+          // 4b. NOTIFICAR AL DOCTOR POR PUSH NOTIFICATION
+          try {
+            const formattedDate = new Date(appointment.appointment_date).toLocaleDateString('es-ES');
+            sendPushToDoctor(doctor_id, {
+              title: 'Nueva Solicitud de Turno 📅',
+              body: `El paciente ${appointment.patient_name} ${appointment.patient_last_name} solicitó un turno para el ${formattedDate} a las ${appointment.appointment_time} hs.`,
+              url: '/appointments'
+            }).catch(err => console.error("Error enviando push al doctor desde webhook:", err.message));
+          } catch (pushErr) {
+            console.error("Error al preparar notificación push desde webhook:", pushErr.message);
+          }
 
           // 5. NOTIFICAR AL DOCTOR POR EMAIL
           const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointments`;

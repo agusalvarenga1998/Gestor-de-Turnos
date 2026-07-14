@@ -4,7 +4,7 @@ import { sendAppointmentReminder } from '../services/emailService.js';
 import webpush from 'web-push';
 
 // Helper para enviar notificaciones push a un médico (a todos sus dispositivos suscritos)
-const sendPushToDoctor = async (doctorId, payload) => {
+export const sendPushToDoctor = async (doctorId, payload) => {
   try {
     const result = await query(
       'SELECT endpoint, p256dh, auth FROM doctor_push_subscriptions WHERE doctor_id = $1',

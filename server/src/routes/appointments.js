@@ -8,6 +8,7 @@ import * as availabilityService from '../services/availabilityService.js';
 import * as mpService from '../services/mercadopagoService.js';
 import axios from 'axios';
 import * as wss from '../websocket/server.js';
+import { sendPushToDoctor } from '../cron/reminderCron.js';
 
 const router = express.Router();
 const generateAppointmentCode = (doctorName, doctorId, appointmentDate, appointmentTime) => {
@@ -638,6 +639,18 @@ router.post('/public/create', async (req, res) => {
         console.error('Error enviando notificación WS:', wsErr.message);
       }
 
+      // NOTIFICAR AL DOCTOR POR PUSH NOTIFICATION (Cobertura Total / Sin Pago inmediato)
+      try {
+        const formattedDate = new Date(appointmentDate).toLocaleDateString('es-ES');
+        sendPushToDoctor(doctorId, {
+          title: 'Nueva Solicitud de Turno 📅',
+          body: `El paciente ${patientName} ${patientLastName || ''} solicitó un turno para el ${formattedDate} a las ${appointmentTime} hs.`,
+          url: '/appointments'
+        }).catch(err => console.error("Error enviando push al doctor en reserva directa:", err.message));
+      } catch (pushErr) {
+        console.error("Error al preparar notificación push en reserva directa:", pushErr.message);
+      }
+
       // NOTIFICAR POR EMAIL (Cobertura Total) - SIN AWAIT para no bloquear al usuario
       const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointments`;
       let serviceLabel = 'Consulta General';
@@ -988,6 +1001,18 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
           serviceName: ad.service_name || 'Consulta General',
           dashboardUrl: dashboardUrl
         }).catch(err => console.error("Error asíncrono email doctor:", err));
+
+        // NOTIFICAR AL DOCTOR POR PUSH NOTIFICATION (Verificación manual de pago)
+        try {
+          const formattedDate = new Date(ad.appointment_date).toLocaleDateString('es-ES');
+          sendPushToDoctor(appointment.doctor_id, {
+            title: 'Nueva Solicitud de Turno 📅',
+            body: `El pago fue verificado. El paciente ${ad.patient_name} solicitó un turno para el ${formattedDate} a las ${ad.appointment_time} hs.`,
+            url: '/appointments'
+          }).catch(err => console.error("Error enviando push al doctor en verificación manual:", err.message));
+        } catch (pushErr) {
+          console.error("Error al preparar notificación push en verificación manual:", pushErr.message);
+        }
 
         // Notificar al paciente por Email (Pago Verificado)
         sendAppointmentConfirmation({
