@@ -54,6 +54,8 @@ export default function SettingsPage() {
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [loadingPush, setLoadingPush] = useState(false);
   const [loadingTestPush, setLoadingTestPush] = useState(false);
+  const [pushLogs, setPushLogs] = useState('');
+  const [showLogs, setShowLogs] = useState(false);
 
   // Componente para manejar clics en el mapa
   function LocationMarker() {
@@ -306,6 +308,25 @@ export default function SettingsPage() {
       alert(`Error al enviar push de prueba: ${errMsg}`);
     } finally {
       setLoadingTestPush(false);
+    }
+  };
+
+  const handleFetchPushLogs = async () => {
+    if (showLogs) {
+      setShowLogs(false);
+      return;
+    }
+    try {
+      const response = await apiClient.get('/api/doctor/push-subscription/debug-logs');
+      if (response.data.success) {
+        setPushLogs(response.data.logs);
+        setShowLogs(true);
+      } else {
+        alert('Error al obtener logs: ' + response.data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error al obtener logs de depuración');
     }
   };
 
@@ -581,6 +602,37 @@ export default function SettingsPage() {
                 </button>
               )}
             </div>
+
+            {pushSubscribed && (
+              <div style={{ marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+                <button
+                  onClick={handleFetchPushLogs}
+                  className={styles.connectBtn}
+                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', background: '#f1f5f9', borderColor: '#cbd5e1' }}
+                >
+                  <Icon name="search" size={16} color="currentColor" />
+                  {showLogs ? 'Ocultar Logs de Notificaciones' : 'Ver Logs de Notificaciones'}
+                </button>
+                {showLogs && (
+                  <pre style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    background: '#0f172a',
+                    color: '#e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    maxHeight: '250px',
+                    overflowY: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                    textAlign: 'left',
+                    fontFamily: 'monospace'
+                  }}>
+                    {pushLogs}
+                  </pre>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

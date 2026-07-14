@@ -3,17 +3,32 @@ import { query } from '../db/config.js';
 import { sendAppointmentReminder } from '../services/emailService.js';
 import webpush from 'web-push';
 
+import fs from 'fs';
+import path from 'path';
+
+// Helper to write push debug logs
+const logPushDebug = (msg) => {
+  try {
+    const logMsg = `[${new Date().toISOString()}] ${msg}\n`;
+    fs.appendFileSync(path.join(process.cwd(), 'push_debug.log'), logMsg, 'utf8');
+  } catch (e) {
+    console.error('Error writing push debug log:', e);
+  }
+};
+
 // Helper para enviar notificaciones push a un médico (a todos sus dispositivos suscritos)
 export const sendPushToDoctor = async (doctorId, payload) => {
+  logPushDebug(`sendPushToDoctor called for doctorId: ${doctorId}`);
   try {
     const result = await query(
       'SELECT endpoint, p256dh, auth FROM doctor_push_subscriptions WHERE doctor_id = $1',
       [doctorId]
     );
 
+    logPushDebug(`Found ${result.rows.length} subscription(s) for doctorId: ${doctorId}`);
     if (result.rows.length === 0) return;
 
-    const notificationsPromises = result.rows.map(sub => {
+    const notificationsPromises = result.rows.map((sub, index) => {
       const pushConfig = {
         endpoint: sub.endpoint,
         keys: {
@@ -22,22 +37,27 @@ export const sendPushToDoctor = async (doctorId, payload) => {
         }
       };
 
+      logPushDebug(`Sending push to endpoint: ${sub.endpoint.substring(0, 40)}...`);
       return webpush.sendNotification(
         pushConfig,
         JSON.stringify(payload)
-      ).catch(err => {
-        console.error(`❌ Error enviando push al endpoint ${sub.endpoint}:`, err.message);
+      ).then(() => {
+        logPushDebug(`Push sent successfully to endpoint index ${index}`);
+      }).catch(err => {
+        logPushDebug(`❌ Error sending push to endpoint index ${index}: ${err.message} (status: ${err.statusCode})`);
         // Si la suscripción expiró o ya no existe (404 o 410), la eliminamos de la base de datos
         if (err.statusCode === 404 || err.statusCode === 410) {
           query('DELETE FROM doctor_push_subscriptions WHERE endpoint = $1', [sub.endpoint])
-            .catch(dbErr => console.error('Error al limpiar suscripción push obsoleta:', dbErr.message));
+            .then(() => logPushDebug(`Deleted expired subscription: ${sub.endpoint.substring(0, 40)}...`))
+            .catch(dbErr => logPushDebug(`Error deleting expired subscription: ${dbErr.message}`));
         }
       });
     });
 
     await Promise.all(notificationsPromises);
+    logPushDebug(`All push promises resolved for doctorId: ${doctorId}`);
   } catch (err) {
-    console.error(`❌ Error general en sendPushToDoctor para médico ${doctorId}:`, err.message);
+    logPushDebug(`❌ General error in sendPushToDoctor for doctor ${doctorId}: ${err.message}`);
   }
 };
 

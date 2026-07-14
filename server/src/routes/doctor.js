@@ -6,6 +6,8 @@ import { getPatientsByDoctor } from '../services/patientService.js';
 import { getDashboard } from '../controllers/doctorController.js';
 import { copyTemplateServicesToDoctor } from '../services/templateService.js';
 import webpush from 'web-push';
+import fs from 'fs';
+import path from 'path';
 
 const router = express.Router();
 
@@ -268,6 +270,21 @@ router.post('/push-subscription/test', async (req, res) => {
   } catch (error) {
     console.error('Error al enviar push de prueba:', error);
     res.status(500).json({ success: false, message: 'Error al enviar notificación: ' + error.message });
+  }
+});
+
+// Obtener logs de depuración de notificaciones push
+router.get('/push-subscription/debug-logs', async (req, res) => {
+  try {
+    const logPath = path.join(process.cwd(), 'push_debug.log');
+    if (!fs.existsSync(logPath)) {
+      return res.json({ success: true, logs: 'No hay logs de depuración registrados aún.' });
+    }
+    const logs = fs.readFileSync(logPath, 'utf8');
+    res.json({ success: true, logs });
+  } catch (error) {
+    console.error('Error al leer logs de depuración:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener logs: ' + error.message });
   }
 });
 
