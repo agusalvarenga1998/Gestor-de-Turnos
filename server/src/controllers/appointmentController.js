@@ -132,6 +132,7 @@ export const createAppointment = async (req, res) => {
 export const getAppointments = async (req, res) => {
   try {
     const doctorId = req.user.id;
+    await appointmentService.autoUpdatePastAppointments(doctorId);
     const { date, status } = req.query;
 
     const appointments = await appointmentService.getAppointmentsByDoctor(doctorId, {
@@ -157,6 +158,7 @@ export const getAppointments = async (req, res) => {
 export const getTodayAppointments = async (req, res) => {
   try {
     const doctorId = req.user.id;
+    await appointmentService.autoUpdatePastAppointments(doctorId);
     const appointments = await appointmentService.getAppointmentsForToday(doctorId);
 
     res.json({

@@ -291,7 +291,15 @@
   border-radius: 50px;
   font-size: 0.75rem;
   font-weight: 600;
+  display: inline-block;
 }
+
+.statusPending { background: #fef3c7; color: #d97706; }
+.statusScheduled { background: #eff6ff; color: #2563eb; }
+.statusCompleted { background: #f0fdf4; color: #16a34a; }
+.statusCancelled { background: #fef2f2; color: #dc2626; }
+.statusRejected { background: #fee2e2; color: #991b1b; }
+.statusAbsent { background: #fff7ed; color: #ea580c; }
 
 /* Modales y Formularios */
 .modal {

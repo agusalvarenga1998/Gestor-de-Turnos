@@ -479,3 +479,37 @@ export const recalculateQueueForDate = async (doctorId, appointmentDate) => {
     throw error;
   }
 };
+
+// Auto-actualizar citas pasadas no completadas a estado 'absent' (Ausente)
+export const autoUpdatePastAppointments = async (doctorId) => {
+  try {
+    const now = new Date();
+    const dateOptions = { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' };
+    const currentDate = new Intl.DateTimeFormat('fr-CA', dateOptions).format(now);
+    
+    const timeOptions = { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const currentTime = new Intl.DateTimeFormat('en-US', timeOptions).format(now);
+
+    const result = await query(`
+      UPDATE appointments 
+      SET status = 'absent', updated_at = CURRENT_TIMESTAMP
+      WHERE doctor_id = $1 
+        AND status = 'scheduled' 
+        AND (
+          appointment_date < $2::date 
+          OR (
+            appointment_date = $2::date 
+            AND (appointment_time + (COALESCE(duration_minutes, 30) || ' minutes')::INTERVAL) < $3::time
+          )
+        )
+      RETURNING id
+    `, [doctorId, currentDate, currentTime]);
+
+    if (result.rows.length > 0) {
+      console.log(`🤖 Auto-update: ${result.rows.length} past appointments marked as 'absent' for doctor ${doctorId}`);
+    }
+  } catch (error) {
+    console.error('Error in autoUpdatePastAppointments:', error);
+  }
+};
+

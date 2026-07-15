@@ -274,7 +274,8 @@ export default function DashboardNewPage() {
     const badges = {
       scheduled: { label: 'PROGRAMADO', class: styles.statusScheduled },
       completed: { label: 'COMPLETADO', class: styles.statusCompleted },
-      cancelled: { label: 'CANCELADO', class: styles.statusCancelled }
+      cancelled: { label: 'CANCELADO', class: styles.statusCancelled },
+      absent: { label: 'AUSENTE', class: styles.statusAbsent }
     };
     const badge = badges[status] || badges.scheduled;
     return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;

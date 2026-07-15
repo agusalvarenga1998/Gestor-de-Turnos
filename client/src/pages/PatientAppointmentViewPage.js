@@ -114,7 +114,8 @@ export default function PatientAppointmentViewPage() {
     const badges = {
       scheduled: { label: 'Confirmado', class: styles.statusScheduled },
       completed: { label: 'Completado', class: styles.statusCompleted },
-      cancelled: { label: 'Cancelado', class: styles.statusCancelled }
+      cancelled: { label: 'Cancelado', class: styles.statusCancelled },
+      absent: { label: 'Ausente', class: styles.statusAbsent }
     };
     const badge = badges[status] || badges.scheduled;
     return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
@@ -185,6 +186,7 @@ export default function PatientAppointmentViewPage() {
               {appointment.status === 'pending_payment' && <h1 style={{ color: '#f59e0b' }}>Pago en Proceso</h1>}
               {appointment.status === 'completed' && <h1>Cita Concluida</h1>}
               {appointment.status === 'cancelled' && <h1>Cita Cancelada</h1>}
+              {appointment.status === 'absent' && <h1 style={{ color: '#ea580c' }}>Ausente / No asististe</h1>}
               {isToday && appointment.status === 'scheduled' && (
                 <div className={styles.todayPill}>ES HOY</div>
               )}

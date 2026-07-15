@@ -1,4 +1,5 @@
 import * as db from '../db/config.js';
+import * as appointmentService from '../services/appointmentService.js';
 
 // Obtener horarios de trabajo del doctor
 export const getWorkingHours = async (req, res) => {
@@ -142,6 +143,7 @@ export const updateProfile = async (req, res) => {
 export const getDashboard = async (req, res) => {
   try {
     const doctorId = req.user.id;
+    await appointmentService.autoUpdatePastAppointments(doctorId);
     let targetDate = req.query.date;
 
     if (!targetDate) {

@@ -88,6 +88,9 @@
 .badgeSCHEDULED { background: #dbeafe; color: #1e40af; }
 .badgeCOMPLETED { background: #d1fae5; color: #065f46; }
 .badgeCANCELLED { background: #fee2e2; color: #991b1b; }
+.badgeABSENT { background: #fff7ed; color: #ea580c; }
+.badgeabsent { background: #fff7ed; color: #ea580c; }
+.statusAbsent { background: #fff7ed; color: #ea580c; }
 
 .statusAnnouncement h1 {
   font-size: 1.5rem;

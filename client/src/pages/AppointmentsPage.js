@@ -395,7 +395,8 @@ export default function AppointmentsPage() {
       scheduled: { label: 'Programado', class: styles.statusScheduled },
       completed: { label: 'Completado', class: styles.statusCompleted },
       cancelled: { label: 'Cancelado', class: styles.statusCancelled },
-      rejected: { label: 'Rechazado', class: styles.statusRejected }
+      rejected: { label: 'Rechazado', class: styles.statusRejected },
+      absent: { label: 'Ausente', class: styles.statusAbsent }
     };
     const badge = badges[status] || badges.scheduled;
     return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
@@ -583,7 +584,7 @@ export default function AppointmentsPage() {
                                 ✗ Rechazar
                               </button>
                             </>
-                          ) : appt.status === 'scheduled' ? (
+                          ) : ['scheduled', 'absent'].includes(appt.status) ? (
                             <>
                               <select
                                 value={appt.status}
@@ -593,6 +594,7 @@ export default function AppointmentsPage() {
                                 <option value="scheduled">Programado</option>
                                 <option value="completed">Completado</option>
                                 <option value="cancelled">Cancelado</option>
+                                <option value="absent">Ausente</option>
                               </select>
                               <button
                                 type="button"
@@ -862,6 +864,7 @@ export default function AppointmentsPage() {
               <option value="completed">Completado</option>
               <option value="cancelled">Cancelado</option>
               <option value="rejected">Rechazado</option>
+              <option value="absent">Ausente / No asistió</option>
             </select>
 
             {viewMode === 'list' && (
@@ -1019,7 +1022,7 @@ export default function AppointmentsPage() {
                               ✗ Rechazar
                             </button>
                           </>
-                        ) : appt.status === 'scheduled' ? (
+                        ) : ['scheduled', 'absent'].includes(appt.status) ? (
                           <>
                             <select
                               value={appt.status}
@@ -1029,6 +1032,7 @@ export default function AppointmentsPage() {
                               <option value="scheduled">Programado</option>
                               <option value="completed">Completado</option>
                               <option value="cancelled">Cancelado</option>
+                              <option value="absent">Ausente</option>
                             </select>
                             <button
                               onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
