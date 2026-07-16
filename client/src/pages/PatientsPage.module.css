@@ -437,9 +437,7 @@
   }
 
   .patientsTable, 
-  .patientsTable thead, 
   .patientsTable tbody, 
-  .patientsTable th, 
   .patientsTable td, 
   .patientsTable tr {
     display: flex !important;
@@ -449,7 +447,7 @@
   }
 
   .patientsTable thead {
-    display: none;
+    display: none !important;
   }
 
   .patientsTable tr {
