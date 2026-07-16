@@ -220,19 +220,61 @@
 }
 
 @media (max-width: 768px) {
-  .scheduleGrid {
-    grid-template-columns: 1fr;
+  .container {
+    padding: 12px 16px !important;
   }
 
   .title {
     font-size: 1.5rem;
   }
 
-  .container {
-    padding: 1rem;
+  .scheduleContainer {
+    padding: 12px !important;
   }
 
-  .scheduleContainer {
-    padding: 1rem;
+  .scheduleGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .dayCard {
+    padding: 16px !important;
+  }
+
+  /* Make toggle slider larger and touch friendly on mobile */
+  .toggleSlider {
+    width: 56px !important;
+    height: 32px !important;
+    border-radius: 16px !important;
+  }
+
+  .toggleSlider::before {
+    height: 26px !important;
+    width: 26px !important;
+    left: 3px !important;
+    bottom: 3px !important;
+  }
+
+  .toggle input:checked + .toggleSlider::before {
+    transform: translateX(24px) !important;
+  }
+
+  /* Time inputs 48px height and 16px font-size on mobile */
+  .timeGroup input {
+    min-height: 48px !important;
+    font-size: 16px !important;
+    padding: 10px 12px !important;
+  }
+
+  .actions {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .saveBtn {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
   }
 }

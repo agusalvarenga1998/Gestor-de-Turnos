@@ -1,11 +1,11 @@
 import React from 'react';
 import styles from './Loading.module.css';
 
-export default function Loading() {
+export default function Loading({ inline = false }) {
   const brand = "TurnoHub".split("");
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${inline ? styles.inlineContainer : ''}`}>
       <div className={styles.wrapper}>
         <div className={styles.spinner}></div>
         <div className={styles.brand}>

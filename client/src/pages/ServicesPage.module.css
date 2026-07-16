@@ -433,3 +433,94 @@
   border-left: 3px solid #ef4444;
   line-height: 1.4;
 }
+
+/* Responsive mobile-first adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px 16px !important;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .headerActions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .importBtn, .syncBtn, .addBtn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 0.9rem;
+    padding: 0.5rem !important;
+    box-sizing: border-box;
+  }
+
+  .addBtn {
+    grid-column: span 2; /* Ancho completo */
+  }
+
+  .servicesGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .serviceCard {
+    padding: 16px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .editBtn, .deleteBtn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .modal {
+    padding: 20px;
+    margin: 16px;
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  .modalActions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .saveBtn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .cancelLink {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

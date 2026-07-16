@@ -1141,4 +1141,440 @@
   display: inline-block;
 }
 
+/* Layout adaptativo: Tabla en desktop, Tarjetas en móvil */
+.desktopTableView {
+  display: block;
+}
+
+.mobileCardsList {
+  display: none;
+}
+
+.desktopAgendaViewOnly {
+  display: block;
+}
+
+.mobileAgendaViewOnly {
+  display: none;
+}
+
+/* Tarjetas responsivas en móvil */
+.mobileApptCard {
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  transition: all var(--transition-base);
+}
+
+.mobileApptCard:active {
+  transform: scale(0.98);
+}
+
+.cardHeaderMobile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.mobileApptDateTime {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--primary-color);
+}
+
+.mobileApptDateTime strong {
+  text-transform: capitalize;
+}
+
+.mobileApptTime {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.mobileApptStatus {
+  flex-shrink: 0;
+}
+
+.cardBodyMobile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobilePatientName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.mobilePatientPhone {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mobileApptService {
+  margin-top: 4px;
+}
+
+.mobileApptReason {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 4px 0 0 0;
+}
+
+.mobileApptInsurance {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.mobilePricesGroup {
+  margin-top: 8px;
+  background: var(--gray-50);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobilePriceRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.mobilePriceRow strong {
+  color: var(--text-primary);
+}
+
+.mobileToChargeRow {
+  border-top: 1px solid var(--border-color);
+  padding-top: 4px;
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.mobileToChargeRow strong {
+  color: var(--success-color);
+  font-size: 1.05rem;
+}
+
+.cardActionsMobile {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.cardActionsMobile button,
+.cardActionsMobile select {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+}
+
+.mobileAcceptBtn {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.mobileRejectBtn {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.mobileStatusSelect {
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.mobileDelayBtn {
+  background: var(--gray-100);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.mobileWhatsappBtn {
+  background-color: #25d366;
+  color: white;
+  border: none;
+}
+
+.mobileDelayBadge {
+  margin-top: 4px;
+  background-color: #fef3c7;
+  color: #d97706;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+/* Agenda Móvil */
+.mobileAgendaList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobileAgendaEmptySlot {
+  background: white;
+  border: 1.5px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.mobileAgendaEmptySlot:hover {
+  border-color: var(--primary-color);
+  background-color: var(--gray-50);
+}
+
+.mobileAgendaTime {
+  font-family: monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.mobileAgendaAddArea {
+  color: var(--gray-400);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mobileAgendaSlotCard {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mobileAgendaCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobileAgendaTimeActive {
+  font-family: monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+
+.mobileAgendaBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobileDelayLabel {
+  background-color: #fef3c7;
+  color: #d97706;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.mobileAgendaCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.mobileAgendaCardBody h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mobileAgendaCardBody p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.mobileAgendaServiceText {
+  font-weight: 600;
+  color: var(--primary-color) !important;
+}
+
+.mobileAgendaReasonText {
+  margin-top: 4px !important;
+  font-style: italic;
+}
+
+.mobileAgendaActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 12px 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .headerActions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .viewToggle {
+    width: 100%;
+  }
+
+  .toggleBtn {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .addBtn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 1rem;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 1.25rem;
+  }
+
+  .searchBox {
+    width: 100%;
+    min-width: 100%;
+    min-height: 44px;
+  }
+
+  .filters {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .filters select,
+  .filters input[type="date"],
+  .refreshBtn {
+    width: 100%;
+    min-height: 44px;
+    font-size: 0.9rem;
+    padding: 0.5rem !important;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+  }
+
+  .refreshBtn {
+    grid-column: span 2;
+  }
+
+  .calendarNavContainer {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .calendarNavControls {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .dayPills {
+    gap: 4px;
+  }
+
+  .dayPill {
+    padding: 6px 4px;
+    border-radius: 8px;
+  }
+
+  .dayNum {
+    font-size: 1rem;
+  }
+
+  .desktopTableView {
+    display: none !important;
+  }
+
+  .mobileCardsList {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .desktopAgendaViewOnly {
+    display: none !important;
+  }
+
+  .mobileAgendaViewOnly {
+    display: block !important;
+  }
+}
+
 

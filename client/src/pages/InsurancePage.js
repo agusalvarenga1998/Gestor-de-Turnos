@@ -802,60 +802,110 @@ export default function InsurancePage() {
             </button>
           </div>
         ) : (
-          <div className={styles.tableContainer}>
-            <table className={styles.insuranceTable}>
-              <thead>
-                <tr>
-                  <th>Convenio</th>
-                  <th>Monto Global</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {insurances.map((insurance) => (
-                  <tr key={insurance.id}>
-                    <td className={styles.name}>{insurance.name}</td>
-                    <td className={styles.fee}>
-                      ${parseFloat(insurance.additional_fee || 0).toFixed(2)}
-                    </td>
-                    <td className={styles.actions}>
-                      <button
-                        onClick={() => handleConfigurePlans(insurance)}
-                        className={styles.configBtn}
-                        title="Gestionar Planes de Cobertura"
-                        style={{ marginRight: '6px' }}
-                      >
-                        <Icon name="list" size={18} color="currentColor" />
-                        Planes
-                      </button>
-                      <button
-                        onClick={() => handleConfigureCoverage(insurance)}
-                        className={styles.configBtn}
-                        title="Configurar por Servicio"
-                      >
-                        <Icon name="settings" size={18} color="currentColor" />
-                        Servicios
-                      </button>
-                      <button
-                        onClick={() => handleEdit(insurance)}
-                        className={styles.iconBtn}
-                        title="Editar nombre/global"
-                      >
-                        <Icon name="edit" size={18} color="currentColor" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(insurance.id)}
-                        className={styles.iconBtn}
-                        title="Eliminar"
-                      >
-                        <Icon name="trash" size={18} color="currentColor" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop Table View */}
+            <div className={styles.desktopTableView}>
+              <div className={styles.tableContainer}>
+                <table className={styles.insuranceTable}>
+                  <thead>
+                    <tr>
+                      <th>Convenio</th>
+                      <th>Monto Global</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {insurances.map((insurance) => (
+                      <tr key={insurance.id}>
+                        <td className={styles.name}>{insurance.name}</td>
+                        <td className={styles.fee}>
+                          ${parseFloat(insurance.additional_fee || 0).toFixed(2)}
+                        </td>
+                        <td className={styles.actions}>
+                          <button
+                            onClick={() => handleConfigurePlans(insurance)}
+                            className={styles.configBtn}
+                            title="Gestionar Planes de Cobertura"
+                            style={{ marginRight: '6px' }}
+                          >
+                            <Icon name="list" size={18} color="currentColor" />
+                            Planes
+                          </button>
+                          <button
+                            onClick={() => handleConfigureCoverage(insurance)}
+                            className={styles.configBtn}
+                            title="Configurar por Servicio"
+                          >
+                            <Icon name="settings" size={18} color="currentColor" />
+                            Servicios
+                          </button>
+                          <button
+                            onClick={() => handleEdit(insurance)}
+                            className={styles.iconBtn}
+                            title="Editar nombre/global"
+                          >
+                            <Icon name="edit" size={18} color="currentColor" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(insurance.id)}
+                            className={styles.iconBtn}
+                            title="Eliminar"
+                          >
+                            <Icon name="trash" size={18} color="currentColor" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className={styles.mobileCardsView}>
+              {insurances.map((insurance) => (
+                <div key={insurance.id} className={styles.insuranceCardMobile}>
+                  <div className={styles.insuranceCardHeaderMobile}>
+                    <h3 className={styles.insuranceNameMobile}>{insurance.name}</h3>
+                    <div className={styles.insuranceFeeMobile}>
+                      <span>Monto Global:</span>
+                      <strong>${parseFloat(insurance.additional_fee || 0).toFixed(2)}</strong>
+                    </div>
+                  </div>
+                  <div className={styles.insuranceCardActionsMobile}>
+                    <button
+                      onClick={() => handleConfigurePlans(insurance)}
+                      className={styles.mobileActionBtn}
+                    >
+                      <Icon name="list" size={16} color="currentColor" />
+                      <span>Planes</span>
+                    </button>
+                    <button
+                      onClick={() => handleConfigureCoverage(insurance)}
+                      className={styles.mobileActionBtn}
+                    >
+                      <Icon name="settings" size={16} color="currentColor" />
+                      <span>Servicios</span>
+                    </button>
+                    <button
+                      onClick={() => handleEdit(insurance)}
+                      className={styles.mobileEditBtn}
+                      aria-label="Editar"
+                    >
+                      <Icon name="edit" size={16} color="currentColor" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(insurance.id)}
+                      className={styles.mobileDeleteBtn}
+                      aria-label="Eliminar"
+                    >
+                      <Icon name="trash" size={16} color="currentColor" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Modal de Catálogo Global */}

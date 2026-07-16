@@ -56,6 +56,19 @@ export default function SettingsPage() {
   const [loadingTestPush, setLoadingTestPush] = useState(false);
   const [pushLogs, setPushLogs] = useState('');
   const [showLogs, setShowLogs] = useState(false);
+  const [openSections, setOpenSections] = useState({
+    google: window.innerWidth > 768,
+    push: window.innerWidth > 768,
+    mercadopago: window.innerWidth > 768,
+    profile: true
+  });
+
+  const toggleSection = (section) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   // Componente para manejar clics en el mapa
   function LocationMarker() {
@@ -423,6 +436,63 @@ export default function SettingsPage() {
     }
   };
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert('La geolocalización no es compatible con este navegador o dispositivo.');
+      return;
+    }
+    setSavingProfile(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+            params: {
+              lat: latitude,
+              lon: longitude,
+              format: 'json',
+            },
+            headers: { 'User-Agent': 'TurnoHub-App/1.0' }
+          });
+          
+          let addressVal = '';
+          if (res.data && res.data.display_name) {
+            addressVal = res.data.display_name;
+          } else {
+            addressVal = `${latitude}, ${longitude}`;
+          }
+
+          setProfileData(prev => ({
+            ...prev,
+            address: addressVal,
+            latitude,
+            longitude
+          }));
+          setMapCenter([latitude, longitude]);
+          setSuccessMessage('✓ Ubicación obtenida exitosamente');
+          setTimeout(() => setSuccessMessage(''), 5000);
+        } catch (err) {
+          console.error('Error in reverse geocoding:', err);
+          setProfileData(prev => ({
+            ...prev,
+            latitude,
+            longitude
+          }));
+          setMapCenter([latitude, longitude]);
+          alert('Ubicación obtenida pero no pudimos decodificar la dirección de texto.');
+        } finally {
+          setSavingProfile(false);
+        }
+      },
+      (error) => {
+        console.error('Error getting position:', error);
+        alert(`Error al obtener ubicación: ${error.message}`);
+        setSavingProfile(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
@@ -479,411 +549,449 @@ export default function SettingsPage() {
         )}
 
         {/* Google Calendar Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <div className={styles.sectionTitle}>
-              <Icon name="calendar" size={24} color="#2563eb" />
-              Google Calendar
+        <div className={`${styles.section} ${openSections.google ? styles.sectionOpen : ''}`}>
+          <div className={styles.sectionHeader} onClick={() => toggleSection('google')} style={{ cursor: 'pointer' }}>
+            <div className={styles.sectionTitleGroup}>
+              <div className={styles.sectionTitle}>
+                <Icon name="calendar" size={24} color="#2563eb" />
+                Google Calendar
+              </div>
+              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
+                {openSections.google ? 'expand_less' : 'expand_more'}
+              </span>
             </div>
             <p className={styles.sectionDescription}>
               Sincroniza automáticamente tus citas con Google Calendar.
             </p>
           </div>
 
-          <div className={styles.card}>
-            {loading ? (
-              <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Cargando estado...</p>
-              </div>
-            ) : (
-              <div className={styles.statusSection}>
-                <div className={styles.statusIndicator}>
-                  <div className={`${styles.statusDot} ${googleConnected ? styles.connected : styles.disconnected}`}></div>
-                  <div>
-                    <h3 className={styles.statusLabel}>
-                      {googleConnected ? 'Conectado' : 'Desconectado'}
-                    </h3>
-                    <p className={styles.statusDescription}>
-                      {googleConnected
-                        ? 'Tu Google Calendar está sincronizado con TurnoHub'
-                        : 'Conecta tu Google Calendar para sincronizar automáticamente tus citas'}
-                    </p>
-                  </div>
+          {openSections.google && (
+            <div className={styles.card}>
+              {loading ? (
+                <div className={styles.loading}>
+                  <div className={styles.spinner}></div>
+                  <p>Cargando estado...</p>
                 </div>
-
-                {googleConnected ? (
-                  <button
-                    className={styles.disconnectBtn}
-                    onClick={handleDisconnect}
-                    disabled={disconnecting}
-                  >
-                    {disconnecting ? 'Desconectando...' : 'Desconectar'}
-                  </button>
-                ) : user?.plan?.allow_google_calendar === false ? (
-                  <div className={styles.planRestricted}>
-                    <button className={styles.disabledBtn} disabled>
-                      <Icon name="lock" size={18} color="currentColor" />
-                      Google Calendar Bloqueado
-                    </button>
-                    <p className={styles.upgradeNotice}>
-                      Tu plan actual (<strong>{user.plan.name}</strong>) no incluye sincronización con Google Calendar. Contacta al administrador para solicitar esta funcionalidad.
-                    </p>
+              ) : (
+                <div className={styles.statusSection}>
+                  <div className={styles.statusIndicator}>
+                    <div className={`${styles.statusDot} ${googleConnected ? styles.connected : styles.disconnected}`}></div>
+                    <div>
+                      <h3 className={styles.statusLabel}>
+                        {googleConnected ? 'Conectado' : 'Desconectado'}
+                      </h3>
+                      <p className={styles.statusDescription}>
+                        {googleConnected
+                          ? 'Tu Google Calendar está sincronizado con TurnoHub'
+                          : 'Conecta tu Google Calendar para sincronizar automáticamente tus citas'}
+                      </p>
+                    </div>
                   </div>
-                ) : (
-                  <button
-                    className={styles.connectBtn}
-                    onClick={handleConnect}
-                  >
-                    <Icon name="check" size={18} color="currentColor" />
-                    Conectar Google Calendar
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+
+                  {googleConnected ? (
+                    <button
+                      className={styles.disconnectBtn}
+                      onClick={handleDisconnect}
+                      disabled={disconnecting}
+                    >
+                      {disconnecting ? 'Desconectando...' : 'Desconectar'}
+                    </button>
+                  ) : user?.plan?.allow_google_calendar === false ? (
+                    <div className={styles.planRestricted}>
+                      <button className={styles.disabledBtn} disabled>
+                        <Icon name="lock" size={18} color="currentColor" />
+                        Google Calendar Bloqueado
+                      </button>
+                      <p className={styles.upgradeNotice}>
+                        Tu plan actual (<strong>{user.plan.name}</strong>) no incluye sincronización con Google Calendar. Contacta al administrador para solicitar esta funcionalidad.
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      className={styles.connectBtn}
+                      onClick={handleConnect}
+                    >
+                      <Icon name="check" size={18} color="currentColor" />
+                      Conectar Google Calendar
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* PWA Push Notifications Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <div className={styles.sectionTitle}>
-              <Icon name="download" size={24} color="#10b981" />
-              Notificaciones en el Celular
+        <div className={`${styles.section} ${openSections.push ? styles.sectionOpen : ''}`}>
+          <div className={styles.sectionHeader} onClick={() => toggleSection('push')} style={{ cursor: 'pointer' }}>
+            <div className={styles.sectionTitleGroup}>
+              <div className={styles.sectionTitle}>
+                <Icon name="download" size={24} color="#10b981" />
+                Notificaciones en el Celular
+              </div>
+              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
+                {openSections.push ? 'expand_less' : 'expand_more'}
+              </span>
             </div>
             <p className={styles.sectionDescription}>
               Recibe avisos push nativos 15 minutos antes de cada turno y resúmenes diarios de tu agenda.
             </p>
           </div>
 
-          <div className={styles.card}>
-            <div className={styles.statusSection}>
-              <div className={styles.statusIndicator}>
-                <div className={`${styles.statusDot} ${pushSubscribed ? styles.connected : styles.disconnected}`}></div>
-                <div>
-                  <h3 className={styles.statusLabel}>
-                    {pushSubscribed ? 'Notificaciones Activas' : 'Notificaciones Desactivadas'}
-                  </h3>
-                  <p className={styles.statusDescription}>
-                    {pushSubscribed
-                      ? 'Este dispositivo recibirá alertas automáticas sobre tus turnos'
-                      : 'Activa las notificaciones en este navegador/celular para no perderte ningún turno'}
-                  </p>
+          {openSections.push && (
+            <div className={styles.card}>
+              <div className={styles.statusSection}>
+                <div className={styles.statusIndicator}>
+                  <div className={`${styles.statusDot} ${pushSubscribed ? styles.connected : styles.disconnected}`}></div>
+                  <div>
+                    <h3 className={styles.statusLabel}>
+                      {pushSubscribed ? 'Notificaciones Activas' : 'Notificaciones Desactivadas'}
+                    </h3>
+                    <p className={styles.statusDescription}>
+                      {pushSubscribed
+                        ? 'Este dispositivo recibirá alertas automáticas sobre tus turnos'
+                        : 'Activa las notificaciones en este navegador/celular para no perderte ningún turno'}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              {pushSubscribed ? (
-                <div className={styles.buttonGroup}>
+                {pushSubscribed ? (
+                  <div className={styles.buttonGroup}>
+                    <button
+                      className={styles.testBtn}
+                      onClick={handleSendTestPush}
+                      disabled={loadingTestPush}
+                    >
+                      <Icon name="refresh" size={18} color="currentColor" />
+                      {loadingTestPush ? 'Enviando...' : 'Probar Notificación'}
+                    </button>
+                    <button
+                      className={styles.disconnectBtn}
+                      onClick={handleUnsubscribePush}
+                      disabled={loadingPush}
+                    >
+                      {loadingPush ? 'Desactivando...' : 'Desactivar Notificaciones'}
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    className={styles.testBtn}
-                    onClick={handleSendTestPush}
-                    disabled={loadingTestPush}
-                  >
-                    <Icon name="refresh" size={18} color="currentColor" />
-                    {loadingTestPush ? 'Enviando...' : 'Probar Notificación'}
-                  </button>
-                  <button
-                    className={styles.disconnectBtn}
-                    onClick={handleUnsubscribePush}
+                    className={styles.connectBtn}
+                    onClick={handleSubscribePush}
                     disabled={loadingPush}
+                    style={{ background: '#10b981' }}
                   >
-                    {loadingPush ? 'Desactivando...' : 'Desactivar Notificaciones'}
+                    <Icon name="check" size={18} color="currentColor" />
+                    {loadingPush ? 'Activando...' : 'Activar Notificaciones'}
                   </button>
-                </div>
-              ) : (
-                <button
-                  className={styles.connectBtn}
-                  onClick={handleSubscribePush}
-                  disabled={loadingPush}
-                  style={{ background: '#10b981' }}
-                >
-                  <Icon name="check" size={18} color="currentColor" />
-                  {loadingPush ? 'Activando...' : 'Activar Notificaciones'}
-                </button>
-              )}
-            </div>
-
-            {pushSubscribed && (
-              <div style={{ marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
-                <button
-                  onClick={handleFetchPushLogs}
-                  className={styles.connectBtn}
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', background: '#f1f5f9', borderColor: '#cbd5e1' }}
-                >
-                  <Icon name="search" size={16} color="currentColor" />
-                  {showLogs ? 'Ocultar Logs de Notificaciones' : 'Ver Logs de Notificaciones'}
-                </button>
-                {showLogs && (
-                  <pre style={{
-                    marginTop: '1rem',
-                    padding: '1rem',
-                    background: '#0f172a',
-                    color: '#e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    maxHeight: '250px',
-                    overflowY: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all',
-                    textAlign: 'left',
-                    fontFamily: 'monospace'
-                  }}>
-                    {pushLogs}
-                  </pre>
                 )}
               </div>
-            )}
-          </div>
+
+              {pushSubscribed && (
+                <div style={{ marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+                  <button
+                    onClick={handleFetchPushLogs}
+                    className={styles.connectBtn}
+                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', background: '#f1f5f9', borderColor: '#cbd5e1' }}
+                  >
+                    <Icon name="search" size={16} color="currentColor" />
+                    {showLogs ? 'Ocultar Logs de Notificaciones' : 'Ver Logs de Notificaciones'}
+                  </button>
+                  {showLogs && (
+                    <pre style={{
+                      marginTop: '1rem',
+                      padding: '1rem',
+                      background: '#0f172a',
+                      color: '#e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
+                      maxHeight: '250px',
+                      overflowY: 'auto',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-all',
+                      textAlign: 'left',
+                      fontFamily: 'monospace'
+                    }}>
+                      {pushLogs}
+                    </pre>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Mercado Pago Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <div className={styles.sectionTitle}>
-              <Icon name="check-circle" size={24} color="#009ee3" />
-              Mercado Pago
+        <div className={`${styles.section} ${openSections.mercadopago ? styles.sectionOpen : ''}`}>
+          <div className={styles.sectionHeader} onClick={() => toggleSection('mercadopago')} style={{ cursor: 'pointer' }}>
+            <div className={styles.sectionTitleGroup}>
+              <div className={styles.sectionTitle}>
+                <Icon name="check-circle" size={24} color="#009ee3" />
+                Mercado Pago
+              </div>
+              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
+                {openSections.mercadopago ? 'expand_less' : 'expand_more'}
+              </span>
             </div>
             <p className={styles.sectionDescription}>
               Conecta tu cuenta de Mercado Pago para recibir el pago de las señas de tus pacientes automáticamente en tu cuenta.
             </p>
           </div>
 
-          <div className={styles.card}>
-            <div className={styles.statusSection}>
-              <div className={styles.statusIndicator}>
-                <div className={`${styles.statusDot} ${profileData.mp_connected ? styles.connected : styles.disconnected}`}></div>
-                <div>
-                  <h3 className={styles.statusLabel}>
-                    {profileData.mp_connected ? 'Conectado' : 'No vinculado'}
-                  </h3>
-                  <p className={styles.statusDescription}>
-                    {profileData.mp_connected
-                      ? 'Tu cuenta de Mercado Pago está lista para recibir cobros'
-                      : 'Vincula tu cuenta para que los pacientes puedan pagar la reserva online'}
-                  </p>
-                  {profileData.mp_connected && loadingMp && (
-                    <p className={styles.mpAccountInfo}>Cargando datos de la cuenta...</p>
-                  )}
-                  {profileData.mp_connected && mpAccount && (
-                    <p className={styles.mpAccountInfo}>
-                      Cuenta vinculada: <strong>{mpAccount.email || mpAccount.nickname}</strong> {mpAccount.name && `(${mpAccount.name})`}
+          {openSections.mercadopago && (
+            <div className={styles.card}>
+              <div className={styles.statusSection}>
+                <div className={styles.statusIndicator}>
+                  <div className={`${styles.statusDot} ${profileData.mp_connected ? styles.connected : styles.disconnected}`}></div>
+                  <div>
+                    <h3 className={styles.statusLabel}>
+                      {profileData.mp_connected ? 'Conectado' : 'No vinculado'}
+                    </h3>
+                    <p className={styles.statusDescription}>
+                      {profileData.mp_connected
+                        ? 'Tu cuenta de Mercado Pago está lista para recibir cobros'
+                        : 'Vincula tu cuenta para que los pacientes puedan pagar la reserva online'}
                     </p>
-                  )}
+                    {profileData.mp_connected && loadingMp && (
+                      <p className={styles.mpAccountInfo}>Cargando datos de la cuenta...</p>
+                    )}
+                    {profileData.mp_connected && mpAccount && (
+                      <p className={styles.mpAccountInfo}>
+                        Cuenta vinculada: <strong>{mpAccount.email || mpAccount.nickname}</strong> {mpAccount.name && `(${mpAccount.name})`}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {profileData.mp_connected ? (
-                <button
-                  className={styles.disconnectBtn}
-                  onClick={async () => {
-                    if (window.confirm('¿Desvincular tu cuenta de Mercado Pago? No podrás recibir cobros de reservas.')) {
-                      try {
-                        const res = await apiClient.put('/api/auth/profile', { mp_connected: false, mp_access_token: null });
-                        if (res.data.success) {
-                          setSuccessMessage('✓ Mercado Pago desvinculado');
-                          refreshUser();
-                        }
-                      } catch (err) {
-                        alert('Error al desvincular');
-                      }
-                    }
-                  }}
-                >
-                  Desvincular Cuenta
-                </button>
-              ) : user?.plan?.allow_mercadopago === false ? (
-                <div className={styles.planRestricted}>
+                {profileData.mp_connected ? (
                   <button
-                    className={styles.disabledBtn}
-                    disabled
+                    className={styles.disconnectBtn}
+                    onClick={async () => {
+                      if (window.confirm('¿Desvincular tu cuenta de Mercado Pago? No podrás recibir cobros de reservas.')) {
+                        try {
+                          const res = await apiClient.put('/api/auth/profile', { mp_connected: false, mp_access_token: null });
+                          if (res.data.success) {
+                            setSuccessMessage('✓ Mercado Pago desvinculado');
+                            refreshUser();
+                          }
+                        } catch (err) {
+                          alert('Error al desvincular');
+                        }
+                      }
+                    }}
                   >
-                    <Icon name="lock" size={18} color="currentColor" />
-                    Mercado Pago Bloqueado
+                    Desvincular Cuenta
                   </button>
-                  <p className={styles.upgradeNotice}>
-                    Tu plan actual (<strong>{user.plan.name}</strong>) no incluye integración con Mercado Pago. Contacta al administrador para solicitar esta funcionalidad.
-                  </p>
-                </div>
-              ) : (
-                <button
-                  className={styles.connectBtn}
-                  style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}
-                  onClick={() => {
-                    const token = localStorage.getItem('token');
-                    if (!token) {
-                      setSuccessMessage('✗ No hay sesión activa');
-                      return;
-                    }
-                    window.location.href = `${process.env.REACT_APP_API_BASE_URL || ''}/api/mercadopago/oauth/auth?token=${token}`;
-                  }}
-                >
-                   <Icon name="check-circle" size={18} color="white" />
-                   Vincular con Mercado Pago
-                </button>
-              )}
+                ) : user?.plan?.allow_mercadopago === false ? (
+                  <div className={styles.planRestricted}>
+                    <button
+                      className={styles.disabledBtn}
+                      disabled
+                    >
+                      <Icon name="lock" size={18} color="currentColor" />
+                      Mercado Pago Bloqueado
+                    </button>
+                    <p className={styles.upgradeNotice}>
+                      Tu plan actual (<strong>{user.plan.name}</strong>) no incluye integración con Mercado Pago. Contacta al administrador para solicitar esta funcionalidad.
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    className={styles.connectBtn}
+                    style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onClick={() => {
+                      const token = localStorage.getItem('token');
+                      if (!token) {
+                        setSuccessMessage('✗ No hay sesión activa');
+                        return;
+                      }
+                      window.location.href = `${process.env.REACT_APP_API_BASE_URL || ''}/api/mercadopago/oauth/auth?token=${token}`;
+                    }}
+                  >
+                     <Icon name="check-circle" size={18} color="white" />
+                     Vincular con Mercado Pago
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Profile Settings */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <div className={styles.sectionTitle}>
-              <Icon name="users" size={24} color="#2563eb" />
-              Datos Profesionales
+        <div className={`${styles.section} ${openSections.profile ? styles.sectionOpen : ''}`}>
+          <div className={styles.sectionHeader} onClick={() => toggleSection('profile')} style={{ cursor: 'pointer' }}>
+            <div className={styles.sectionTitleGroup}>
+              <div className={styles.sectionTitle}>
+                <Icon name="users" size={24} color="#2563eb" />
+                Datos Profesionales
+              </div>
+              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
+                {openSections.profile ? 'expand_less' : 'expand_more'}
+              </span>
             </div>
             <p className={styles.sectionDescription}>
               Actualiza tu información profesional y de contacto
             </p>
           </div>
 
-          <div className={styles.card}>
-            <form onSubmit={handleSaveProfile} className={styles.form}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="rubro">Rubro (Categoría Principal) *</label>
-                  <select
-                    id="rubro"
-                    name="rubro"
-                    value={profileData.rubro}
-                    onChange={handleRubroChange}
-                    disabled={savingProfile}
-                    required
-                    style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
-                  >
-                    <option value="">Selecciona un rubro...</option>
-                    {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
-                      <option key={rub} value={rub}>{rub}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="specialization">Especialidad *</label>
-                  <select
-                    id="specialization"
-                    name="specialization"
-                    value={profileData.specialization}
-                    onChange={handleSpecializationChange}
-                    disabled={savingProfile || !profileData.rubro}
-                    required
-                    style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
-                  >
-                    <option value="">Selecciona una especialidad...</option>
-                    {profileData.rubro && RUBROS_ESPECIALIDADES[profileData.rubro]?.map(spec => (
-                      <option key={spec} value={spec}>{spec}</option>
-                    ))}
-                    {profileData.rubro && (
-                      <option value="__custom__">+ Otra / Agregar nueva especialidad...</option>
-                    )}
-                  </select>
-                </div>
-              </div>
-
-              {isCustomSpecialty && (
-                <div className={styles.formGroup} style={{ marginBottom: '1.5rem' }}>
-                  <label htmlFor="customSpecialty">Escribe tu Especialidad Personalizada *</label>
-                  <input
-                    type="text"
-                    id="customSpecialty"
-                    value={customSpecialty}
-                    onChange={(e) => setCustomSpecialty(e.target.value)}
-                    placeholder="Ej: Neuropediatría, Microblading Avanzado, etc."
-                    disabled={savingProfile}
-                    required
-                  />
-                </div>
-              )}
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="license_number">Número de Matrícula</label>
-                  <input
-                    type="text"
-                    id="license_number"
-                    name="license_number"
-                    value={profileData.license_number}
-                    onChange={handleProfileChange}
-                    placeholder="Ej: MED-123456"
-                    disabled={savingProfile}
-                  />
-                </div>
-                <div className={styles.formGroup}></div>
-              </div>
-
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="clinic_name">Nombre de la Clínica</label>
-                  <input
-                    type="text"
-                    id="clinic_name"
-                    name="clinic_name"
-                    value={profileData.clinic_name}
-                    onChange={handleProfileChange}
-                    placeholder="Ej: Clínica Central"
-                    disabled={savingProfile}
-                  />
+          {openSections.profile && (
+            <div className={styles.card}>
+              <form onSubmit={handleSaveProfile} className={styles.form}>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="rubro">Rubro (Categoría Principal) *</label>
+                    <select
+                      id="rubro"
+                      name="rubro"
+                      value={profileData.rubro}
+                      onChange={handleRubroChange}
+                      disabled={savingProfile}
+                      required
+                      style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
+                    >
+                      <option value="">Selecciona un rubro...</option>
+                      {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
+                        <option key={rub} value={rub}>{rub}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="specialization">Especialidad *</label>
+                    <select
+                      id="specialization"
+                      name="specialization"
+                      value={profileData.specialization}
+                      onChange={handleSpecializationChange}
+                      disabled={savingProfile || !profileData.rubro}
+                      required
+                      style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
+                    >
+                      <option value="">Selecciona una especialidad...</option>
+                      {profileData.rubro && RUBROS_ESPECIALIDADES[profileData.rubro]?.map(spec => (
+                        <option key={spec} value={spec}>{spec}</option>
+                      ))}
+                      {profileData.rubro && (
+                        <option value="__custom__">+ Otra / Agregar nueva especialidad...</option>
+                      )}
+                    </select>
+                  </div>
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="phone">Teléfono de Contacto</label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={profileData.phone}
-                    onChange={handleProfileChange}
-                    placeholder="Ej: +54 9 11 1234-5678"
-                    disabled={savingProfile}
-                  />
-                </div>
-              </div>
+                {isCustomSpecialty && (
+                  <div className={styles.formGroup} style={{ marginBottom: '1.5rem' }}>
+                    <label htmlFor="customSpecialty">Escribe tu Especialidad Personalizada *</label>
+                    <input
+                      type="text"
+                      id="customSpecialty"
+                      value={customSpecialty}
+                      onChange={(e) => setCustomSpecialty(e.target.value)}
+                      placeholder="Ej: Neuropediatría, Microblading Avanzado, etc."
+                      disabled={savingProfile}
+                      required
+                    />
+                  </div>
+                )}
 
-               <div className={styles.formGroup}>
-                <label htmlFor="address">Dirección del Consultorio *</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    value={profileData.address}
-                    onChange={handleProfileChange}
-                    placeholder="Ej: Calle Principal 123, Ciudad"
-                    style={{ flex: 1 }}
-                    disabled={savingProfile}
-                    required
-                  />
-                  <button 
-                    type="button" 
-                    onClick={handleVerifyAddress}
-                    className={styles.verifyBtn}
-                  >
-                    Ubicar en Mapa 🗺️
-                  </button>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="license_number">Número de Matrícula</label>
+                    <input
+                      type="text"
+                      id="license_number"
+                      name="license_number"
+                      value={profileData.license_number}
+                      onChange={handleProfileChange}
+                      placeholder="Ej: MED-123456"
+                      disabled={savingProfile}
+                    />
+                  </div>
+                  <div className={styles.formGroup}></div>
                 </div>
-                <small>Escribe tu dirección y presiona "Ubicar" para verla en el mapa inferior.</small>
-              </div>
 
-              <div className={styles.mapPreviewContainer}>
-                <p className={styles.mapLabel}>Confirma tu ubicación exacta (puedes arrastrar el pin):</p>
-                <div className={styles.mapWrapper}>
-                  <MapContainer center={mapCenter} zoom={15} scrollWheelZoom={false} style={{ height: '300px', width: '100%', borderRadius: '12px' }}>
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <LocationMarker />
-                    <RecenterMap position={mapCenter} />
-                  </MapContainer>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="clinic_name">Nombre de la Clínica</label>
+                    <input
+                      type="text"
+                      id="clinic_name"
+                      name="clinic_name"
+                      value={profileData.clinic_name}
+                      onChange={handleProfileChange}
+                      placeholder="Ej: Clínica Central"
+                      disabled={savingProfile}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="phone">Teléfono de Contacto</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={profileData.phone}
+                      onChange={handleProfileChange}
+                      placeholder="Ej: +54 9 11 1234-5678"
+                      disabled={savingProfile}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                className={styles.submitBtn}
-                disabled={savingProfile}
-              >
-                {savingProfile ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-            </form>
-          </div>
+                 <div className={styles.formGroup}>
+                  <label htmlFor="address">Dirección del Consultorio *</label>
+                  <div className={styles.addressInputGroup}>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      value={profileData.address}
+                      onChange={handleProfileChange}
+                      placeholder="Ej: Calle Principal 123, Ciudad"
+                      className={styles.addressInput}
+                      disabled={savingProfile}
+                      required
+                    />
+                    <div className={styles.addressActionButtons}>
+                      <button 
+                        type="button" 
+                        onClick={handleVerifyAddress}
+                        className={styles.verifyBtn}
+                      >
+                        Ubicar en Mapa 🗺️
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={handleGetLocation}
+                        className={styles.gpsBtn}
+                        title="Usar mi ubicación actual por GPS"
+                      >
+                        📍 Usar GPS
+                      </button>
+                    </div>
+                  </div>
+                  <small>Escribe tu dirección y presiona "Ubicar" para verla en el mapa, o usa tu ubicación actual por GPS.</small>
+                </div>
+
+                <div className={styles.mapPreviewContainer}>
+                  <p className={styles.mapLabel}>Confirma tu ubicación exacta (puedes arrastrar el pin):</p>
+                  <div className={styles.mapWrapper}>
+                    <MapContainer center={mapCenter} zoom={15} scrollWheelZoom={false} style={{ height: '300px', width: '100%', borderRadius: '12px' }}>
+                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <LocationMarker />
+                      <RecenterMap position={mapCenter} />
+                    </MapContainer>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className={styles.submitBtn}
+                  disabled={savingProfile}
+                >
+                  {savingProfile ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </form>
+            </div>
+          )}
         </div>
       </div>
     </DoctorLayout>

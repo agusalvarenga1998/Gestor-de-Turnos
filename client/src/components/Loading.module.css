@@ -13,6 +13,18 @@
   z-index: 9999;
 }
 
+.inlineContainer {
+  position: relative !important;
+  min-height: 300px !important;
+  height: auto !important;
+  background-color: transparent !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 10 !important;
+}
+
 .wrapper {
   position: relative;
   display: flex;

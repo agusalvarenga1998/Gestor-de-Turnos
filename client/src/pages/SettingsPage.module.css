@@ -367,3 +367,152 @@
   }
 }
 
+/* Accordion Accordion styles */
+.sectionTitleGroup {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.accordionChevron {
+  color: var(--gray-400);
+  font-size: 24px !important;
+  transition: transform var(--transition-base);
+}
+
+.sectionHeader {
+  user-select: none;
+}
+
+/* Address Input with Geolocation styling */
+.addressInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.addressInput {
+  width: 100% !important;
+  padding: 0.85rem 1rem !important;
+  background: #f8fafc !important;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  color: #1e293b !important;
+  box-sizing: border-box;
+}
+
+.addressActionButtons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.addressActionButtons button {
+  flex: 1;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.verifyBtn {
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.gpsBtn {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: var(--primary-color);
+}
+
+.gpsBtn:hover {
+  background: #dbeafe;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 12px 16px !important;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  /* Form Elements for Touch Targets and to prevent auto-zoom in iOS (font-size 16px) */
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea {
+    min-height: 48px !important;
+    font-size: 16px !important;
+    padding: 12px !important;
+  }
+
+  .submitBtn,
+  .cancelBtn,
+  .connectBtn,
+  .disconnectBtn {
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    font-size: 1rem !important;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+
+  .section {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: white;
+    margin-bottom: 12px;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .sectionHeader {
+    padding: 16px;
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+
+  .sectionOpen .sectionHeader {
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--gray-50);
+  }
+
+  .sectionDescription {
+    display: none; /* Hide description on mobile to keep accordion super clean */
+  }
+
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 16px !important;
+    margin: 0 !important;
+  }
+
+  .mapWrapper {
+    height: 250px !important;
+  }
+}
+

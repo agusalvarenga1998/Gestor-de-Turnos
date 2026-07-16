@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Icon from './Icon';
+import WebSocketStatus from './WebSocketStatus';
+import TrialCounter from './TrialCounter';
 import styles from './Sidebar.module.css';
 
-export default function Sidebar({ isMobile, isOpen, onClose }) {
+export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -51,7 +53,7 @@ export default function Sidebar({ isMobile, isOpen, onClose }) {
 
           {/* Botón cerrar (solo móvil) */}
           {isOpen && (
-            <button className={styles.closeBtn} onClick={onClose}>
+            <button className={styles.closeBtn} onClick={onClose} aria-label="Cerrar menú">
               <Icon name="x" size={24} color="currentColor" />
             </button>
           )}
@@ -85,6 +87,28 @@ export default function Sidebar({ isMobile, isOpen, onClose }) {
             );
           })}
         </nav>
+
+        {/* Mobile Tutorial Button */}
+        {isOpen && onOpenTour && (
+          <div className={styles.mobileTourContainer}>
+            <button 
+              onClick={() => {
+                onOpenTour();
+                onClose();
+              }}
+              className={styles.mobileTourBtn}
+            >
+              <span className="material-symbols-outlined">explore</span>
+              <span>Tutorial de TurnoHub</span>
+            </button>
+          </div>
+        )}
+
+        {/* Mobile Status Section */}
+        <div className={styles.sidebarStatus}>
+          <WebSocketStatus />
+          <TrialCounter />
+        </div>
 
         {/* Footer con usuario */}
         <div className={styles.footer}>

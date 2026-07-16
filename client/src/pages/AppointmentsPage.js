@@ -471,165 +471,271 @@ export default function AppointmentsPage() {
     window.open(whatsappUrl, '_blank');
   };
 
+  const renderMobileAgendaList = (slots) => {
+    return (
+      <div className={styles.mobileAgendaList}>
+        {slots.map((slot) => {
+          const slotAppointments = filteredAppointments.filter((appt) => {
+            const dateStr = String(appt.appointment_date).split('T')[0];
+            if (dateStr !== selectedDate) return false;
+            const apptTime = String(appt.appointment_time).substring(0, 5);
+            return apptTime === slot;
+          });
+
+          if (slotAppointments.length === 0) {
+            return (
+              <div key={slot} className={styles.mobileAgendaEmptySlot} onClick={() => handleEmptySlotClick(slot)}>
+                <div className={styles.mobileAgendaTime}>{slot}</div>
+                <div className={styles.mobileAgendaAddArea}>
+                  <span className={styles.plusIcon}>+</span>
+                  <span>Disponible (Crear cita)</span>
+                </div>
+              </div>
+            );
+          }
+
+          return slotAppointments.map((appt) => {
+            return (
+              <div key={`${slot}-${appt.id}`} className={styles.mobileAgendaSlotCard}>
+                <div className={styles.mobileAgendaCardHeader}>
+                  <div className={styles.mobileAgendaTimeActive}>{slot} hs</div>
+                  <div className={styles.mobileAgendaBadgeGroup}>
+                    {getStatusBadge(appt.status)}
+                    {appt.delay_minutes > 0 && (
+                      <span className={styles.mobileDelayLabel}>+{appt.delay_minutes}m</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className={styles.mobileAgendaCardBody}>
+                  <h4 className={styles.mobilePatientName}>{appt.patient_name}</h4>
+                  <p className={styles.mobilePatientPhone}>📞 {appt.patient_phone || 'Sin teléfono'}</p>
+                  <p className={styles.mobileAgendaServiceText}>💼 {appt.service_name || 'Consulta General'}</p>
+                  {appt.reason_for_visit && (
+                    <p className={styles.mobileAgendaReasonText}>
+                      <strong>Motivo:</strong> {appt.reason_for_visit}
+                    </p>
+                  )}
+                </div>
+
+                <div className={styles.mobileAgendaActions}>
+                  {['pending', 'pending_payment'].includes(appt.status) ? (
+                    <div className={styles.cardActionsMobile}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
+                        className={styles.mobileAcceptBtn}
+                      >
+                        Aceptar
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRejectAppointment(appt.id); }}
+                        className={styles.mobileRejectBtn}
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  ) : ['scheduled', 'absent'].includes(appt.status) ? (
+                    <div className={styles.cardActionsMobile}>
+                      <select
+                        value={appt.status}
+                        onChange={(e) => { e.stopPropagation(); handleStatusChange(appt.id, e.target.value); }}
+                        className={styles.mobileStatusSelect}
+                      >
+                        <option value="scheduled">Programado</option>
+                        <option value="completed">Completado</option>
+                        <option value="cancelled">Cancelado</option>
+                        <option value="absent">Ausente</option>
+                      </select>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
+                        className={styles.mobileDelayBtn}
+                      >
+                        ⏱️ Retrasar
+                      </button>
+                    </div>
+                  ) : null}
+                  {!['cancelled', 'rejected'].includes(appt.status) && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
+                      className={styles.mobileWhatsappBtn}
+                    >
+                      <Icon name="whatsapp" size={16} color="#FFF" />
+                      <span>Recordar</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          });
+        })}
+      </div>
+    );
+  };
+
   const renderAgendaGrid = () => {
     const slots = generateTimeSlots(appointments);
     
     return (
       <div className={styles.agendaContainer}>
-        <div className={styles.tableContainer}>
-          <table className={styles.agendaTable}>
-            <thead>
-              <tr>
-                <th className={styles.timeColHeader}>Hora</th>
-                <th className={styles.statusColHeader}>Presentismo</th>
-                <th className={styles.patientColHeader}>Paciente</th>
-                <th className={styles.insuranceColHeader}>Obra social / Plan</th>
-                <th className={styles.observationColHeader}>Observación</th>
-                <th className={styles.actionsColHeader}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {slots.map((slot) => {
-                const slotAppointments = filteredAppointments.filter((appt) => {
-                  const dateStr = String(appt.appointment_date).split('T')[0];
-                  if (dateStr !== selectedDate) return false;
-                  const apptTime = String(appt.appointment_time).substring(0, 5);
-                  return apptTime === slot;
-                });
+        <div className={styles.mobileAgendaViewOnly}>
+          {renderMobileAgendaList(slots)}
+        </div>
+        <div className={styles.desktopAgendaViewOnly}>
+          <div className={styles.tableContainer}>
+            <table className={styles.agendaTable}>
+              <thead>
+                <tr>
+                  <th className={styles.timeColHeader}>Hora</th>
+                  <th className={styles.statusColHeader}>Presentismo</th>
+                  <th className={styles.patientColHeader}>Paciente</th>
+                  <th className={styles.insuranceColHeader}>Obra social / Plan</th>
+                  <th className={styles.observationColHeader}>Observación</th>
+                  <th className={styles.actionsColHeader}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {slots.map((slot) => {
+                  const slotAppointments = filteredAppointments.filter((appt) => {
+                    const dateStr = String(appt.appointment_date).split('T')[0];
+                    if (dateStr !== selectedDate) return false;
+                    const apptTime = String(appt.appointment_time).substring(0, 5);
+                    return apptTime === slot;
+                  });
 
-                if (slotAppointments.length === 0) {
-                  return (
-                    <tr key={slot} className={styles.emptyRow}>
-                      <td className={styles.timeCell}>
-                        <span className={styles.timeLabel}>{slot}</span>
-                      </td>
-                      <td colSpan="5" className={styles.emptySlotCell}>
-                        <button 
-                          type="button"
-                          onClick={() => handleEmptySlotClick(slot)}
-                          className={styles.availableSlotBtn}
-                          title="Hacer clic para crear una cita en este horario"
-                        >
-                          <span className={styles.plusIcon}>+</span>
-                          <span className={styles.availableText}>Disponible</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                }
-
-                return slotAppointments.map((appt, index) => {
-                  const isExpanded = expandedApptId === appt.id;
-                  return (
-                    <tr 
-                      key={`${slot}-${appt.id}`} 
-                      className={`${styles.agendaRow} ${isExpanded ? styles.cardExpanded : ''}`}
-                      onClick={() => toggleExpandAppt(appt.id)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {index === 0 ? (
-                        <td className={styles.timeCell} rowSpan={slotAppointments.length}>
+                  if (slotAppointments.length === 0) {
+                    return (
+                      <tr key={slot} className={styles.emptyRow}>
+                        <td className={styles.timeCell}>
                           <span className={styles.timeLabel}>{slot}</span>
                         </td>
-                      ) : null}
-                      <td data-label="Presentismo" className={styles.statusCell}>
-                        {getStatusBadge(appt.status)}
-                        {appt.delay_minutes > 0 && (
-                          <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
-                        )}
-                        <div className={`${styles.mobileChevron} ${isExpanded ? styles.rotated : ''}`}>
-                          <Icon name="chevronRight" size={16} />
-                        </div>
-                      </td>
-                      <td data-label="Paciente" className={styles.patientCell}>
-                        <div className={styles.pName}>{appt.patient_name}</div>
-                        <div className={styles.pPhone}>{appt.patient_phone}</div>
-                      </td>
-                      <td data-label="Obra social / Plan" className={styles.insuranceCell}>
-                        {appt.insurance_name ? (
-                          <div className={styles.insuranceBadge}>
-                            {appt.insurance_name}
-                            {appt.insurance_plan_name ? ` (${appt.insurance_plan_name})` : ''}
+                        <td colSpan="5" className={styles.emptySlotCell}>
+                          <button 
+                            type="button"
+                            onClick={() => handleEmptySlotClick(slot)}
+                            className={styles.availableSlotBtn}
+                            title="Hacer clic para crear una cita en este horario"
+                          >
+                            <span className={styles.plusIcon}>+</span>
+                            <span className={styles.availableText}>Disponible</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return slotAppointments.map((appt, index) => {
+                    const isExpanded = expandedApptId === appt.id;
+                    return (
+                      <tr 
+                        key={`${slot}-${appt.id}`} 
+                        className={`${styles.agendaRow} ${isExpanded ? styles.cardExpanded : ''}`}
+                        onClick={() => toggleExpandAppt(appt.id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {index === 0 ? (
+                          <td className={styles.timeCell} rowSpan={slotAppointments.length}>
+                            <span className={styles.timeLabel}>{slot}</span>
+                          </td>
+                        ) : null}
+                        <td data-label="Presentismo" className={styles.statusCell}>
+                          {getStatusBadge(appt.status)}
+                          {appt.delay_minutes > 0 && (
+                            <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
+                          )}
+                          <div className={`${styles.mobileChevron} ${isExpanded ? styles.rotated : ''}`}>
+                            <Icon name="chevronRight" size={16} />
                           </div>
-                        ) : (
-                          <span className={styles.particularLabel}>Particular</span>
-                        )}
-                      </td>
-                      <td data-label="Observación" className={styles.observationCell}>
-                        <span className={styles.serviceNameBadge}>
-                          {appt.service_name || 'Consulta General'}
-                        </span>
-                        <div className={styles.reasonText}>
-                          {appt.reason_for_visit || 'Visita general'}
-                        </div>
-                      </td>
-                      <td data-label="Acciones" className={styles.actionsCell}>
-                        <div className={styles.actionButtons}>
-                          {['pending', 'pending_payment'].includes(appt.status) ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
-                                className={styles.acceptBtn}
-                                title="Confirmar/Aceptar cita"
-                              >
-                                ✓ Aceptar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); handleRejectAppointment(appt.id); }}
-                                className={styles.rejectBtn}
-                                title="Rechazar cita"
-                              >
-                                ✗ Rechazar
-                              </button>
-                            </>
-                          ) : ['scheduled', 'absent'].includes(appt.status) ? (
-                            <>
-                              <select
-                                value={appt.status}
-                                onChange={(e) => { e.stopPropagation(); handleStatusChange(appt.id, e.target.value); }}
-                                className={styles.statusSelect}
-                              >
-                                <option value="scheduled">Programado</option>
-                                <option value="completed">Completado</option>
-                                <option value="cancelled">Cancelado</option>
-                                <option value="absent">Ausente</option>
-                              </select>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
-                                className={styles.delayBtn}
-                                title="Registrar retraso"
-                              >
-                                ⏱️ Retraso
-                              </button>
-                            </>
-                          ) : (
-                            <div className={styles.statusOnly}>
-                              {getStatusBadge(appt.status)}
+                        </td>
+                        <td data-label="Paciente" className={styles.patientCell}>
+                          <div className={styles.pName}>{appt.patient_name}</div>
+                          <div className={styles.pPhone}>{appt.patient_phone}</div>
+                        </td>
+                        <td data-label="Obra social / Plan" className={styles.insuranceCell}>
+                          {appt.insurance_name ? (
+                            <div className={styles.insuranceBadge}>
+                              {appt.insurance_name}
+                              {appt.insurance_plan_name ? ` (${appt.insurance_plan_name})` : ''}
                             </div>
+                          ) : (
+                            <span className={styles.particularLabel}>Particular</span>
                           )}
-                          
-                          {!['cancelled', 'rejected'].includes(appt.status) && (
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
-                              className={styles.whatsappBtn}
-                              title="Recordar cita por WhatsApp"
-                            >
-                              <Icon name="whatsapp" size={18} color="#FFF" />
-                              WPP
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                });
-              })}
-            </tbody>
-          </table>
+                        </td>
+                        <td data-label="Observación" className={styles.observationCell}>
+                          <span className={styles.serviceNameBadge}>
+                            {appt.service_name || 'Consulta General'}
+                          </span>
+                          <div className={styles.reasonText}>
+                            {appt.reason_for_visit || 'Visita general'}
+                          </div>
+                        </td>
+                        <td data-label="Acciones" className={styles.actionsCell}>
+                          <div className={styles.actionButtons}>
+                            {['pending', 'pending_payment'].includes(appt.status) ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
+                                  className={styles.acceptBtn}
+                                  title="Confirmar/Aceptar cita"
+                                >
+                                  ✓ Aceptar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleRejectAppointment(appt.id); }}
+                                  className={styles.rejectBtn}
+                                  title="Rechazar cita"
+                                >
+                                  ✗ Rechazar
+                                </button>
+                              </>
+                            ) : ['scheduled', 'absent'].includes(appt.status) ? (
+                              <>
+                                <select
+                                  value={appt.status}
+                                  onChange={(e) => { e.stopPropagation(); handleStatusChange(appt.id, e.target.value); }}
+                                  className={styles.statusSelect}
+                                >
+                                  <option value="scheduled">Programado</option>
+                                  <option value="completed">Completado</option>
+                                  <option value="cancelled">Cancelado</option>
+                                  <option value="absent">Ausente</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
+                                  className={styles.delayBtn}
+                                  title="Registrar retraso"
+                                >
+                                  ⏱️ Retraso
+                                </button>
+                              </>
+                            ) : (
+                              <div className={styles.statusOnly}>
+                                {getStatusBadge(appt.status)}
+                              </div>
+                            )}
+                            
+                            {!['cancelled', 'rejected'].includes(appt.status) && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
+                                className={styles.whatsappBtn}
+                                title="Recordar cita por WhatsApp"
+                              >
+                                <Icon name="whatsapp" size={18} color="#FFF" />
+                                WPP
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  });
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
@@ -929,147 +1035,277 @@ export default function AppointmentsPage() {
             <p>No hay citas que coincidan con tus filtros</p>
           </div>
         ) : (
-          <div className={styles.tableContainer}>
-            <table className={styles.appointmentsTable}>
-              <thead>
-                <tr>
-                  <th>Turno</th>
-                  <th>Cliente</th>
-                  <th>Servicio</th>
-                  <th>Motivo / Obra Social</th>
-                  <th>Costo Total</th>
-                  <th>Seña Pagada</th>
-                  <th>Cobertura OS</th>
-                  <th>Estado</th>
-                  <th className={styles.toChargeHeader}>A COBRAR</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAppointments.map((appt) => {
-                  const toCharge = parseFloat(appt.total_price || 0) - parseFloat(appt.booking_fee_paid || 0) - parseFloat(appt.coverage_amount || 0);
-                  const isExpanded = expandedApptId === appt.id;
-                  return (
-                    <tr 
-                      key={appt.id}
-                      className={`${isExpanded ? styles.cardExpanded : ''}`}
-                      onClick={() => toggleExpandAppt(appt.id)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <td className={styles.dateTime} data-label="Turno">
-                        <div className={styles.date}>
+          <>
+            {/* Vista Escritorio (Tabla) */}
+            <div className={styles.desktopTableView}>
+              <div className={styles.tableContainer}>
+                <table className={styles.appointmentsTable}>
+                  <thead>
+                    <tr>
+                      <th>Turno</th>
+                      <th>Cliente</th>
+                      <th>Servicio</th>
+                      <th>Motivo / Obra Social</th>
+                      <th>Costo Total</th>
+                      <th>Seña Pagada</th>
+                      <th>Cobertura OS</th>
+                      <th>Estado</th>
+                      <th className={styles.toChargeHeader}>A COBRAR</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAppointments.map((appt) => {
+                      const toCharge = parseFloat(appt.total_price || 0) - parseFloat(appt.booking_fee_paid || 0) - parseFloat(appt.coverage_amount || 0);
+                      const isExpanded = expandedApptId === appt.id;
+                      return (
+                        <tr 
+                          key={appt.id}
+                          className={`${isExpanded ? styles.cardExpanded : ''}`}
+                          onClick={() => toggleExpandAppt(appt.id)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <td className={styles.dateTime} data-label="Turno">
+                            <div className={styles.date}>
+                              {(() => {
+                                const dateStr = String(appt.appointment_date).split('T')[0];
+                                const d = new Date(dateStr + 'T12:00:00');
+                                return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                              })()}
+                            </div>
+                            <div className={styles.time}>{appt.appointment_time}</div>
+                            <div className={styles.miniCode}>{appt.appointment_code}</div>
+                            <div className={`${styles.mobileChevron} ${isExpanded ? styles.rotated : ''}`}>
+                              <Icon name="chevronRight" size={16} />
+                            </div>
+                          </td>
+                          <td className={styles.patientInfo} data-label="Cliente">
+                            <div className={styles.pName}>{appt.patient_name}</div>
+                            <div className={styles.pPhone}>{appt.patient_phone}</div>
+                          </td>
+                          <td data-label="Servicio">
+                            <span className={styles.serviceNameBadge}>
+                              {appt.service_name || 'Consulta General'}
+                            </span>
+                          </td>
+                          <td className={styles.reasonCol} data-label="Motivo / OS">
+                            <div className={styles.reasonText}>{appt.reason_for_visit || 'Visita general'}</div>
+                            {appt.insurance_name && (
+                              <div className={styles.insuranceBadge}>
+                                {appt.insurance_name}
+                                {appt.insurance_plan_name ? ` (${appt.insurance_plan_name})` : ''}
+                              </div>
+                            )}
+                          </td>
+                          <td className={styles.amount} data-label="Total">
+                            ${parseFloat(appt.total_price || 0).toLocaleString()}
+                          </td>
+                          <td className={styles.feePaid} data-label="Seña">
+                            ${parseFloat(appt.booking_fee_paid || 0).toLocaleString()}
+                          </td>
+                          <td className={styles.coverage} data-label="Cobertura">
+                            {parseFloat(appt.coverage_amount || 0) > 0 ? `-$${parseFloat(appt.coverage_amount).toLocaleString()}` : '-'}
+                          </td>
+                          <td data-label="Estado">{getStatusBadge(appt.status)}</td>
+                          <td className={styles.toChargeCell} data-label="A COBRAR">
+                            <div className={styles.toChargeAmount}>
+                              ${toCharge > 0 ? toCharge.toLocaleString() : '0'}
+                            </div>
+                          </td>
+                          <td className={styles.actions} data-label="Acciones">
+                            <div className={styles.actionButtons}>
+                            {['pending', 'pending_payment'].includes(appt.status) ? (
+                              <>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
+                                  className={styles.acceptBtn}
+                                  title="Confirmar/Aceptar cita"
+                                >
+                                  ✓ Aceptar
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleRejectAppointment(appt.id); }}
+                                  className={styles.rejectBtn}
+                                  title="Rechazar cita"
+                                >
+                                  ✗ Rechazar
+                                </button>
+                              </>
+                            ) : ['scheduled', 'absent'].includes(appt.status) ? (
+                              <>
+                                <select
+                                  value={appt.status}
+                                  onChange={(e) => { e.stopPropagation(); handleStatusChange(appt.id, e.target.value); }}
+                                  className={styles.statusSelect}
+                                >
+                                  <option value="scheduled">Programado</option>
+                                  <option value="completed">Completado</option>
+                                  <option value="cancelled">Cancelado</option>
+                                  <option value="absent">Ausente</option>
+                                </select>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
+                                  className={styles.delayBtn}
+                                  title="Registrar retraso"
+                                >
+                                  ⏱️ Retraso
+                                </button>
+                              </>
+                            ) : (
+                              <div className={styles.statusOnly}>
+                                {getStatusBadge(appt.status)}
+                              </div>
+                            )}
+                            
+                            {/* WhatsApp siempre disponible si hay teléfono y no es estado final negativo */}
+                            {!['cancelled', 'rejected'].includes(appt.status) && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
+                                className={styles.whatsappBtn}
+                                title="Recordar cita por WhatsApp"
+                              >
+                                <Icon name="whatsapp" size={18} color="#FFF" />
+                                WPP
+                              </button>
+                            )}
+                            </div>
+                            {appt.delay_minutes > 0 && (
+                              <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Vista Móvil (Tarjetas) */}
+            <div className={styles.mobileCardsList}>
+              {filteredAppointments.map((appt) => {
+                const toCharge = parseFloat(appt.total_price || 0) - parseFloat(appt.booking_fee_paid || 0) - parseFloat(appt.coverage_amount || 0);
+                return (
+                  <div key={appt.id} className={styles.mobileApptCard}>
+                    <div className={styles.cardHeaderMobile}>
+                      <div className={styles.mobileApptDateTime}>
+                        <strong>
                           {(() => {
                             const dateStr = String(appt.appointment_date).split('T')[0];
                             const d = new Date(dateStr + 'T12:00:00');
-                            return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                            return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', weekday: 'short' });
                           })()}
-                        </div>
-                        <div className={styles.time}>{appt.appointment_time}</div>
-                        <div className={styles.miniCode}>{appt.appointment_code}</div>
-                        <div className={`${styles.mobileChevron} ${isExpanded ? styles.rotated : ''}`}>
-                          <Icon name="chevronRight" size={16} />
-                        </div>
-                      </td>
-                      <td className={styles.patientInfo} data-label="Cliente">
-                        <div className={styles.pName}>{appt.patient_name}</div>
-                        <div className={styles.pPhone}>{appt.patient_phone}</div>
-                      </td>
-                      <td data-label="Servicio">
+                        </strong>
+                        <span className={styles.mobileApptTime}>
+                          ⏱️ {appt.appointment_time} hs
+                        </span>
+                      </div>
+                      <div className={styles.mobileApptStatus}>
+                        {getStatusBadge(appt.status)}
+                      </div>
+                    </div>
+
+                    <div className={styles.cardBodyMobile}>
+                      <h3 className={styles.mobilePatientName}>{appt.patient_name}</h3>
+                      <div className={styles.mobilePatientPhone}>📞 {appt.patient_phone || 'Sin teléfono'}</div>
+                      <div className={styles.mobileApptService}>
                         <span className={styles.serviceNameBadge}>
                           {appt.service_name || 'Consulta General'}
                         </span>
-                      </td>
-                      <td className={styles.reasonCol} data-label="Motivo / OS">
-                        <div className={styles.reasonText}>{appt.reason_for_visit || 'Visita general'}</div>
-                        {appt.insurance_name && (
-                          <div className={styles.insuranceBadge}>
-                            {appt.insurance_name}
-                            {appt.insurance_plan_name ? ` (${appt.insurance_plan_name})` : ''}
-                          </div>
-                        )}
-                      </td>
-                      <td className={styles.amount} data-label="Total">
-                        ${parseFloat(appt.total_price || 0).toLocaleString()}
-                      </td>
-                      <td className={styles.feePaid} data-label="Seña">
-                        ${parseFloat(appt.booking_fee_paid || 0).toLocaleString()}
-                      </td>
-                      <td className={styles.coverage} data-label="Cobertura">
-                        {parseFloat(appt.coverage_amount || 0) > 0 ? `-$${parseFloat(appt.coverage_amount).toLocaleString()}` : '-'}
-                      </td>
-                      <td data-label="Estado">{getStatusBadge(appt.status)}</td>
-                      <td className={styles.toChargeCell} data-label="A COBRAR">
-                        <div className={styles.toChargeAmount}>
-                          ${toCharge > 0 ? toCharge.toLocaleString() : '0'}
+                      </div>
+                      {appt.reason_for_visit && (
+                        <p className={styles.mobileApptReason}>
+                          <strong>Motivo:</strong> {appt.reason_for_visit}
+                        </p>
+                      )}
+                      {appt.insurance_name && (
+                        <div className={styles.mobileApptInsurance}>
+                          🛡️ {appt.insurance_name} {appt.insurance_plan_name ? `(${appt.insurance_plan_name})` : ''}
                         </div>
-                      </td>
-                      <td className={styles.actions} data-label="Acciones">
-                        <div className={styles.actionButtons}>
-                        {['pending', 'pending_payment'].includes(appt.status) ? (
-                          <>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
-                              className={styles.acceptBtn}
-                              title="Confirmar/Aceptar cita"
-                            >
-                              ✓ Aceptar
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleRejectAppointment(appt.id); }}
-                              className={styles.rejectBtn}
-                              title="Rechazar cita"
-                            >
-                              ✗ Rechazar
-                            </button>
-                          </>
-                        ) : ['scheduled', 'absent'].includes(appt.status) ? (
-                          <>
-                            <select
-                              value={appt.status}
-                              onChange={(e) => { e.stopPropagation(); handleStatusChange(appt.id, e.target.value); }}
-                              className={styles.statusSelect}
-                            >
-                              <option value="scheduled">Programado</option>
-                              <option value="completed">Completado</option>
-                              <option value="cancelled">Cancelado</option>
-                              <option value="absent">Ausente</option>
-                            </select>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
-                              className={styles.delayBtn}
-                              title="Registrar retraso"
-                            >
-                              ⏱️ Retraso
-                            </button>
-                          </>
-                        ) : (
-                          <div className={styles.statusOnly}>
-                            {getStatusBadge(appt.status)}
+                      )}
+                      
+                      <div className={styles.mobilePricesGroup}>
+                        <div className={styles.mobilePriceRow}>
+                          <span>Costo Total:</span>
+                          <strong>${parseFloat(appt.total_price || 0).toLocaleString()}</strong>
+                        </div>
+                        {parseFloat(appt.booking_fee_paid || 0) > 0 && (
+                          <div className={styles.mobilePriceRow}>
+                            <span>Seña Pagada:</span>
+                            <strong>${parseFloat(appt.booking_fee_paid).toLocaleString()}</strong>
                           </div>
                         )}
-                        
-                        {/* WhatsApp siempre disponible si hay teléfono y no es estado final negativo */}
-                        {!['cancelled', 'rejected'].includes(appt.status) && (
+                        {parseFloat(appt.coverage_amount || 0) > 0 && (
+                          <div className={styles.mobilePriceRow}>
+                            <span>Cobertura:</span>
+                            <strong>-${parseFloat(appt.coverage_amount).toLocaleString()}</strong>
+                          </div>
+                        )}
+                        <div className={`${styles.mobilePriceRow} ${styles.mobileToChargeRow}`}>
+                          <span>A Cobrar:</span>
+                          <strong>${toCharge > 0 ? toCharge.toLocaleString() : '0'}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.cardActionsMobile}>
+                      {['pending', 'pending_payment'].includes(appt.status) ? (
+                        <>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
-                            className={styles.whatsappBtn}
-                            title="Recordar cita por WhatsApp"
+                            onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
+                            className={styles.mobileAcceptBtn}
                           >
-                            <Icon name="whatsapp" size={18} color="#FFF" />
-                            WPP
+                            Aceptar
                           </button>
-                        )}
-                        </div>
-                        {appt.delay_minutes > 0 && (
-                          <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRejectAppointment(appt.id); }}
+                            className={styles.mobileRejectBtn}
+                          >
+                            Rechazar
+                          </button>
+                        </>
+                      ) : ['scheduled', 'absent'].includes(appt.status) ? (
+                        <>
+                          <select
+                            value={appt.status}
+                            onChange={(e) => { e.stopPropagation(); handleStatusChange(appt.id, e.target.value); }}
+                            className={styles.mobileStatusSelect}
+                          >
+                            <option value="scheduled">Programado</option>
+                            <option value="completed">Completado</option>
+                            <option value="cancelled">Cancelado</option>
+                            <option value="absent">Ausente</option>
+                          </select>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDelayModal({ show: true, appointmentId: appt.id }); }}
+                            className={styles.mobileDelayBtn}
+                          >
+                            ⏱️ Retrasar
+                          </button>
+                        </>
+                      ) : null}
+
+                      {!['cancelled', 'rejected'].includes(appt.status) && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
+                          className={styles.mobileWhatsappBtn}
+                        >
+                          <Icon name="whatsapp" size={18} color="#FFF" />
+                          <span>WhatsApp</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {appt.delay_minutes > 0 && (
+                      <div className={styles.mobileDelayBadge}>
+                        ⏱️ Retrasado +{appt.delay_minutes} min
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         <div className={styles.footer}>

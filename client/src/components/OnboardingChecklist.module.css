@@ -329,3 +329,62 @@
     padding: 1.25rem 1.5rem;
   }
 }
+
+@media (max-width: 480px) {
+  .stepsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding-top: 12px !important;
+    margin-top: 12px !important;
+  }
+
+  .stepCard {
+    min-height: auto !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    padding: 10px 12px !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .stepHeader {
+    margin-bottom: 0 !important;
+    flex-direction: row-reverse !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .stepBody {
+    flex: 1 !important;
+    text-align: left !important;
+  }
+
+  .stepTitle {
+    font-size: 0.9rem !important;
+    margin-bottom: 2px !important;
+    line-height: 1.2 !important;
+  }
+
+  .stepDesc {
+    font-size: 0.75rem !important;
+    line-height: 1.3 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .stepFooter {
+    margin-top: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .actionLink {
+    font-size: 0.75rem !important;
+  }
+
+  .actionLink span {
+    display: none !important;
+  }
+}
