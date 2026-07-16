@@ -1316,4 +1316,151 @@
   }
 }
 
+/* PWA App Marketing Card Styling */
+.appMarketingCard {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.appMarketingHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.appMarketingIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 12px;
+  color: #16a34a;
+  box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.1);
+  flex-shrink: 0;
+}
+
+.appMarketingIcon span {
+  font-size: 26px;
+}
+
+.appMarketingText h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #14532d;
+}
+
+.appMarketingText p {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.925rem;
+  color: #15803d;
+  line-height: 1.4;
+}
+
+.appMarketingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.instructionColumn {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(22, 163, 74, 0.15);
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.platformTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(22, 163, 74, 0.1);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.platformTitle h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #14532d;
+}
+
+.instructionList {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: #166534;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.4;
+}
+
+.instructionList li strong {
+  color: #14532d;
+}
+
+.appMarketingAction {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+}
+
+.installBtnLarge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.75rem 1.75rem;
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+}
+
+.installBtnLarge:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3);
+}
+
+@media (max-width: 768px) {
+  .appMarketingCard {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  .appMarketingGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .instructionColumn {
+    padding: 1rem;
+  }
+
+  .installBtnLarge {
+    width: 100%;
+  }
+}
+
 
