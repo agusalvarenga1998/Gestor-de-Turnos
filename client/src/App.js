@@ -26,6 +26,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import AccountPendingPage from './pages/AccountPendingPage';
 import SubscriptionExpiredPage from './pages/SubscriptionExpiredPage';
 import SuspendedPage from './pages/SuspendedPage';
+import InstallAppPage from './pages/InstallAppPage';
 
 // Páginas - Admin
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -87,6 +88,7 @@ function AppContent() {
       <Route path="/support" element={<SupportPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
       <Route path="/terms" element={<TermsOfServicePage />} />
+      <Route path="/install-app" element={<InstallAppPage />} />
 
       {/* Rutas del Admin */}
       <Route path="/admin/login" element={<AdminLoginPage />} />

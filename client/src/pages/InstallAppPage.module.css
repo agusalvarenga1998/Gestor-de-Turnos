@@ -1,0 +1,199 @@
+.container {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  padding: 3rem 1.5rem;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.header {
+  text-align: center;
+  max-width: 600px;
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.logoIcon {
+  font-size: 32px;
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.logoText {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin: 1rem 0 0 0;
+  line-height: 1.5;
+}
+
+.actionSection {
+  margin-bottom: 3rem;
+}
+
+.primaryInstallBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 1rem 2.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+  transition: all 0.2s ease;
+}
+
+.primaryInstallBtn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.5);
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 1000px;
+  width: 100%;
+  margin-bottom: 3rem;
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.cardHeader h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.stepList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.stepList li {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.stepNumber {
+  background-color: #eff6ff;
+  color: var(--primary-color);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.stepList li p {
+  margin: 0;
+  font-size: 0.975rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.stepList li strong {
+  color: var(--text-primary);
+}
+
+.footer {
+  text-align: center;
+  margin-top: auto;
+}
+
+.closeTabBtn {
+  background: none;
+  border: 1.5px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeTabBtn:hover {
+  background-color: #f1f5f9;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 2rem 1rem;
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .stepsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+
+  .primaryInstallBtn {
+    width: 100%;
+  }
+}

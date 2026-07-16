@@ -23,43 +23,12 @@ export default function DashboardNewPage() {
   const { user } = useAuth();
   const { isConnected } = useWebSocketContext();
   const [loading, setLoading] = useState(true);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    // Detectar iOS y standalone
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const ios = /iphone|ipad|ipod/.test(userAgent);
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    setIsIOS(ios);
     setIsStandalone(standalone);
-
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallPrompt(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
   }, []);
-
-  const handleInstallPWA = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`PWA Installation outcome: ${outcome}`);
-      setDeferredPrompt(null);
-      setShowInstallPrompt(false);
-    } else if (isIOS) {
-      alert("Para instalar TurnoHub en tu iPhone/iPad: Presiona el botón Compartir (📤) en la barra inferior de Safari y luego selecciona 'Agregar a Inicio' (➕).");
-    }
-  };
   const [stats, setStats] = useState({
     appointmentsToday: 0,
     totalPatients: 0,
@@ -316,9 +285,9 @@ export default function DashboardNewPage() {
           </div>
           
           <div className={styles.headerActions}>
-            {(showInstallPrompt || (isIOS && !isStandalone)) && (
+            {!isStandalone && (
               <button 
-                onClick={handleInstallPWA}
+                onClick={() => window.open('/install-app', '_blank')}
                 className={styles.installAppBtn}
                 style={{ marginRight: '1rem' }}
               >
@@ -396,49 +365,26 @@ export default function DashboardNewPage() {
           </div>
         )}
 
-        <div className={styles.appMarketingCard}>
-          <div className={styles.appMarketingHeader}>
-            <div className={styles.appMarketingIcon}>
-              <span className="material-symbols-outlined">install_mobile</span>
-            </div>
-            <div className={styles.appMarketingText}>
-              <h3>¡Lleva TurnoHub en tu Celular! 📱</h3>
-              <p>Instala la aplicación para acceder en un toque, recibir notificaciones al instante y usar el sistema de forma más rápida.</p>
-            </div>
-          </div>
-          <div className={styles.appMarketingGrid}>
-            <div className={styles.instructionColumn}>
-              <div className={styles.platformTitle}>
-                <span className="material-symbols-outlined" style={{ color: '#3ddc84', fontSize: '20px' }}>android</span>
-                <h4>Android (Chrome)</h4>
+        {!isStandalone && (
+          <div className={styles.downloadAppBanner}>
+            <div className={styles.downloadAppBannerLeft}>
+              <div className={styles.downloadAppBannerIcon}>
+                <span className="material-symbols-outlined">install_mobile</span>
               </div>
-              <ol className={styles.instructionList}>
-                <li>Abre TurnoHub desde <strong>Chrome</strong>.</li>
-                <li>Toca los <strong>tres puntos (⋮)</strong> arriba a la derecha.</li>
-                <li>Selecciona <strong>"Instalar aplicación"</strong> o <strong>"Agregar a pantalla principal"</strong>.</li>
-              </ol>
-            </div>
-            <div className={styles.instructionColumn}>
-              <div className={styles.platformTitle}>
-                <span className="material-symbols-outlined" style={{ color: '#1e293b', fontSize: '20px' }}>apple</span>
-                <h4>iOS - iPhone (Safari)</h4>
+              <div className={styles.downloadAppBannerText}>
+                <h3>Lleva TurnoHub en tu celular 📱</h3>
+                <p>Instala la aplicación para acceder en un toque y recibir alertas al instante.</p>
               </div>
-              <ol className={styles.instructionList}>
-                <li>Abre TurnoHub desde <strong>Safari</strong>.</li>
-                <li>Toca el botón <strong>Compartir (📤)</strong> abajo.</li>
-                <li>Desplázate y selecciona <strong>"Agregar a Inicio" (➕)</strong>.</li>
-              </ol>
             </div>
+            <button 
+              onClick={() => window.open('/install-app', '_blank')} 
+              className={styles.downloadAppBannerBtn}
+            >
+              <Icon name="download" size={16} color="currentColor" />
+              <span>Ver Cómo Instalar</span>
+            </button>
           </div>
-          {(showInstallPrompt || (isIOS && !isStandalone)) && (
-            <div className={styles.appMarketingAction}>
-              <button onClick={handleInstallPWA} className={styles.installBtnLarge}>
-                <Icon name="download" size={20} color="currentColor" />
-                <span>Instalar TurnoHub Ahora</span>
-              </button>
-            </div>
-          )}
-        </div>
+        )}
 
         <div className={styles.dashboardGrid}>
           {/* Main Column: Agenda */}
