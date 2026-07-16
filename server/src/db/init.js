@@ -84,6 +84,15 @@ async function initDatabase(retries = 3) {
     `);
 
     await client.query(`
+      ALTER TABLE doctors
+      ADD COLUMN IF NOT EXISTS token_version INTEGER DEFAULT 1,
+      ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS verification_token UUID DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS two_factor_secret TEXT DEFAULT NULL;
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS patients (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
@@ -293,6 +302,111 @@ async function initDatabase(retries = 3) {
       );
     `);
     console.log('✓ Tabla admin_template_services creada');
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS movements (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+        appointment_id UUID REFERENCES appointments(id) ON DELETE SET NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        type VARCHAR(50) NOT NULL, -- 'cobro', 'seña', 'deuda', 'reembolso', 'gasto'
+        payment_method VARCHAR(50) NOT NULL, -- 'efectivo', 'transferencia', 'mercadopago'
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla movements creada');
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID REFERENCES doctors(id) ON DELETE CASCADE,
+        action VARCHAR(100) NOT NULL,
+        details TEXT,
+        ip_address VARCHAR(45),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla audit_logs creada');
+
+    // Crear trigger para registrar movimientos de caja de forma automática
+    await client.query(`
+      CREATE OR REPLACE FUNCTION record_appointment_movements()
+      RETURNS TRIGGER AS $$
+      DECLARE
+        diff_seña DECIMAL(10,2);
+        remaining DECIMAL(10,2);
+      BEGIN
+        -- 1. Registrar seña (booking_fee_paid) cuando se crea o incrementa
+        IF (TG_OP = 'INSERT') THEN
+          IF (NEW.booking_fee_paid > 0) THEN
+            INSERT INTO movements (doctor_id, appointment_id, amount, type, payment_method, description)
+            VALUES (
+              NEW.doctor_id, 
+              NEW.id, 
+              NEW.booking_fee_paid, 
+              'seña', 
+              'mercadopago', 
+              'Seña registrada al crear turno'
+            );
+          END IF;
+        ELSIF (TG_OP = 'UPDATE') THEN
+          diff_seña := COALESCE(NEW.booking_fee_paid, 0) - COALESCE(OLD.booking_fee_paid, 0);
+          IF (diff_seña > 0) THEN
+            INSERT INTO movements (doctor_id, appointment_id, amount, type, payment_method, description)
+            VALUES (
+              NEW.doctor_id, 
+              NEW.id, 
+              diff_seña, 
+              'seña', 
+              'mercadopago', 
+              'Abono de seña registrado'
+            );
+          END IF;
+
+          -- 2. Registrar cobro final si el estado de pago cambia a 'paid'
+          IF (NEW.payment_status = 'paid' AND (OLD.payment_status IS NULL OR OLD.payment_status != 'paid')) THEN
+            remaining := COALESCE(NEW.total_price, 0) - COALESCE(NEW.booking_fee_paid, 0) - COALESCE(NEW.coverage_amount, 0);
+            IF (remaining > 0) THEN
+              INSERT INTO movements (doctor_id, appointment_id, amount, type, payment_method, description)
+              VALUES (
+                NEW.doctor_id, 
+                NEW.id, 
+                remaining, 
+                'cobro', 
+                'efectivo', 
+                'Cobro de saldo restante'
+              );
+            END IF;
+          END IF;
+
+          -- 3. Registrar reembolso si la cita se cancela/rechaza y se había pagado algo
+          IF (NEW.status IN ('cancelled', 'rejected') AND OLD.status NOT IN ('cancelled', 'rejected')) THEN
+            IF (COALESCE(OLD.booking_fee_paid, 0) > 0) THEN
+              INSERT INTO movements (doctor_id, appointment_id, amount, type, payment_method, description)
+              VALUES (
+                NEW.doctor_id, 
+                NEW.id, 
+                -OLD.booking_fee_paid, 
+                'reembolso', 
+                'efectivo', 
+                'Reembolso automático por cancelación de turno'
+              );
+            END IF;
+          END IF;
+        END IF;
+        
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      DROP TRIGGER IF EXISTS trg_record_appointment_movements ON appointments;
+      CREATE TRIGGER trg_record_appointment_movements
+      AFTER INSERT OR UPDATE ON appointments
+      FOR EACH ROW
+      EXECUTE FUNCTION record_appointment_movements();
+    `);
+    console.log('✓ Trigger trg_record_appointment_movements creado/verificado');
 
     // Crear usuario admin por defecto
     const adminEmail = 'admin@example.com';

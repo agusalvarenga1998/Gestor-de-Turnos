@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
+import { query } from '../db/config.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
 // Middleware para verificar JWT
-export const verifyToken = (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -16,6 +17,16 @@ export const verifyToken = (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
+
+    // Validar versión del token contra la base de datos
+    const result = await query('SELECT token_version FROM doctors WHERE id = $1', [decoded.id]);
+    if (result.rows.length === 0 || result.rows[0].token_version !== decoded.token_version) {
+      return res.status(401).json({
+        success: false,
+        message: 'Sesión inválida o expirada. Inicia sesión nuevamente.'
+      });
+    }
+
     next();
   } catch (error) {
     res.status(401).json({
@@ -110,7 +121,8 @@ export const generateToken = (user) => {
       role: 'doctor', // Los que hacen login son siempre doctores
       name: user.name,
       status: user.status || 'pending',
-      subscription_status: user.subscription_status || 'pending'
+      subscription_status: user.subscription_status || 'pending',
+      token_version: user.token_version || 1
     },
     JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }

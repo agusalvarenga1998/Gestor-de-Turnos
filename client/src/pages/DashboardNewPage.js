@@ -302,8 +302,8 @@ export default function DashboardNewPage() {
           </div>
         </header>
 
-        {/* Banner de Configuración Pendiente */}
-        {showOnboardingBanner && (
+        {/* Banner de Configuración Pendiente (Onboarding) */}
+        {stats.incompleteConfig && stats.incompleteConfig.length > 0 && (
           <div className={styles.onboardingBanner}>
             <div className={styles.onboardingBannerLeft}>
               <div className={styles.onboardingBannerIcon}>
@@ -311,11 +311,18 @@ export default function DashboardNewPage() {
               </div>
               <div className={styles.onboardingBannerText}>
                 <h3>Configuración pendiente de tu consultorio</h3>
-                <p>Completa los pasos iniciales (perfil, horarios y servicios) para comenzar a recibir reservas online.</p>
+                <p>
+                  Aún quedan tareas pendientes:{' '}
+                  {stats.incompleteConfig.map(c => 
+                    c === 'profile' ? 'Perfil del Doctor' : 
+                    c === 'hours' ? 'Horarios de Atención' : 
+                    c === 'services' ? 'Mis Servicios' : c
+                  ).join(', ')}. Completa los pasos para comenzar a recibir reservas online.
+                </p>
               </div>
             </div>
-            <button onClick={() => navigate('/onboarding')} className={styles.onboardingBannerBtn}>
-              <span>Ir a la Guía de Inicio</span>
+            <button onClick={() => navigate('/settings')} className={styles.onboardingBannerBtn}>
+              <span>Completar Configuración</span>
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
           </div>
@@ -386,21 +393,98 @@ export default function DashboardNewPage() {
           </div>
         )}
 
+        {/* Fila de Indicadores y Acciones Urgentes */}
+        <div className={styles.actionableMetrics}>
+          {stats.pendingApprovalCount > 0 && (
+            <div className={`${styles.actionCard} ${styles.danger}`} onClick={() => navigate('/appointments?tab=pending')}>
+              <div className={styles.actionCardHeader}>
+                <span className={styles.actionNumber}>{stats.pendingApprovalCount}</span>
+                <Icon name="warning" size={20} />
+              </div>
+              <p className={styles.actionText}>Por Aprobar</p>
+            </div>
+          )}
+          
+          {stats.pendingPaymentCount > 0 && (
+            <div className={`${styles.actionCard} ${styles.warning}`} onClick={() => navigate('/appointments?tab=pending-payment')}>
+              <div className={styles.actionCardHeader}>
+                <span className={styles.actionNumber}>{stats.pendingPaymentCount}</span>
+                <Icon name="wallet" size={20} />
+              </div>
+              <p className={styles.actionText}>Pagos Pendientes</p>
+            </div>
+          )}
+
+          {stats.indebtedPatientsCount > 0 && (
+            <div className={`${styles.actionCard} ${styles.orange}`} onClick={() => navigate('/movements')}>
+              <div className={styles.actionCardHeader}>
+                <span className={styles.actionNumber}>{stats.indebtedPatientsCount}</span>
+                <Icon name="users" size={20} />
+              </div>
+              <p className={styles.actionText}>Clientes con Deuda</p>
+            </div>
+          )}
+
+          {stats.recentCancellationsCount > 0 && (
+            <div className={`${styles.actionCard} ${styles.info}`} onClick={() => navigate('/appointments?tab=cancelled')}>
+              <div className={styles.actionCardHeader}>
+                <span className={styles.actionNumber}>{stats.recentCancellationsCount}</span>
+                <Icon name="calendar" size={20} />
+              </div>
+              <p className={styles.actionText}>Cancelados Recientes</p>
+            </div>
+          )}
+
+          <div className={`${styles.actionCard} ${styles.success}`}>
+            <div className={styles.actionCardHeader}>
+              <span className={styles.actionNumber}>{stats.availableSlotsCount}</span>
+              <Icon name="clock" size={20} />
+            </div>
+            <p className={styles.actionText}>Horas Libres Hoy</p>
+          </div>
+        </div>
+
+        {/* Tarjeta de Próximo Turno */}
+        {stats.nextAppointment && (
+          <div className={styles.nextAppointmentCard}>
+            <div className={styles.nextApptHeader}>
+              <span className={styles.nextApptBadge}>Siguiente Paciente</span>
+              <span className={styles.nextApptTime}>
+                <Icon name="clock" size={16} /> {stats.nextAppointment.appointment_time.substring(0, 5)} hs
+              </span>
+            </div>
+            <div className={styles.nextApptBody}>
+              <div>
+                <h3 className={styles.nextPatientName}>{stats.nextAppointment.patient_name}</h3>
+                <p className={styles.nextApptReason}>
+                  💼 {stats.nextAppointment.service_name || 'Consulta General'} ({stats.nextAppointment.duration_minutes || 30} min)
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedAppointment(stats.nextAppointment)} 
+                className={styles.viewNextBtn}
+              >
+                <Icon name="eye" size={16} /> Ver Detalles
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className={styles.dashboardGrid}>
           {/* Main Column: Agenda */}
           <main className={styles.agendaColumn}>
             {/* Turnos Pendientes Section */}
             <div className={styles.agendaSection}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Turnos Pendientes de Hoy</h2>
-                <span className={`${styles.countBadge} ${styles.pendingBadge}`}>{pendingAppointments.length} pendientes</span>
+                <h2 className={styles.cardTitle}>Turnos de Hoy</h2>
+                <span className={`${styles.countBadge} ${styles.pendingBadge}`}>{pendingAppointments.length} agendados</span>
               </div>
 
               <div className={styles.appointmentList}>
                 {pendingAppointments.length === 0 ? (
                   <div className={styles.emptyAgendaSmall}>
                     <Icon name="clock" size={20} />
-                    <p>No tienes turnos pendientes para hoy.</p>
+                    <p>No tienes turnos agendados para hoy.</p>
                   </div>
                 ) : (
                   pendingAppointments.map((appt) => (
@@ -452,7 +536,7 @@ export default function DashboardNewPage() {
               <div className={styles.appointmentList}>
                 {completedAppointments.length === 0 ? (
                   <div className={styles.emptyAgendaSmall}>
-                    <Icon name="check-circle" size={20} />
+                    <Icon name="check" size={20} />
                     <p>Aún no has completado ningún turno hoy.</p>
                   </div>
                 ) : (
@@ -484,23 +568,12 @@ export default function DashboardNewPage() {
             </div>
           </main>
 
-          {/* Sidebar Column: Stats & Info */}
+          {/* Sidebar Column: Birthdays & Info */}
           <aside className={styles.statsColumn}>
-            <div className={styles.summaryCard}>
-              <h2 className={styles.summaryTitle}>Resumen General</h2>
-              
-              <div className={styles.statsList}>
-                <StatItem label="Turnos hoy" value={stats?.appointmentsToday || 0} iconName="calendar" color="blue" />
-                <StatItem label="Pendientes" value={stats?.pendingAppointments || 0} iconName="clock" color="orange" />
-                <StatItem label="Completados" value={stats?.completedThisMonth || 0} iconName="check-circle" color="green" />
-                <StatItem label="Total clientes" value={stats?.totalPatients || 0} iconName="users" color="purple" />
-              </div>
-            </div>
-
-            {upcomingBirthdays.length > 0 && (
+            {upcomingBirthdays.length > 0 ? (
               <div className={styles.birthdaysCard}>
                 <div className={styles.cardHeaderSmall}>
-                  <Icon name="gift" size={18} color="#e11d48" />
+                  <Icon name="users" size={18} color="#e11d48" />
                   <h3>Cumpleaños de la semana</h3>
                 </div>
                 <div className={styles.birthdayList}>
@@ -513,6 +586,11 @@ export default function DashboardNewPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            ) : (
+              <div className={styles.quickGuideCard}>
+                <h3>Dashboard Accionable</h3>
+                <p>Este panel principal te muestra únicamente lo que requiere atención inmediata para que organices tu día eficientemente.</p>
               </div>
             )}
           </aside>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
@@ -10,6 +11,7 @@ import styles from './AppointmentsPage.module.css';
 
 export default function AppointmentsPage() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,8 +39,10 @@ export default function AppointmentsPage() {
   const [delayModal, setDelayModal] = useState({ show: false, appointmentId: null });
   const [delayMinutes, setDelayMinutes] = useState(15);
 
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'day');
+
   // New calendar states
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'agenda'
+  const [viewMode, setViewMode] = useState(() => (searchParams.get('tab') || 'day') === 'day' ? 'agenda' : 'list'); // 'list' or 'agenda'
   const [expandedApptId, setExpandedApptId] = useState(null);
 
   const toggleExpandAppt = (apptId) => {
@@ -236,24 +240,54 @@ export default function AppointmentsPage() {
     }
   };
 
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName);
+    if (tabName === 'day') {
+      setViewMode('agenda');
+    } else {
+      setViewMode('list');
+    }
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('tab', tabName);
+    setSearchParams(newParams);
+  };
+
   useEffect(() => {
     let filtered = [...appointments];
 
-    // Filtro por Estado
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(a => a.status === filterStatus);
-    }
-
-    // Filtro por Fecha (Normalizado)
-    const activeDateFilter = viewMode === 'agenda' ? selectedDate : filterDate;
-    if (activeDateFilter) {
+    if (activeTab === 'day') {
       filtered = filtered.filter(a => {
         const dateStr = String(a.appointment_date).split('T')[0];
-        return dateStr === activeDateFilter;
+        return dateStr === selectedDate;
       });
+    } else if (activeTab === 'week') {
+      const monday = parseLocalDate(currentWeekStart);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      
+      const monStr = getLocalDateString(monday);
+      const sunStr = getLocalDateString(sunday);
+      
+      filtered = filtered.filter(a => {
+        const dateStr = String(a.appointment_date).split('T')[0];
+        return dateStr >= monStr && dateStr <= sunStr;
+      });
+    } else if (activeTab === 'pending') {
+      filtered = filtered.filter(a => ['pending', 'pending_payment'].includes(a.status));
+    } else if (activeTab === 'cancelled') {
+      filtered = filtered.filter(a => ['cancelled', 'rejected'].includes(a.status));
+    } else { // activeTab === 'all'
+      if (filterStatus !== 'all') {
+        filtered = filtered.filter(a => a.status === filterStatus);
+      }
+      if (filterDate) {
+        filtered = filtered.filter(a => {
+          const dateStr = String(a.appointment_date).split('T')[0];
+          return dateStr === filterDate;
+        });
+      }
     }
 
-    // Filtro por Buscador (Nombre o Teléfono)
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(a => {
@@ -264,7 +298,7 @@ export default function AppointmentsPage() {
     }
 
     setFilteredAppointments(filtered);
-  }, [appointments, searchTerm, filterStatus, filterDate, viewMode, selectedDate]);
+  }, [appointments, searchTerm, filterStatus, filterDate, activeTab, selectedDate, currentWeekStart]);
 
   const fetchAppointments = async () => {
     try {
@@ -741,6 +775,71 @@ export default function AppointmentsPage() {
     );
   };
 
+  const renderWeekView = () => {
+    const days = getDaysOfWeek(currentWeekStart);
+    return (
+      <div className={styles.weekViewContainer}>
+        {/* Navegador de Semana */}
+        <div className={styles.weekNavigator}>
+          <button type="button" onClick={handlePrevWeek} className={styles.navBtn}>
+            <Icon name="chevronLeft" size={18} />
+          </button>
+          <button type="button" onClick={handleGoToToday} className={styles.todayBtn}>
+            Hoy
+          </button>
+          <button type="button" onClick={handleNextWeek} className={styles.navBtn}>
+            <Icon name="chevronRight" size={18} />
+          </button>
+          <span className={styles.weekLabel}>
+            {getWeekRangeLabel()}
+          </span>
+        </div>
+
+        <div className={styles.weekDaysGrid}>
+          {days.map((day) => {
+            const dayAppointments = appointments.filter(a => {
+              const dateStr = String(a.appointment_date).split('T')[0];
+              return dateStr === day.dateStr;
+            });
+            const isToday = day.dateStr === getLocalDateString(new Date());
+
+            return (
+              <div 
+                key={day.dateStr} 
+                className={`${styles.weekDayCard} ${isToday ? styles.todayWeekCard : ''}`}
+              >
+                <div className={styles.weekDayHeader}>
+                  <div>
+                    <span className={styles.weekDayName}>{day.name}</span>
+                    <strong className={styles.weekDayNum}>{day.dayNum}</strong>
+                  </div>
+                  <span className={styles.weekApptCount}>{dayAppointments.length} turnos</span>
+                </div>
+                
+                <div className={styles.weekDayBody}>
+                  {dayAppointments.length === 0 ? (
+                    <p className={styles.noApptsText}>Sin turnos</p>
+                  ) : (
+                    dayAppointments.sort((a,b) => a.appointment_time.localeCompare(b.appointment_time)).map(appt => (
+                      <div 
+                        key={appt.id} 
+                        className={`${styles.weekApptItem} ${styles['status_' + appt.status] || ''}`}
+                        onClick={() => toggleExpandAppt(appt.id)}
+                      >
+                        <span className={styles.weekApptTime}>{appt.appointment_time.substring(0, 5)} hs</span>
+                        <span className={styles.weekApptName}>{appt.patient_name}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <DoctorLayout>
@@ -754,42 +853,13 @@ export default function AppointmentsPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>Gestión de Citas</h1>
-            <p className={styles.subtitle}>Administra todas tus citas médicas</p>
+            <h1 className={styles.title}>Gestión de Turnos</h1>
+            <p className={styles.subtitle}>Agenda, aprueba y haz seguimiento de tus citas médicas</p>
           </div>
-          <div className={styles.headerActions}>
-            <div className={styles.viewToggle}>
-              <button
-                type="button"
-                onClick={() => setViewMode('list')}
-                className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.activeToggle : ''}`}
-                title="Vista de Lista"
-              >
-                <Icon name="list" size={18} />
-                <span>Lista</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('agenda')}
-                className={`${styles.toggleBtn} ${viewMode === 'agenda' ? styles.activeToggle : ''}`}
-                title="Vista de Agenda"
-              >
-                <Icon name="calendar" size={18} />
-                <span>Agenda</span>
-              </button>
-            </div>
-            
-            <button
-              onClick={() => {
-                resetForm();
-                setShowForm(true);
-              }}
-              className={styles.addBtn}
-            >
-              <Icon name="plus" size={18} color="currentColor" />
-              Nueva Cita
-            </button>
-          </div>
+          <button onClick={() => setShowForm(true)} className={styles.addBtn}>
+            <Icon name="plus" size={18} color="#FFF" />
+            Nuevo Turno
+          </button>
         </div>
 
         {error && <div className={styles.errorBox}>{error}</div>}
@@ -799,38 +869,39 @@ export default function AppointmentsPage() {
           <div className={styles.modal}>
             <div className={styles.modalContent}>
               <div className={styles.modalHeader}>
-                <h2>Nueva Cita</h2>
+                <h2>Nuevo Turno</h2>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowForm(false);
                     resetForm();
                   }}
                   className={styles.closeBtn}
                 >
-                  <Icon name="x" size={20} color="currentColor" />
+                  ✕
                 </button>
               </div>
 
               <form onSubmit={handleCreateAppointment} className={styles.form}>
                 <div className={styles.formGroup}>
-                  <label>Cliente*</label>
+                  <label>Paciente / Cliente*</label>
                   <select
                     name="patientId"
                     value={formData.patientId}
                     onChange={handleFormChange}
                     required
                   >
-                    <option value="">Selecciona un cliente</option>
-                    {patients.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} {p.email ? `(${p.email})` : '(Sin email)'}
+                    <option value="">Selecciona un paciente</option>
+                    {patients.map((patient) => (
+                      <option key={patient.id} value={patient.id}>
+                        {patient.name} ({patient.phone || 'Sin teléfono'})
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Servicio*</label>
+                  <label>Servicio / Tratamiento*</label>
                   <select
                     name="serviceId"
                     value={formData.serviceId}
@@ -838,9 +909,9 @@ export default function AppointmentsPage() {
                     required
                   >
                     <option value="">Selecciona un servicio</option>
-                    {services.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.duration_minutes} min - ${parseFloat(s.price).toLocaleString()})
+                    {services.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.name} (${parseFloat(service.price).toLocaleString()} - {service.duration_minutes} min)
                       </option>
                     ))}
                   </select>
@@ -884,11 +955,8 @@ export default function AppointmentsPage() {
                       )
                     ) : (
                       <input
-                        type="time"
-                        name="appointment_time"
-                        value={formData.appointment_time}
-                        onChange={handleFormChange}
-                        placeholder="Selecciona una fecha primero"
+                        type="text"
+                        placeholder="Primero selecciona fecha"
                         disabled
                       />
                     )}
@@ -896,11 +964,11 @@ export default function AppointmentsPage() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Motivo de la consulta</label>
+                  <label>Motivo del turno</label>
                   <input
                     type="text"
                     name="reason_for_visit"
-                    placeholder="Ej: Revisión general, Dolor de cabeza..."
+                    placeholder="Ej: Revisión general, Consulta de control..."
                     value={formData.reason_for_visit}
                     onChange={handleFormChange}
                   />
@@ -926,7 +994,7 @@ export default function AppointmentsPage() {
 
                 <div className={styles.formActions}>
                   <button type="submit" className={styles.submitBtn} disabled={formSubmitting}>
-                    {formSubmitting ? 'Creando...' : 'Crear Cita'}
+                    {formSubmitting ? 'Creando...' : 'Crear Turno'}
                   </button>
                   <button
                     type="button"
@@ -944,7 +1012,46 @@ export default function AppointmentsPage() {
           </div>
         )}
 
-        {/* Toolbar de filtros */}
+        {/* Pestañas de Navegación Unificada */}
+        <div className={styles.tabsHeader}>
+          <button 
+            type="button"
+            className={`${styles.tabBtn} ${activeTab === 'day' ? styles.activeTab : ''}`}
+            onClick={() => handleTabChange('day')}
+          >
+            <Icon name="clock" size={16} /> Día / Agenda
+          </button>
+          <button 
+            type="button"
+            className={`${styles.tabBtn} ${activeTab === 'week' ? styles.activeTab : ''}`}
+            onClick={() => handleTabChange('week')}
+          >
+            <Icon name="calendar" size={16} /> Semana
+          </button>
+          <button 
+            type="button"
+            className={`${styles.tabBtn} ${activeTab === 'all' ? styles.activeTab : ''}`}
+            onClick={() => handleTabChange('all')}
+          >
+            <Icon name="list" size={16} /> Lista Completa
+          </button>
+          <button 
+            type="button"
+            className={`${styles.tabBtn} ${activeTab === 'pending' ? styles.activeTab : ''}`}
+            onClick={() => handleTabChange('pending')}
+          >
+            <Icon name="warning" size={16} /> Pendientes
+          </button>
+          <button 
+            type="button"
+            className={`${styles.tabBtn} ${activeTab === 'cancelled' ? styles.activeTab : ''}`}
+            onClick={() => handleTabChange('cancelled')}
+          >
+            <Icon name="x" size={16} /> Cancelados
+          </button>
+        </div>
+
+        {/* Toolbar de filtros (Buscador general siempre visible) */}
         <div className={styles.toolbar}>
           <div className={styles.searchBox}>
             <Icon name="search" size={18} color="#64748b" />
@@ -958,39 +1065,41 @@ export default function AppointmentsPage() {
           </div>
 
           <div className={styles.filters}>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className={styles.select}
-            >
-              <option value="all">Todos los estados</option>
-              <option value="pending">Pendiente de Aprobación</option>
-              <option value="pending_payment">Pendiente de Pago</option>
-              <option value="scheduled">Programado</option>
-              <option value="completed">Completado</option>
-              <option value="cancelled">Cancelado</option>
-              <option value="rejected">Rechazado</option>
-              <option value="absent">Ausente / No asistió</option>
-            </select>
+            {activeTab === 'all' && (
+              <>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="all">Todos los estados</option>
+                  <option value="pending">Pendiente de Aprobación</option>
+                  <option value="pending_payment">Pendiente de Pago</option>
+                  <option value="scheduled">Programado</option>
+                  <option value="completed">Completado</option>
+                  <option value="cancelled">Cancelado</option>
+                  <option value="rejected">Rechazado</option>
+                  <option value="absent">Ausente / No asistió</option>
+                </select>
 
-            {viewMode === 'list' && (
-              <input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                className={styles.select}
-              />
+                <input
+                  type="date"
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                  className={styles.select}
+                />
+              </>
             )}
 
             <button onClick={fetchAppointments} className={styles.refreshBtn} title="Actualizar">
-              <Icon name="search" size={18} color="currentColor" />
+              <Icon name="refresh" size={18} color="currentColor" />
               Actualizar
             </button>
           </div>
         </div>
 
         {/* Navigation & Day Selector for Agenda */}
-        {viewMode === 'agenda' && (
+        {activeTab === 'day' && (
           <div className={styles.calendarNavContainer}>
             <div className={styles.calendarNavControls}>
               <button type="button" onClick={handlePrevWeek} className={styles.navBtn} title="Semana anterior">
@@ -1027,9 +1136,11 @@ export default function AppointmentsPage() {
           </div>
         )}
 
-        {/* Tabla de citas */}
-        {viewMode === 'agenda' ? (
+        {/* Contenido según pestaña */}
+        {activeTab === 'day' ? (
           renderAgendaGrid()
+        ) : activeTab === 'week' ? (
+          renderWeekView()
         ) : filteredAppointments.length === 0 ? (
           <div className={styles.emptyState}>
             <p>No hay citas que coincidan con tus filtros</p>

@@ -14,6 +14,8 @@ import AppointmentsPage from './pages/AppointmentsPage';
 import PatientsPage from './pages/PatientsPage';
 import PatientHistoryPage from './pages/PatientHistoryPage';
 import SettingsPage from './pages/SettingsPage';
+import ReportsPage from './pages/ReportsPage';
+import MovementsPage from './pages/MovementsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import WorkingHoursPage from './pages/WorkingHoursPage';
 import InsurancePage from './pages/InsurancePage';
@@ -162,7 +164,8 @@ function AppContent() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/working-hours" element={<WorkingHoursPage />} />
           <Route path="/services" element={<ServicesPage />} />
-          <Route path="/reports" element={<DashboardNewPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/movements" element={<MovementsPage />} />
           <Route path="/doctor/*" element={<DashboardNewPage />} />
         </>
       )}

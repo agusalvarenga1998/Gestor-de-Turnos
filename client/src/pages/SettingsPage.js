@@ -6,6 +6,7 @@ import Icon from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
 import apiClient, { googleAPI, doctorAPI } from '../services/api';
 import { RUBROS_ESPECIALIDADES } from '../constants/categories';
+import OnboardingChecklist from '../components/OnboardingChecklist';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -60,8 +61,123 @@ export default function SettingsPage() {
     google: window.innerWidth > 768,
     push: window.innerWidth > 768,
     mercadopago: window.innerWidth > 768,
-    profile: true
+    profile: true,
+    onboarding: false,
+    security: false
   });
+
+  // Estados de Seguridad
+  const [securityData, setSecurityData] = useState({
+    twoFactorEnabled: false,
+    emailVerified: false
+  });
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [twoFactorSecret, setTwoFactorSecret] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [show2FAForm, setShow2FAForm] = useState(false);
+  const [loadingSecurity, setLoadingSecurity] = useState(false);
+  const [securityError, setSecurityError] = useState('');
+  const [securitySuccess, setSecuritySuccess] = useState('');
+
+  const handleSendVerification = async () => {
+    setLoadingSecurity(true);
+    setSecurityError('');
+    setSecuritySuccess('');
+    try {
+      const response = await apiClient.post('/api/auth/profile/send-verification');
+      if (response.data.success) {
+        setSecuritySuccess('Código de verificación generado: ' + response.data.verificationToken);
+      }
+    } catch (err) {
+      setSecurityError('Error al enviar código de verificación.');
+    } finally {
+      setLoadingSecurity(false);
+    }
+  };
+
+  const handleSetup2FA = async () => {
+    setLoadingSecurity(true);
+    setSecurityError('');
+    setSecuritySuccess('');
+    try {
+      const response = await apiClient.post('/api/auth/profile/2fa/setup');
+      if (response.data.success) {
+        setQrCodeUrl(response.data.qrCodeUrl);
+        setTwoFactorSecret(response.data.secret);
+        setShow2FAForm(true);
+      }
+    } catch (err) {
+      setSecurityError('Error al iniciar configuración de 2FA.');
+    } finally {
+      setLoadingSecurity(false);
+    }
+  };
+
+  const handleVerify2FA = async (enable) => {
+    setLoadingSecurity(true);
+    setSecurityError('');
+    setSecuritySuccess('');
+    try {
+      const response = await apiClient.post('/api/auth/profile/2fa/verify', {
+        code: twoFactorCode,
+        enable
+      });
+      if (response.data.success) {
+        setSecuritySuccess(response.data.message);
+        setSecurityData(prev => ({ ...prev, twoFactorEnabled: enable }));
+        setShow2FAForm(false);
+        setTwoFactorCode('');
+        await refreshUser();
+      }
+    } catch (err) {
+      setSecurityError(err.response?.data?.message || 'Código incorrecto. Verifica el autenticador.');
+    } finally {
+      setLoadingSecurity(false);
+    }
+  };
+
+  const handleLogoutAll = async () => {
+    if (!window.confirm('¿Estás seguro? Esto cerrará tu sesión en TODOS tus dispositivos móviles y web actuales.')) return;
+    setLoadingSecurity(true);
+    try {
+      const response = await apiClient.post('/api/auth/profile/logout-all');
+      if (response.data.success) {
+        alert('Sesiones cerradas con éxito. Por favor vuelve a iniciar sesión.');
+        localStorage.clear();
+        window.location.href = '/login';
+      }
+    } catch (err) {
+      setSecurityError('Error al cerrar todas las sesiones.');
+    } finally {
+      setLoadingSecurity(false);
+    }
+  };
+
+  const handleExportData = () => {
+    const token = localStorage.getItem('token');
+    window.open(`${process.env.REACT_APP_API_BASE_URL || ''}/api/auth/profile/export?token=${token}`, '_blank');
+  };
+
+  const handleDeleteAccount = async () => {
+    const code = window.prompt('ATENCIÓN ⚠️: Esta acción es irreversible. Se eliminarán tus turnos, servicios, registros de pacientes y cuenta. Escribe "ELIMINAR MI CUENTA" para proceder:');
+    if (code !== 'ELIMINAR MI CUENTA') {
+      alert('Confirmación incorrecta.');
+      return;
+    }
+    setLoadingSecurity(true);
+    try {
+      const response = await apiClient.delete('/api/auth/profile/delete-account');
+      if (response.data.success) {
+        alert('Cuenta eliminada permanentemente. Esperamos volver a verte.');
+        localStorage.clear();
+        window.location.href = '/register';
+      }
+    } catch (err) {
+      setSecurityError('Error al eliminar tu cuenta.');
+    } finally {
+      setLoadingSecurity(false);
+    }
+  };
 
   const toggleSection = (section) => {
     setOpenSections(prev => ({
@@ -135,6 +251,10 @@ export default function SettingsPage() {
       });
       setIsCustomSpecialty(isCustom);
       setCustomSpecialty(isCustom ? spec : '');
+      setSecurityData({
+        twoFactorEnabled: user.two_factor_enabled || false,
+        emailVerified: user.email_verified || false
+      });
       
       if (user.latitude && user.longitude) {
         setMapCenter([user.latitude, user.longitude]);
@@ -993,6 +1113,177 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+
+        {/* Onboarding Checklist Section */}
+        <div className={`${styles.section} ${openSections.onboarding ? styles.sectionOpen : ''}`}>
+          <div className={styles.sectionHeader} onClick={() => toggleSection('onboarding')} style={{ cursor: 'pointer' }}>
+            <div className={styles.sectionTitleGroup}>
+              <div className={styles.sectionTitle}>
+                <Icon name="reports" size={24} color="#f59e0b" />
+                Guía de Inicio / Estado del Consultorio
+              </div>
+              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
+                {openSections.onboarding ? 'expand_less' : 'expand_more'}
+              </span>
+            </div>
+            <p className={styles.sectionDescription}>
+              Completa los pasos obligatorios para habilitar el portal de reservas online de tus pacientes.
+            </p>
+          </div>
+
+          {openSections.onboarding && (
+            <div className={styles.card}>
+              <OnboardingChecklist alwaysShow={true} />
+            </div>
+          )}
+        </div>
+
+        {/* Seguridad Section */}
+        <div className={`${styles.section} ${openSections.security ? styles.sectionOpen : ''}`}>
+          <div className={styles.sectionHeader} onClick={() => toggleSection('security')} style={{ cursor: 'pointer' }}>
+            <div className={styles.sectionTitleGroup}>
+              <div className={styles.sectionTitle}>
+                <Icon name="lock" size={24} color="#dc2626" />
+                Seguridad y Datos
+              </div>
+              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
+                {openSections.security ? 'expand_less' : 'expand_more'}
+              </span>
+            </div>
+            <p className={styles.sectionDescription}>
+              Protege tu consultorio con Autenticación de Dos Factores (2FA) y administra la privacidad de tus datos.
+            </p>
+          </div>
+
+          {openSections.security && (
+            <div className={styles.card}>
+              <div className={styles.securityContainer}>
+                {securitySuccess && <div className={styles.successMessage} style={{ marginBottom: '1rem' }}>{securitySuccess}</div>}
+                {securityError && <div className={styles.errorMessage} style={{ color: '#dc2626', background: '#fef2f2', padding: '0.75rem', borderRadius: '8px', border: '1px solid #fca5a5', marginBottom: '1rem', fontSize: '0.875rem' }}>{securityError}</div>}
+
+                {/* Doble Factor (2FA) */}
+                <div className={styles.securityItem}>
+                  <div className={styles.securityInfo}>
+                    <h4>Autenticación de Dos Factores (2FA)</h4>
+                    <p>Agrega un paso adicional al iniciar sesión ingresando un código temporal de tu celular (Google Authenticator, Authy, etc.).</p>
+                  </div>
+                  <div className={styles.securityActions}>
+                    {securityData.twoFactorEnabled ? (
+                      <div className={styles.enabledBadgeGroup}>
+                        <span className={styles.enabledBadge}>✓ HABILITADO</span>
+                        <button 
+                          onClick={() => {
+                            setTwoFactorCode('');
+                            setShow2FAForm(true);
+                          }} 
+                          className={styles.disable2faBtn}
+                          disabled={loadingSecurity}
+                        >
+                          Desactivar
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={handleSetup2FA} className={styles.enable2faBtn} disabled={loadingSecurity}>
+                        Activar 2FA
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Formulario 2FA Setup/Desactivación */}
+                {show2FAForm && (
+                  <div className={styles.setup2faBox}>
+                    {!securityData.twoFactorEnabled && qrCodeUrl && (
+                      <div className={styles.qrSetup}>
+                        <p>1. Escanea el código QR desde tu app autenticadora:</p>
+                        <div style={{ textAlign: 'center', margin: '1rem 0' }}>
+                          <img src={qrCodeUrl} alt="2FA QR Code" style={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                        </div>
+                        <p>O introduce la clave manualmente: <code>{twoFactorSecret}</code></p>
+                      </div>
+                    )}
+                    <p style={{ marginTop: '0.5rem' }}>
+                      {securityData.twoFactorEnabled 
+                        ? 'Ingresa el código temporal de 6 dígitos de tu celular para desactivar 2FA:' 
+                        : '2. Ingresa el código temporal de 6 dígitos para validar la configuración:'}
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <input
+                        type="text"
+                        maxLength="6"
+                        placeholder="Ej: 123456"
+                        value={twoFactorCode}
+                        onChange={(e) => setTwoFactorCode(e.target.value)}
+                        style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', width: '120px', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }}
+                      />
+                      <button
+                        onClick={() => handleVerify2FA(!securityData.twoFactorEnabled)}
+                        className={styles.confirmBtn}
+                        style={{ padding: '0.5rem 1rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                        disabled={loadingSecurity || twoFactorCode.length !== 6}
+                      >
+                        {loadingSecurity ? 'Verificando...' : 'Confirmar'}
+                      </button>
+                      <button
+                        onClick={() => setShow2FAForm(false)}
+                        style={{ padding: '0.5rem 1rem', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <hr className={styles.securityDivider} />
+
+                {/* Sesiones Activas / Cierre Global */}
+                <div className={styles.securityItem}>
+                  <div className={styles.securityInfo}>
+                    <h4>Cerrar Sesión en Todos los Dispositivos</h4>
+                    <p>Invalida todas las sesiones activas actuales en celulares, tablets o navegadores. Deberás iniciar sesión nuevamente.</p>
+                  </div>
+                  <div className={styles.securityActions}>
+                    <button onClick={handleLogoutAll} className={styles.logoutAllBtn} disabled={loadingSecurity}>
+                      Cerrar Sesiones Globales
+                    </button>
+                  </div>
+                </div>
+
+                <hr className={styles.securityDivider} />
+
+                {/* Descargar Datos */}
+                <div className={styles.securityItem}>
+                  <div className={styles.securityInfo}>
+                    <h4>Descargar mis Datos</h4>
+                    <p>Obtén una copia completa en formato JSON de tu perfil, historial de turnos, convenios y caja.</p>
+                  </div>
+                  <div className={styles.securityActions}>
+                    <button onClick={handleExportData} className={styles.exportBtn}>
+                      <Icon name="download" size={16} /> Exportar JSON
+                    </button>
+                  </div>
+                </div>
+
+                <hr className={styles.securityDivider} />
+
+                {/* Borrar Cuenta */}
+                <div className={styles.securityItem} style={{ background: '#fef2f2', padding: '1rem', borderRadius: '8px', border: '1px solid #fca5a5' }}>
+                  <div className={styles.securityInfo}>
+                    <h4 style={{ color: '#b91c1c' }}>Eliminar Cuenta Permanentemente</h4>
+                    <p style={{ color: '#7f1d1d' }}>Esta acción es irreversible y eliminará de inmediato toda tu agenda, deudas, servicios y datos de pacientes.</p>
+                  </div>
+                  <div className={styles.securityActions}>
+                    <button onClick={handleDeleteAccount} className={styles.deleteAccBtn}>
+                      Eliminar Cuenta
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     </DoctorLayout>
   );

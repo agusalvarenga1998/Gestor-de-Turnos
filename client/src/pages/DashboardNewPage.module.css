@@ -1412,4 +1412,174 @@
   }
 }
 
+/* Acciones Urgentes / Indicadores */
+.actionableMetrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.actionCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.actionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+}
+
+.actionCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.actionNumber {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.actionText {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Card Modifiers */
+.danger { border-top: 4px solid #ef4444; }
+.danger .actionNumber { color: #ef4444; }
+.danger svg { stroke: #ef4444; }
+
+.warning { border-top: 4px solid #f59e0b; }
+.warning .actionNumber { color: #f59e0b; }
+.warning svg { stroke: #f59e0b; }
+
+.orange { border-top: 4px solid #ed6c02; }
+.orange .actionNumber { color: #ed6c02; }
+.orange svg { stroke: #ed6c02; }
+
+.info { border-top: 4px solid #3b82f6; }
+.info .actionNumber { color: #3b82f6; }
+.info svg { stroke: #3b82f6; }
+
+.success { border-top: 4px solid #10b981; }
+.success .actionNumber { color: #10b981; }
+.success svg { stroke: #10b981; }
+
+/* Próximo Turno */
+.nextAppointmentCard {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  color: white;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+}
+
+.nextApptHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.nextApptBadge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.nextApptTime {
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #cbd5e1;
+}
+
+.nextApptBody {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.nextPatientName {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 0.35rem 0;
+  color: white;
+}
+
+.nextApptReason {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.viewNextBtn {
+  background: white;
+  color: #0f172a;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.viewNextBtn:hover {
+  background: #f1f5f9;
+  transform: translateX(2px);
+}
+
+/* Quick Guide Card */
+.quickGuideCard {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.quickGuideCard h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.quickGuideCard p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
 

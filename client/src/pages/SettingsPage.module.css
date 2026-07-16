@@ -516,3 +516,151 @@
   }
 }
 
+/* Security CSS Section */
+.securityContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.securityItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.securityInfo {
+  flex: 1;
+  min-width: 250px;
+}
+
+.securityInfo h4 {
+  margin: 0 0 0.35rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.securityInfo p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.securityActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.securityDivider {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 0;
+}
+
+/* 2FA Setup Form Box */
+.setup2faBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  font-size: 0.85rem;
+  color: #334155;
+  width: 100%;
+}
+
+.qrSetup p {
+  margin: 0.5rem 0;
+  font-weight: 600;
+}
+
+.qrSetup img {
+  max-width: 180px;
+}
+
+.qrSetup code {
+  background: #cbd5e1;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: bold;
+}
+
+/* Security buttons */
+.enable2faBtn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.enable2faBtn:hover { background: #1d4ed8; }
+
+.disable2faBtn {
+  background: #fee2e2;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.disable2faBtn:hover { background: #fecaca; }
+
+.enabledBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.enabledBadge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.logoutAllBtn {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.logoutAllBtn:hover { background: #e2e8f0; }
+
+.deleteAccBtn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.deleteAccBtn:hover { background: #dc2626; }
+
+

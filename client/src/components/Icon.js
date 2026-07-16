@@ -229,6 +229,13 @@ export const Icon = ({ name, size = 24, color = 'currentColor' }) => {
         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
       </svg>
     ),
+    wallet: (
+      <svg {...iconProps}>
+        <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+        <path d="M16 8h6v8h-6z"></path>
+        <circle cx="19" cy="12" r="1"></circle>
+      </svg>
+    ),
   };
 
   return icons[name] || null;

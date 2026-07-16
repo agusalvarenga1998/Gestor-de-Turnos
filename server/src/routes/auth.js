@@ -6,6 +6,8 @@ import { query } from '../db/config.js';
 import { generateToken, verifyToken } from '../middleware/auth.js';
 import * as googleAuthService from '../services/googleAuthService.js';
 import { copyTemplateServicesToDoctor } from '../services/templateService.js';
+import { logAction } from '../services/auditService.js';
+import { generateSecret, verifyTOTP } from '../utils/totp.js';
 
 const router = express.Router();
 
@@ -21,6 +23,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
       d.status, d.subscription_status, d.trial_ends_at, d.subscription_expires_at, 
       d.mp_connected, d.plan_type, d.pricing_plan_id,
       d.notify_daily_summary_push, d.notify_advance_push, d.notify_advance_time, d.notify_email, d.notify_approval_push,
+      d.two_factor_enabled, d.email_verified,
       p.name as plan_name, p.key as plan_key, p.allow_google_calendar, 
       p.allow_mercadopago, p.allow_telemedicine, p.allow_reminders, p.allow_insurance, p.allow_patient_booking,
       p.max_patients, p.max_appointments_monthly
@@ -58,6 +61,8 @@ export async function getDoctorProfileWithPlan(doctorId) {
     notify_advance_time: row.notify_advance_time !== null ? row.notify_advance_time : 15,
     notify_email: row.notify_email !== false,
     notify_approval_push: row.notify_approval_push !== false,
+    two_factor_enabled: row.two_factor_enabled || false,
+    email_verified: row.email_verified || false,
     plan: {
       name: row.plan_name || (row.plan_type === 'commission' ? 'Plan Comisión' : 'Plan Mensual'),
       key: row.plan_key || row.plan_type || 'monthly',
@@ -143,6 +148,9 @@ router.post('/register', async (req, res) => {
 
     // Generar token - el usuario puede usar la app inmediatamente
     const token = generateToken(doctorProfile);
+
+    // Auditoría
+    await logAction(doctor.id, 'register', 'Registro de cuenta de doctor', req.ip);
 
     res.status(201).json({
       success: true,
@@ -243,6 +251,17 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Verificar si tiene 2FA habilitado
+    if (doctor.two_factor_enabled) {
+      await logAction(doctor.id, 'login_step1_2fa', 'Inicio de sesión - Paso 1: Requiere 2FA', req.ip);
+      return res.json({
+        success: true,
+        requires2FA: true,
+        doctorId: doctor.id,
+        message: 'Por favor, ingresa el código de verificación de 2 factores.'
+      });
+    }
+
     // Obtener el perfil completo con plan para el token y la respuesta
     const doctorProfile = await getDoctorProfileWithPlan(doctor.id);
     
@@ -251,6 +270,9 @@ router.post('/login', async (req, res) => {
 
     // Generar token
     const token = generateToken(doctorProfile);
+
+    // Auditoría
+    await logAction(doctor.id, 'login', 'Inicio de sesión exitoso', req.ip);
 
     res.json({
       success: true,
@@ -592,10 +614,319 @@ router.get('/google/callback', async (req, res) => {
     console.log('🔄 Redirigiendo a:', redirectUrl.split('?')[0]);
     console.log('✓ Flujo completado\n');
 
+    // Auditoría de login con Google
+    await logAction(doctor.id, 'login_google', 'Inicio de sesión con Google exitoso', req.ip);
+
     res.redirect(redirectUrl);
   } catch (error) {
     console.error('❌ Error en Google callback:', error);
     res.redirect(`${FRONTEND_URL}/login?error=${encodeURIComponent(error.message)}`);
+  }
+});
+
+// ==========================================
+// NUEVOS ENDPOINTS DE SEGURIDAD Y AUDITORÍA
+// ==========================================
+
+// Login Step 2: Verificar 2FA
+router.post('/login/2fa', async (req, res) => {
+  try {
+    const { doctorId, code } = req.body;
+    if (!doctorId || !code) {
+      return res.status(400).json({ success: false, message: 'ID de doctor y código son requeridos' });
+    }
+
+    const result = await query('SELECT * FROM doctors WHERE id = $1', [doctorId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Doctor no encontrado' });
+    }
+
+    const doctor = result.rows[0];
+
+    if (!verifyTOTP(doctor.two_factor_secret, code)) {
+      await logAction(doctor.id, 'login_2fa_failed', 'Intento de 2FA fallido (código inválido)', req.ip);
+      return res.status(401).json({ success: false, message: 'Código de segundo factor incorrecto' });
+    }
+
+    const doctorProfile = await getDoctorProfileWithPlan(doctor.id);
+    const token = generateToken(doctorProfile);
+
+    await logAction(doctor.id, 'login', 'Inicio de sesión con 2FA exitoso', req.ip);
+
+    res.json({
+      success: true,
+      message: 'Login exitoso',
+      token,
+      doctor: doctorProfile
+    });
+  } catch (error) {
+    console.error('Error en login 2FA:', error);
+    res.status(500).json({ success: false, message: 'Error al procesar login 2FA' });
+  }
+});
+
+// Recuperar contraseña - Paso 1: Enviar correo/token
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'El email es requerido' });
+    }
+
+    const result = await query('SELECT id, name FROM doctors WHERE email = $1', [email.trim().toLowerCase()]);
+    if (result.rows.length === 0) {
+      // Por seguridad, retornamos éxito simulado para evitar escaneo de cuentas
+      return res.json({ success: true, message: 'Si el correo existe, se enviará un enlace de recuperación.' });
+    }
+
+    const doctor = result.rows[0];
+    const resetToken = uuidv4();
+
+    // Guardar token en base de datos
+    await query('UPDATE doctors SET verification_token = $1 WHERE id = $2', [resetToken, doctor.id]);
+
+    // Auditoría
+    await logAction(doctor.id, 'forgot_password', { token: resetToken }, req.ip);
+
+    // Nota: Aquí se enviaría el correo real mediante nodemailer. 
+    // Para simulaciones y desarrollo local, retornamos el token en la respuesta para facilitar la prueba
+    res.json({
+      success: true,
+      message: 'Se ha generado el token de recuperación.',
+      resetToken, // En producción real esto no se retornaría en el JSON sino solo en el email
+      simulatedEmailSent: true
+    });
+  } catch (error) {
+    console.error('Error en forgot-password:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// Recuperar contraseña - Paso 2: Reseteo
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ success: false, message: 'Token y contraseña nueva son requeridos' });
+    }
+
+    const result = await query('SELECT id FROM doctors WHERE verification_token = $1', [token]);
+    if (result.rows.length === 0) {
+      return res.status(400).json({ success: false, message: 'Token inválido o expirado' });
+    }
+
+    const doctor = result.rows[0];
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Actualizar contraseña e invalidar token de recuperación e invalidar sesiones previas incrementando token_version
+    await query(
+      `UPDATE doctors 
+       SET password_hash = $1, 
+           verification_token = NULL,
+           token_version = token_version + 1
+       WHERE id = $2`, 
+      [hashedPassword, doctor.id]
+    );
+
+    await logAction(doctor.id, 'reset_password', 'Contraseña restablecida correctamente', req.ip);
+
+    res.json({
+      success: true,
+      message: 'Contraseña restablecida exitosamente. Por favor, inicia sesión con tu nueva contraseña.'
+    });
+  } catch (error) {
+    console.error('Error en reset-password:', error);
+    res.status(500).json({ success: false, message: 'Error al restablecer contraseña' });
+  }
+});
+
+// Enviar verificación de email (Protegida)
+router.post('/profile/send-verification', verifyToken, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const verificationToken = uuidv4();
+
+    await query('UPDATE doctors SET verification_token = $1 WHERE id = $2', [verificationToken, doctorId]);
+    await logAction(doctorId, 'send_verification', { token: verificationToken }, req.ip);
+
+    res.json({
+      success: true,
+      message: 'Código de verificación generado.',
+      verificationToken, // Retornado para fines de simulación local
+      simulatedEmailSent: true
+    });
+  } catch (error) {
+    console.error('Error al enviar verificación:', error);
+    res.status(500).json({ success: false, message: 'Error al enviar código de verificación' });
+  }
+});
+
+// Verificar email con Token
+router.get('/verify-email', async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).send('<h1>Error</h1><p>Falta el token de verificación</p>');
+    }
+
+    const result = await query('SELECT id FROM doctors WHERE verification_token = $1', [token]);
+    if (result.rows.length === 0) {
+      return res.status(400).send('<h1>Error</h1><p>Token inválido o expirado</p>');
+    }
+
+    const doctorId = result.rows[0].id;
+    await query('UPDATE doctors SET email_verified = true, verification_token = NULL WHERE id = $1', [doctorId]);
+    await logAction(doctorId, 'verify_email', 'Correo verificado exitosamente', req.ip);
+
+    res.send(`
+      <div style="font-family: sans-serif; text-align: center; padding: 3rem;">
+        <h1 style="color: #16a34a;">✓ Correo Verificado</h1>
+        <p>Tu correo ha sido verificado con éxito. Ya puedes volver a la aplicación de TurnoHub.</p>
+        <button onclick="window.close()" style="padding: 0.5rem 1.5rem; background: #16a34a; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 1rem;">Cerrar pestaña</button>
+      </div>
+    `);
+  } catch (error) {
+    console.error('Error al verificar email:', error);
+    res.status(500).send('<h1>Error</h1><p>Error interno del servidor</p>');
+  }
+});
+
+// Cerrar sesión en todos los dispositivos (Protegida)
+router.post('/profile/logout-all', verifyToken, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+
+    // Incrementar token_version invalida todos los JWTs anteriores de inmediato
+    await query('UPDATE doctors SET token_version = token_version + 1 WHERE id = $1', [doctorId]);
+    await logAction(doctorId, 'logout_all_devices', 'Sesión cerrada en todos los dispositivos', req.ip);
+
+    res.json({
+      success: true,
+      message: 'Se ha cerrado la sesión en todos tus dispositivos correctamente.'
+    });
+  } catch (error) {
+    console.error('Error en logout global:', error);
+    res.status(500).json({ success: false, message: 'Error al cerrar sesión global' });
+  }
+});
+
+// Configurar 2FA - Paso 1: Generar secreto y código QR (Protegida)
+router.post('/profile/2fa/setup', verifyToken, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const doctorRes = await query('SELECT email FROM doctors WHERE id = $1', [doctorId]);
+    const email = doctorRes.rows[0]?.email || 'doctor';
+
+    const secret = generateSecret();
+    
+    // Guardar secreto de forma temporal (todavía no activado)
+    await query('UPDATE doctors SET two_factor_secret = $1 WHERE id = $2', [secret, doctorId]);
+    await logAction(doctorId, 'setup_2fa_started', 'Iniciada configuración de 2FA', req.ip);
+
+    const qrData = `otpauth://totp/TurnoHub:${email}?secret=${secret}&issuer=TurnoHub`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+
+    res.json({
+      success: true,
+      secret,
+      qrCodeUrl
+    });
+  } catch (error) {
+    console.error('Error en setup 2FA:', error);
+    res.status(500).json({ success: false, message: 'Error al configurar 2FA' });
+  }
+});
+
+// Configurar 2FA - Paso 2: Activar o desactivar verificando código (Protegida)
+router.post('/profile/2fa/verify', verifyToken, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const { code, enable } = req.body; // enable: true para activar, false para desactivar
+
+    if (!code) {
+      return res.status(400).json({ success: false, message: 'Código de verificación requerido' });
+    }
+
+    const doctorRes = await query('SELECT two_factor_secret, two_factor_enabled FROM doctors WHERE id = $1', [doctorId]);
+    const doctor = doctorRes.rows[0];
+
+    if (!doctor || !doctor.two_factor_secret) {
+      return res.status(400).json({ success: false, message: 'No se ha iniciado la configuración de 2FA. Iníciala primero.' });
+    }
+
+    if (!verifyTOTP(doctor.two_factor_secret, code)) {
+      return res.status(400).json({ success: false, message: 'Código de verificación incorrecto' });
+    }
+
+    if (enable) {
+      await query('UPDATE doctors SET two_factor_enabled = true WHERE id = $1', [doctorId]);
+      await logAction(doctorId, 'enable_2fa', 'Doble factor de autenticación habilitado', req.ip);
+      res.json({ success: true, message: 'Autenticación de dos factores habilitada exitosamente.' });
+    } else {
+      await query('UPDATE doctors SET two_factor_enabled = false, two_factor_secret = NULL WHERE id = $1', [doctorId]);
+      await logAction(doctorId, 'disable_2fa', 'Doble factor de autenticación deshabilitado', req.ip);
+      res.json({ success: true, message: 'Autenticación de dos factores deshabilitada exitosamente.' });
+    }
+  } catch (error) {
+    console.error('Error al verificar código 2FA:', error);
+    res.status(500).json({ success: false, message: 'Error interno en verificación 2FA' });
+  }
+});
+
+// Exportación de datos de usuario completa (Protegida)
+router.get('/profile/export', verifyToken, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+
+    // Obtener toda la información relacionada del doctor
+    const [doctorRes, appointmentsRes, servicesRes, patientsRes, movementsRes, logsRes] = await Promise.all([
+      query('SELECT id, email, name, specialization, rubro, phone, clinic_name, clinic_address, created_at FROM doctors WHERE id = $1', [doctorId]),
+      query('SELECT id, patient_id, appointment_date, appointment_time, status, reason_for_visit, total_price, booking_fee_paid, payment_status, created_at FROM appointments WHERE doctor_id = $1', [doctorId]),
+      query('SELECT id, name, description, price, duration_minutes, booking_fee, is_active FROM services WHERE doctor_id = $1', [doctorId]),
+      query('SELECT id, email, phone, name, date_of_birth, address, is_active FROM patients WHERE doctor_id = $1', [doctorId]),
+      query('SELECT id, appointment_id, amount, type, payment_method, description, created_at FROM movements WHERE doctor_id = $1', [doctorId]),
+      query('SELECT action, details, ip_address, created_at FROM audit_logs WHERE doctor_id = $1 ORDER BY created_at DESC LIMIT 100', [doctorId])
+    ]);
+
+    const exportData = {
+      exported_at: new Date().toISOString(),
+      profile: doctorRes.rows[0] || {},
+      services: servicesRes.rows || [],
+      patients: patientsRes.rows || [],
+      appointments: appointmentsRes.rows || [],
+      movements: movementsRes.rows || [],
+      recent_audit_logs: logsRes.rows || []
+    };
+
+    await logAction(doctorId, 'export_data', 'Exportación de datos de la cuenta completada', req.ip);
+
+    res.setHeader('Content-disposition', `attachment; filename=turnohub_backup_${doctorId}.json`);
+    res.setHeader('Content-type', 'application/json');
+    res.write(JSON.stringify(exportData, null, 2));
+    res.end();
+  } catch (error) {
+    console.error('Error al exportar datos:', error);
+    res.status(500).json({ success: false, message: 'Error al exportar datos' });
+  }
+});
+
+// Eliminar cuenta completa (Protegida)
+router.delete('/profile/delete-account', verifyToken, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+
+    // Primero auditamos la eliminación (aunque se borre el doctor en cascada, guardamos log en consola y ejecutamos borrado)
+    console.log(`⚠️ ELIMINANDO CUENTA DEL DOCTOR ID: ${doctorId}`);
+    
+    await query('DELETE FROM doctors WHERE id = $1', [doctorId]);
+
+    res.json({
+      success: true,
+      message: 'Tu cuenta ha sido eliminada permanentemente del sistema de TurnoHub.'
+    });
+  } catch (error) {
+    console.error('Error al eliminar cuenta:', error);
+    res.status(500).json({ success: false, message: 'Error al eliminar cuenta' });
   }
 });
 

@@ -3,7 +3,7 @@ import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/
 import { query, transaction } from '../db/config.js';
 import { getAppointmentsForToday, getAppointmentsByDoctor } from '../services/appointmentService.js';
 import { getPatientsByDoctor } from '../services/patientService.js';
-import { getDashboard } from '../controllers/doctorController.js';
+import { getDashboard, getStatistics } from '../controllers/doctorController.js';
 import { copyTemplateServicesToDoctor } from '../services/templateService.js';
 import webpush from 'web-push';
 import fs from 'fs';
@@ -102,6 +102,9 @@ router.patch('/profile', async (req, res) => {
 
 // Dashboard del doctor (resumen)
 router.get('/dashboard', getDashboard);
+
+// Estadísticas del doctor
+router.get('/statistics', getStatistics);
 
 // Obtener horarios de trabajo del doctor
 router.get('/working-hours', async (req, res) => {

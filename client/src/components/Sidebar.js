@@ -1,22 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Icon from './Icon';
 import WebSocketStatus from './WebSocketStatus';
 import TrialCounter from './TrialCounter';
+import axios from 'axios';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isOnboardingPending, setIsOnboardingPending] = useState(false);
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5002'}/api/doctor/dashboard`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (response.data.success && response.data.dashboard) {
+          const { incompleteConfig } = response.data.dashboard;
+          setIsOnboardingPending(incompleteConfig && incompleteConfig.length > 0);
+        }
+      } catch (err) {
+        console.error('Error al verificar onboarding en Sidebar:', err);
+      }
+    };
+
+    if (user) {
+      checkOnboarding();
+    }
+  }, [user]);
 
   const menuItems = [
     { icon: 'home', label: 'Dashboard', path: '/dashboard' },
-    { icon: 'reports', label: 'Guía de Inicio', path: '/onboarding' },
+    ...(isOnboardingPending ? [{ icon: 'reports', label: 'Guía de Inicio', path: '/onboarding' }] : []),
     { icon: 'calendar', label: 'Gestión de Turnos', path: '/appointments' },
     { icon: 'users', label: 'Clientes', path: '/patients' },
     { icon: 'briefcase', label: 'Mis Servicios', path: '/services' },
+    { icon: 'reports', label: 'Estadísticas', path: '/reports' },
+    { icon: 'wallet', label: 'Caja y Movimientos', path: '/movements' },
     { icon: 'shield', label: 'Convenios', path: '/insurance' },
     { icon: 'clock', label: 'Horarios de Trabajo', path: '/working-hours' },
     { icon: 'bell', label: 'Notificaciones', path: '/notifications' },
