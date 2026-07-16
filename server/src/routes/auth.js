@@ -20,6 +20,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
       d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, 
       d.status, d.subscription_status, d.trial_ends_at, d.subscription_expires_at, 
       d.mp_connected, d.plan_type, d.pricing_plan_id,
+      d.notify_daily_summary_push, d.notify_advance_push, d.notify_advance_time, d.notify_email, d.notify_approval_push,
       p.name as plan_name, p.key as plan_key, p.allow_google_calendar, 
       p.allow_mercadopago, p.allow_telemedicine, p.allow_reminders, p.allow_insurance, p.allow_patient_booking,
       p.max_patients, p.max_appointments_monthly
@@ -52,6 +53,11 @@ export async function getDoctorProfileWithPlan(doctorId) {
     mp_connected: row.mp_connected || false,
     plan_type: row.plan_type,
     pricing_plan_id: row.pricing_plan_id,
+    notify_daily_summary_push: row.notify_daily_summary_push !== false,
+    notify_advance_push: row.notify_advance_push !== false,
+    notify_advance_time: row.notify_advance_time !== null ? row.notify_advance_time : 15,
+    notify_email: row.notify_email !== false,
+    notify_approval_push: row.notify_approval_push !== false,
     plan: {
       name: row.plan_name || (row.plan_type === 'commission' ? 'Plan Comisión' : 'Plan Mensual'),
       key: row.plan_key || row.plan_type || 'monthly',
@@ -309,7 +315,13 @@ router.post('/logout', verifyToken, (req, res) => {
 // Actualizar perfil del doctor
 router.put('/profile', verifyToken, async (req, res) => {
   try {
-    const { specialization, rubro, clinic_name, license_number, phone, address, latitude: reqLat, longitude: reqLng, booking_fee, appointment_price, mp_connected, mp_access_token } = req.body;
+    const { 
+      specialization, rubro, clinic_name, license_number, phone, address, 
+      latitude: reqLat, longitude: reqLng, booking_fee, appointment_price, 
+      mp_connected, mp_access_token,
+      notify_daily_summary_push, notify_advance_push, notify_advance_time, 
+      notify_email, notify_approval_push
+    } = req.body;
     const doctorId = req.user.id;
 
     let latitude = null;
@@ -364,10 +376,21 @@ router.put('/profile', verifyToken, async (req, res) => {
            mp_connected = COALESCE($10, mp_connected),
            mp_access_token = COALESCE($11, mp_access_token),
            rubro = COALESCE($13, rubro),
+           notify_daily_summary_push = COALESCE($14, notify_daily_summary_push),
+           notify_advance_push = COALESCE($15, notify_advance_push),
+           notify_advance_time = COALESCE($16, notify_advance_time),
+           notify_email = COALESCE($17, notify_email),
+           notify_approval_push = COALESCE($18, notify_approval_push),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $9
-       RETURNING id, email, name, specialization, rubro, clinic_name, license_number, phone, address, latitude, longitude, booking_fee, appointment_price, mp_connected`,
-      [specialization, clinic_name, license_number, phone, address, latitude, longitude, booking_fee, doctorId, mp_connected, mp_access_token, appointment_price, rubro]
+       RETURNING id`,
+      [
+        specialization, clinic_name, license_number, phone, address, 
+        latitude, longitude, booking_fee, doctorId, mp_connected, 
+        mp_access_token, appointment_price, rubro,
+        notify_daily_summary_push, notify_advance_push, notify_advance_time, 
+        notify_email, notify_approval_push
+      ]
     );
 
     if (result.rows.length === 0) {

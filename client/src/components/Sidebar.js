@@ -19,6 +19,7 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
     { icon: 'briefcase', label: 'Mis Servicios', path: '/services' },
     { icon: 'shield', label: 'Convenios', path: '/insurance' },
     { icon: 'clock', label: 'Horarios de Trabajo', path: '/working-hours' },
+    { icon: 'bell', label: 'Notificaciones', path: '/notifications' },
     { icon: 'settings', label: 'Configuración', path: '/settings' },
   ];
 

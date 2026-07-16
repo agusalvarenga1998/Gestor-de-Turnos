@@ -20,6 +20,30 @@ const logPushDebug = (msg) => {
 export const sendPushToDoctor = async (doctorId, payload) => {
   logPushDebug(`sendPushToDoctor called for doctorId: ${doctorId}`);
   try {
+    // Verificar preferencias de notificación del doctor en la BD
+    const docCheck = await query(
+      'SELECT notify_daily_summary_push, notify_advance_push, notify_approval_push FROM doctors WHERE id = $1',
+      [doctorId]
+    );
+
+    if (docCheck.rows.length > 0) {
+      const doc = docCheck.rows[0];
+      const title = payload.title || '';
+
+      if (title.includes('Agenda de Mañana') && doc.notify_daily_summary_push === false) {
+        logPushDebug(`Push summary skipped for doctor ${doctorId} (disabled by user)`);
+        return;
+      }
+      if (title.includes('Turno Próximo') && doc.notify_advance_push === false) {
+        logPushDebug(`Push reminder skipped for doctor ${doctorId} (disabled by user)`);
+        return;
+      }
+      if ((title.includes('Pendiente') || title.includes('Reservado') || title.includes('Nuevo Turno')) && doc.notify_approval_push === false) {
+        logPushDebug(`Push approval skipped for doctor ${doctorId} (disabled by user)`);
+        return;
+      }
+    }
+
     const result = await query(
       'SELECT endpoint, p256dh, auth FROM doctor_push_subscriptions WHERE doctor_id = $1',
       [doctorId]
@@ -124,7 +148,7 @@ export const initReminderCron = () => {
   console.log('⏰ Cron de alertas push próximas inicializado (Cada 5 minutos)');
   cron.schedule('*/5 * * * *', async () => {
     try {
-      console.log('🔍 Buscando turnos próximos en los siguientes 15 minutos...');
+      console.log('🔍 Buscando turnos próximos...');
       
       const result = await query(`
         SELECT 
@@ -133,7 +157,9 @@ export const initReminderCron = () => {
           a.appointment_time, 
           p.name as patient_name, 
           d.id as doctor_id,
-          d.name as doctor_name
+          d.name as doctor_name,
+          d.notify_advance_push,
+          d.notify_advance_time
         FROM appointments a
         JOIN patients p ON a.patient_id = p.id
         JOIN doctors d ON a.doctor_id = d.id
@@ -141,21 +167,24 @@ export const initReminderCron = () => {
           AND a.status IN ('scheduled', 'confirmed', 'pending')
           AND a.doctor_push_sent = false
       `);
-
+ 
       if (result.rows.length === 0) return;
-
+ 
       const now = new Date();
       const currentHours = now.getHours();
       const currentMinutes = now.getMinutes();
       const currentTimeInMinutes = currentHours * 60 + currentMinutes;
-
+ 
       for (const appt of result.rows) {
+        if (appt.notify_advance_push === false) continue;
+
+        const advanceTime = appt.notify_advance_time !== null ? appt.notify_advance_time : 15;
         const [h, m] = appt.appointment_time.split(':').map(Number);
         const apptTimeInMinutes = h * 60 + m;
         const diff = apptTimeInMinutes - currentTimeInMinutes;
-
-        // Si el turno es en los próximos 15 minutos (0 a 15)
-        if (diff >= 0 && diff <= 15) {
+ 
+        // Si el turno es en los próximos advanceTime minutos
+        if (diff >= 0 && diff <= advanceTime) {
           console.log(`📱 Enviando alerta push al médico ${appt.doctor_name} por turno próximo de ${appt.patient_name}`);
           
           await sendPushToDoctor(appt.doctor_id, {
@@ -163,7 +192,7 @@ export const initReminderCron = () => {
             body: `Tu turno con ${appt.patient_name} comienza a las ${appt.appointment_time} hs.`,
             url: '/appointments'
           });
-
+ 
           // Marcar como enviado para evitar duplicados
           await query('UPDATE appointments SET doctor_push_sent = true WHERE id = $1', [appt.id]);
         }
@@ -183,18 +212,24 @@ export const initReminderCron = () => {
         SELECT 
           d.id as doctor_id,
           d.name as doctor_name,
+          d.notify_daily_summary_push,
           COUNT(a.id) as appointment_count,
           MIN(a.appointment_time) as first_appointment_time
         FROM doctors d
         JOIN appointments a ON a.doctor_id = d.id
         WHERE a.appointment_date = CURRENT_DATE + INTERVAL '1 day'
           AND a.status IN ('scheduled', 'confirmed', 'pending')
-        GROUP BY d.id, d.name
+        GROUP BY d.id, d.name, d.notify_daily_summary_push
       `);
 
       console.log(`📋 Se enviarán resúmenes push a ${result.rows.length} médicos.`);
 
       for (const row of result.rows) {
+        if (row.notify_daily_summary_push === false) {
+          console.log(`Resumen push diario desactivado para el Dr. ${row.doctor_name}`);
+          continue;
+        }
+
         console.log(`📱 Enviando resumen push a ${row.doctor_name}: ${row.appointment_count} turnos para mañana`);
         
         await sendPushToDoctor(row.doctor_id, {

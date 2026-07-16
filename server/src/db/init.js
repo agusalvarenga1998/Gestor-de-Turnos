@@ -75,7 +75,12 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS mp_access_token TEXT,
       ADD COLUMN IF NOT EXISTS google_refresh_token TEXT,
       ADD COLUMN IF NOT EXISTS google_calendar_id TEXT,
-      ADD COLUMN IF NOT EXISTS google_calendar_connected BOOLEAN DEFAULT false;
+      ADD COLUMN IF NOT EXISTS google_calendar_connected BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS notify_daily_summary_push BOOLEAN DEFAULT true,
+      ADD COLUMN IF NOT EXISTS notify_advance_push BOOLEAN DEFAULT true,
+      ADD COLUMN IF NOT EXISTS notify_advance_time INTEGER DEFAULT 15,
+      ADD COLUMN IF NOT EXISTS notify_email BOOLEAN DEFAULT true,
+      ADD COLUMN IF NOT EXISTS notify_approval_push BOOLEAN DEFAULT true;
     `);
 
     await client.query(`

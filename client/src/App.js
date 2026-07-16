@@ -14,6 +14,7 @@ import AppointmentsPage from './pages/AppointmentsPage';
 import PatientsPage from './pages/PatientsPage';
 import PatientHistoryPage from './pages/PatientHistoryPage';
 import SettingsPage from './pages/SettingsPage';
+import NotificationsPage from './pages/NotificationsPage';
 import WorkingHoursPage from './pages/WorkingHoursPage';
 import InsurancePage from './pages/InsurancePage';
 import ServicesPage from './pages/ServicesPage';
@@ -156,6 +157,7 @@ function AppContent() {
           <Route path="/patient-history/:patientId" element={<PatientHistoryPage />} />
           <Route path="/insurance" element={<InsurancePage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/working-hours" element={<WorkingHoursPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/reports" element={<DashboardNewPage />} />

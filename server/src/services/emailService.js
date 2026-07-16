@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import dns from 'dns';
+import { query } from '../db/config.js';
 
 // Forzar IPv4 para evitar el error ENETUNREACH (IPv6) ocasional en Render
 dns.setDefaultResultOrder('ipv4first');
@@ -678,6 +679,13 @@ export async function sendNewAppointmentNotificationToDoctor({
 }) {
   try {
     if (!to) return { sent: false, reason: 'No email' };
+
+    // Verificar preferencia en BD
+    const docCheck = await query('SELECT notify_email FROM doctors WHERE email = $1', [to]);
+    if (docCheck.rows.length > 0 && docCheck.rows[0].notify_email === false) {
+      console.log(`Email notification skipped for doctor ${to} (disabled by user)`);
+      return { sent: false, reason: 'Disabled by user' };
+    }
 
     const htmlContent = `
       <!DOCTYPE html>
