@@ -167,8 +167,8 @@ export const getDashboard = async (req, res) => {
 
     // 1. Próximo turno de hoy
     const nextApptResult = await db.query(
-      `SELECT a.id, a.appointment_time, a.reason_for_visit, a.total_price, a.booking_fee_paid, a.coverage_amount,
-              p.id as patient_id, p.name as patient_name, p.phone as patient_phone,
+      `SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.payment_status, a.meet_link, a.notes, a.reason_for_visit, a.total_price, a.booking_fee_paid, a.coverage_amount,
+              p.id as patient_id, p.name as patient_name, p.phone as patient_phone, p.email as patient_email,
               s.name as service_name, s.duration_minutes
        FROM appointments a
        JOIN patients p ON a.patient_id = p.id

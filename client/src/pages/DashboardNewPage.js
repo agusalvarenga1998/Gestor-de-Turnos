@@ -707,7 +707,7 @@ export default function DashboardNewPage() {
                 </div>
                 <div className={styles.detailCard}>
                   <label>⚡ Estado Turno</label>
-                  <p>{selectedAppointment.status.toUpperCase()}</p>
+                  <p>{selectedAppointment.status?.toUpperCase() || ''}</p>
                 </div>
               </div>
 
