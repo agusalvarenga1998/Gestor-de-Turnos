@@ -142,6 +142,29 @@ export default function DashboardNewPage() {
     }
   };
 
+  const handleMarkAsPaid = async (appointmentId) => {
+    if (!window.confirm('¿Deseas marcar este turno como pagado?')) return;
+
+    try {
+      const response = await appointmentAPI.updateAppointment(appointmentId, {
+        payment_status: 'paid'
+      });
+
+      if (response.success) {
+        setTodayAppointments(prev =>
+          prev.map(a => a.id === appointmentId
+            ? { ...a, payment_status: 'paid' }
+            : a)
+        );
+        setSelectedAppointment(prev => prev && prev.id === appointmentId ? { ...prev, payment_status: 'paid' } : prev);
+        alert('✓ Turno marcado como pagado');
+      }
+    } catch (err) {
+      console.error('Error al marcar turno como pagado:', err);
+      alert('Error al marcar como pagado');
+    }
+  };
+
   const handleDelay = async () => {
     if (!delayMinutes || delayMinutes <= 0) {
       alert('Por favor ingresa minutos válidos');
@@ -795,6 +818,16 @@ export default function DashboardNewPage() {
                   >
                     <Icon name="check-circle" size={20} />
                     Marcar como Completado
+                  </button>
+                )}
+
+                {selectedAppointment.payment_status !== 'paid' && (
+                  <button 
+                    onClick={() => handleMarkAsPaid(selectedAppointment.id)}
+                    className={styles.payBtn}
+                  >
+                    <Icon name="wallet" size={20} />
+                    Marcar como Pagado
                   </button>
                 )}
 

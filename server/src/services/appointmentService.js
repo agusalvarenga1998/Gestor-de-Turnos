@@ -273,7 +273,7 @@ export const getAppointmentById = async (appointmentId) => {
 
 // Actualizar cita
 export const updateAppointment = async (appointmentId, updateData) => {
-  const { appointment_date, appointment_time, end_time, status, reason_for_visit, notes, delay_minutes, insurance_company_id } = updateData;
+  const { appointment_date, appointment_time, end_time, status, reason_for_visit, notes, delay_minutes, insurance_company_id, payment_status } = updateData;
 
   try {
     // Obtener cita actual para sincronización
@@ -294,10 +294,11 @@ export const updateAppointment = async (appointmentId, updateData) => {
            notes = COALESCE($6, notes),
            delay_minutes = COALESCE($7, delay_minutes),
            insurance_company_id = COALESCE($9, insurance_company_id),
+           payment_status = COALESCE($10, payment_status),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $8
        RETURNING *`,
-      [appointment_date, appointment_time, end_time, status, reason_for_visit, notes, delay_minutes, appointmentId, insurance_company_id]
+      [appointment_date, appointment_time, end_time, status, reason_for_visit, notes, delay_minutes, appointmentId, insurance_company_id, payment_status]
     );
 
     const updatedAppointment = result.rows[0];

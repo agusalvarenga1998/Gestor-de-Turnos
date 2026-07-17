@@ -996,6 +996,27 @@
   background: #059669;
 }
 
+.payBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.payBtn:hover {
+  background: #2563eb;
+}
+
 .birthdaysCard {
   background: white;
   border-radius: 16px;
