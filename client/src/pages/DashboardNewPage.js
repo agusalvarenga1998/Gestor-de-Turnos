@@ -328,70 +328,7 @@ export default function DashboardNewPage() {
           </div>
         )}
 
-        {user?.plan?.allow_patient_booking !== false && (
-          <div className={styles.shareCard}>
-            <div className={styles.shareCardHeader}>
-              <div className={styles.shareCardIcon}>
-                <span className="material-symbols-outlined">share</span>
-              </div>
-              <div className={styles.shareCardText}>
-                <h3>Portal de Reservas Online</h3>
-                <p>Comparte este enlace con tus pacientes para que puedan reservar turnos de manera autónoma.</p>
-              </div>
-            </div>
-            <div className={styles.shareInputGroup}>
-              <div className={styles.shareInputWrapper}>
-                <span className={`material-symbols-outlined ${styles.linkInputIcon}`}>link</span>
-                <input
-                  type="text"
-                  readOnly
-                  value={`${window.location.origin}/patient?doctor=${user?.id}`}
-                  className={styles.shareInput}
-                  onClick={(e) => e.target.select()}
-                />
-              </div>
-              <div className={styles.shareActions}>
-                <button
-                  className={`${styles.copyLinkBtn} ${copied ? styles.copied : ''}`}
-                  onClick={handleCopyLink}
-                >
-                  <Icon name={copied ? 'check' : 'copy'} size={16} />
-                  {copied ? '¡Copiado!' : 'Copiar Enlace'}
-                </button>
-                <a
-                  href={`${window.location.origin}/patient?doctor=${user?.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.viewPortalBtn}
-                >
-                  <Icon name="eye" size={16} />
-                  Ver Portal
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {!isStandalone && (
-          <div className={styles.downloadAppBanner}>
-            <div className={styles.downloadAppBannerLeft}>
-              <div className={styles.downloadAppBannerIcon}>
-                <span className="material-symbols-outlined">install_mobile</span>
-              </div>
-              <div className={styles.downloadAppBannerText}>
-                <h3>Lleva TurnoHub en tu celular 📱</h3>
-                <p>Instala la aplicación para acceder en un toque y recibir alertas al instante.</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => window.open('/install-app', '_blank')} 
-              className={styles.downloadAppBannerBtn}
-            >
-              <Icon name="download" size={16} color="currentColor" />
-              <span>Ver Cómo Instalar</span>
-            </button>
-          </div>
-        )}
 
         {/* Fila de Indicadores y Acciones Urgentes */}
         <div className={styles.actionableMetrics}>
@@ -595,6 +532,71 @@ export default function DashboardNewPage() {
             )}
           </aside>
         </div>
+
+        {user?.plan?.allow_patient_booking !== false && (
+          <div className={styles.shareCard} style={{ marginTop: '2.5rem', marginBottom: 0 }}>
+            <div className={styles.shareCardHeader}>
+              <div className={styles.shareCardIcon}>
+                <span className="material-symbols-outlined">share</span>
+              </div>
+              <div className={styles.shareCardText}>
+                <h3>Portal de Reservas Online</h3>
+                <p>Comparte este enlace con tus pacientes para que puedan reservar turnos de manera autónoma.</p>
+              </div>
+            </div>
+            <div className={styles.shareInputGroup}>
+              <div className={styles.shareInputWrapper}>
+                <span className={`material-symbols-outlined ${styles.linkInputIcon}`}>link</span>
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/patient?doctor=${user?.id}`}
+                  className={styles.shareInput}
+                  onClick={(e) => e.target.select()}
+                />
+              </div>
+              <div className={styles.shareActions}>
+                <button
+                  className={`${styles.copyLinkBtn} ${copied ? styles.copied : ''}`}
+                  onClick={handleCopyLink}
+                >
+                  <Icon name={copied ? 'check' : 'copy'} size={16} />
+                  {copied ? '¡Copiado!' : 'Copiar Enlace'}
+                </button>
+                <a
+                  href={`${window.location.origin}/patient?doctor=${user?.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.viewPortalBtn}
+                >
+                  <Icon name="eye" size={16} />
+                  Ver Portal
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isStandalone && (
+          <div className={styles.downloadAppBanner} style={{ marginTop: '1.5rem', marginBottom: 0 }}>
+            <div className={styles.downloadAppBannerLeft}>
+              <div className={styles.downloadAppBannerIcon}>
+                <span className="material-symbols-outlined">install_mobile</span>
+              </div>
+              <div className={styles.downloadAppBannerText}>
+                <h3>Lleva TurnoHub en tu celular 📱</h3>
+                <p>Instala la aplicación para acceder en un toque y recibir alertas al instante.</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => window.open('/install-app', '_blank')} 
+              className={styles.downloadAppBannerBtn}
+            >
+              <Icon name="download" size={16} color="currentColor" />
+              <span>Ver Cómo Instalar</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Delay Modal */}
