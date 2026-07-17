@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
 import styles from './ReportsPage.module.css';
 
@@ -62,15 +63,18 @@ export default function ReportsPage() {
 
   if (loading && !stats) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner}></div>
-        <p>Cargando reportes y estadísticas...</p>
-      </div>
+      <DoctorLayout>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Cargando reportes y estadísticas...</p>
+        </div>
+      </DoctorLayout>
     );
   }
 
   return (
-    <div className={styles.container}>
+    <DoctorLayout>
+      <div className={styles.container}>
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Estadísticas y Reportes</h1>
@@ -284,6 +288,7 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DoctorLayout>
   );
 }

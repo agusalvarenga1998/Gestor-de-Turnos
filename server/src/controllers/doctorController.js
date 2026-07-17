@@ -385,27 +385,15 @@ export const getStatistics = async (req, res) => {
       [doctorId, start, end]
     );
 
-    // 5. Horarios más demandados
     const topHours = await db.query(
       `SELECT appointment_time as time, COUNT(*) as count 
        FROM appointments 
-       WHERE doctor_id = $1 AND a.appointment_date BETWEEN $2::date AND $3::date AND status != 'cancelled'
+       WHERE doctor_id = $1 AND appointment_date BETWEEN $2::date AND $3::date AND status NOT IN ('cancelled', 'rejected')
        GROUP BY appointment_time 
        ORDER BY count DESC 
        LIMIT 5`,
       [doctorId, start, end]
-    ).catch(e => {
-      // Fallback si la query falla por alias
-      return db.query(
-        `SELECT appointment_time as time, COUNT(*) as count 
-         FROM appointments 
-         WHERE doctor_id = $1 AND appointment_date BETWEEN $2::date AND $3::date AND status != 'cancelled'
-         GROUP BY appointment_time 
-         ORDER BY count DESC 
-         LIMIT 5`,
-        [doctorId, start, end]
-      );
-    });
+    );
 
     // 6. Clientes nuevos y recurrentes
     const patientsStats = await db.query(

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import DoctorLayout from '../components/DoctorLayout';
 import Icon from '../components/Icon';
 import styles from './MovementsPage.module.css';
 
@@ -159,15 +160,18 @@ export default function MovementsPage() {
 
   if (loading && !summary) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner}></div>
-        <p>Cargando caja y movimientos...</p>
-      </div>
+      <DoctorLayout>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Cargando caja y movimientos...</p>
+        </div>
+      </DoctorLayout>
     );
   }
 
   return (
-    <div className={styles.container}>
+    <DoctorLayout>
+      <div className={styles.container}>
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Caja y Movimientos</h1>
@@ -462,6 +466,7 @@ export default function MovementsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DoctorLayout>
   );
 }
