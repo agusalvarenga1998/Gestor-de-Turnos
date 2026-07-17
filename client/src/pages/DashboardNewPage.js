@@ -372,7 +372,7 @@ export default function DashboardNewPage() {
             </div>
           )}
 
-          <div className={`${styles.actionCard} ${styles.success}`}>
+          <div className={`${styles.actionCard} ${styles.success}`} onClick={() => navigate('/appointments?tab=day')}>
             <div className={styles.actionCardHeader}>
               <span className={styles.actionNumber}>{stats.availableSlotsCount}</span>
               <Icon name="clock" size={20} />
