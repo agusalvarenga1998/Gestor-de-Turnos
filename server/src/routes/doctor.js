@@ -13,6 +13,115 @@ const router = express.Router();
 
 // Middleware global para todas las rutas de doctor (protegidas)
 router.use(verifyToken);
+
+// --- RUTAS DE SUSCRIPCIÓN (Accesibles aunque la suscripción esté expirada) ---
+const verifyOnlyDoctorRole = (req, res, next) => {
+  if (!req.user || req.user.role !== 'doctor') {
+    return res.status(403).json({
+      success: false,
+      message: 'Acceso denegado. Solo doctores pueden acceder a este recurso.'
+    });
+  }
+  next();
+};
+
+router.get('/subscriptions/history', verifyOnlyDoctorRole, async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT s.id, s.amount, s.status, s.period_start, s.period_end, s.created_at, p.name as plan_name, p.price_period
+       FROM subscriptions s
+       LEFT JOIN pricing_plans p ON s.pricing_plan_id = p.id
+       WHERE s.doctor_id = $1
+       ORDER BY s.created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ success: true, subscriptions: result.rows });
+  } catch (error) {
+    console.error('Error fetching subscription history:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+router.post('/subscriptions/request', verifyOnlyDoctorRole, async (req, res) => {
+  try {
+    const { pricing_plan_id } = req.body;
+    if (!pricing_plan_id) {
+      return res.status(400).json({ success: false, message: 'pricing_plan_id is required' });
+    }
+
+    const planResult = await query('SELECT id, name, price FROM pricing_plans WHERE id = $1', [pricing_plan_id]);
+    if (planResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Plan not found' });
+    }
+
+    const plan = planResult.rows[0];
+    const result = await query(
+      `INSERT INTO subscriptions (doctor_id, pricing_plan_id, amount, status)
+       VALUES ($1, $2, $3, 'pending')
+       RETURNING *`,
+      [req.user.id, plan.id, plan.price]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Solicitud de plan creada. Pendiente de aprobación del administrador.',
+      subscription: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error creating subscription request:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+router.post('/subscriptions/mercadopago-preference', verifyOnlyDoctorRole, async (req, res) => {
+  try {
+    const { pricing_plan_id } = req.body;
+    if (!pricing_plan_id) {
+      return res.status(400).json({ success: false, message: 'pricing_plan_id is required' });
+    }
+
+    const planResult = await query('SELECT id, name, price FROM pricing_plans WHERE id = $1', [pricing_plan_id]);
+    if (planResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Plan not found' });
+    }
+    const plan = planResult.rows[0];
+
+    // Obtener email del doctor
+    const doctorResult = await query('SELECT email FROM doctors WHERE id = $1', [req.user.id]);
+    const doctorEmail = doctorResult.rows[0]?.email;
+
+    // Crear un registro de suscripción pendiente para trackear el pago
+    const subResult = await query(
+      `INSERT INTO subscriptions (doctor_id, pricing_plan_id, amount, status)
+       VALUES ($1, $2, $3, 'pending')
+       RETURNING id`,
+      [req.user.id, plan.id, plan.price]
+    );
+    const subscriptionId = subResult.rows[0].id;
+
+    // Obtener token de la plataforma (admin) para crear la preferencia
+    const { createSubscriptionPreference } = await import('../services/mercadopagoService.js');
+    const platformToken = process.env.MP_ACCESS_TOKEN || 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647';
+
+    const preference = await createSubscriptionPreference({
+      subscriptionId,
+      planName: plan.name,
+      price: plan.price,
+      doctorEmail
+    }, platformToken);
+
+    res.json({
+      success: true,
+      preferenceId: preference.id,
+      initPoint: preference.init_point
+    });
+  } catch (error) {
+    console.error('Error creating subscription preference:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// --- RESTO DE RUTAS DE DOCTOR (Requieren suscripción activa) ---
 router.use(verifyDoctorRole);
 router.use(checkSubscription);
 

@@ -227,6 +227,14 @@ async function migrate() {
     `);
     console.log('✓ Columna doctor_push_sent configurada.\n');
 
+    // 17. Tabla Subscriptions: asegurar columna pricing_plan_id
+    console.log('➕ Asegurando columna pricing_plan_id en tabla subscriptions...');
+    await client.query(`
+      ALTER TABLE subscriptions
+      ADD COLUMN IF NOT EXISTS pricing_plan_id UUID REFERENCES pricing_plans(id) ON DELETE SET NULL;
+    `);
+    console.log('✓ Tabla subscriptions actualizada.\n');
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {

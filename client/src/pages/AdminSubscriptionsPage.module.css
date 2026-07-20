@@ -98,3 +98,43 @@
     padding: 0.75rem;
   }
 }
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.approveBtn, .rejectBtn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.approveBtn {
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.approveBtn:hover {
+  background: #a7f3d0;
+}
+
+.rejectBtn {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+}
+
+.rejectBtn:hover {
+  background: #fca5a5;
+}
+
+.noAction {
+  color: var(--gray);
+  font-size: 0.9rem;
+}

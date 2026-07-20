@@ -365,6 +365,102 @@ router.get('/subscriptions', verifyAdmin, async (req, res) => {
   }
 });
 
+// Approve a subscription request and activate plan
+router.patch('/subscriptions/:id/approve', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Obtener la solicitud de suscripción
+    const subResult = await query(
+      'SELECT id, doctor_id, pricing_plan_id, amount FROM subscriptions WHERE id = $1 AND status = \'pending\'',
+      [id]
+    );
+
+    if (subResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Solicitud de suscripción pendiente no encontrada' });
+    }
+
+    const subscription = subResult.rows[0];
+
+    // 2. Buscar el plan solicitado
+    const planResult = await query(
+      'SELECT id, key FROM pricing_plans WHERE id = $1',
+      [subscription.pricing_plan_id]
+    );
+
+    if (planResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan comercial no encontrado' });
+    }
+
+    const plan = planResult.rows[0];
+    const plan_type = plan.key === 'commission' ? 'commission' : 'monthly';
+
+    // 3. Calcular vencimiento de suscripción (30 días a partir de hoy)
+    const now = new Date();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    // 4. Actualizar doctor
+    await query(
+      `UPDATE doctors
+       SET subscription_status = 'active',
+           subscription_expires_at = $1,
+           pricing_plan_id = $2,
+           plan_type = $3
+       WHERE id = $4`,
+      [expiresAt, plan.id, plan_type, subscription.doctor_id]
+    );
+
+    // 5. Actualizar registro de suscripción
+    const updatedSubResult = await query(
+      `UPDATE subscriptions
+       SET status = 'approved',
+           period_start = $1,
+           period_end = $2
+       WHERE id = $3
+       RETURNING *`,
+      [now, expiresAt, id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Suscripción aprobada y plan activado con éxito.',
+      subscription: updatedSubResult.rows[0]
+    });
+  } catch (error) {
+    console.error('Approve subscription error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Reject a subscription request
+router.patch('/subscriptions/:id/reject', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      `UPDATE subscriptions
+       SET status = 'rejected'
+       WHERE id = $1 AND status = 'pending'
+       RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Solicitud de suscripción pendiente no encontrada' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Solicitud de suscripción rechazada.',
+      subscription: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Reject subscription error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Update doctor's plan
 router.patch('/doctors/:id/plan', verifyAdmin, async (req, res) => {
   try {

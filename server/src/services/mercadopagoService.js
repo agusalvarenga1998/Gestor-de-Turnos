@@ -46,3 +46,50 @@ export const createMPPreference = async (appointmentData, doctorMPAccessToken) =
     throw error;
   }
 };
+
+export const createSubscriptionPreference = async (subscriptionData, platformAccessToken) => {
+  try {
+    const client = new MercadoPagoConfig({ 
+      accessToken: platformAccessToken,
+      options: { timeout: 5000 }
+    });
+
+    const preference = new Preference(client);
+
+    const { subscriptionId, planName, price, doctorEmail } = subscriptionData;
+
+    const baseReturnUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard`;
+    const isLocalhost = baseReturnUrl.includes('localhost') || baseReturnUrl.includes('127.0.0.1');
+    const bridgeUrl = (target) => `https://httpbin.org/redirect-to?url=${encodeURIComponent(target)}`;
+
+    const body = {
+      items: [
+        {
+          id: subscriptionId,
+          title: `Suscripción TurnoHub - Plan ${planName}`,
+          quantity: 1,
+          unit_price: Number(price),
+          currency_id: 'ARS'
+        }
+      ],
+      external_reference: subscriptionId,
+      payer: {
+        email: doctorEmail
+      },
+      back_urls: {
+        success: isLocalhost ? bridgeUrl(baseReturnUrl) : baseReturnUrl,
+        failure: isLocalhost ? bridgeUrl(baseReturnUrl) : baseReturnUrl,
+        pending: isLocalhost ? bridgeUrl(baseReturnUrl) : baseReturnUrl
+      },
+      auto_return: 'approved',
+      notification_url: `${process.env.BACKEND_WEBHOOK_URL}/mercadopago?subscriptionId=${subscriptionId}`
+    };
+
+    console.log('📦 Enviando preferencia de suscripción a Mercado Pago:', JSON.stringify(body, null, 2));
+    const response = await preference.create({ body });
+    return response;
+  } catch (error) {
+    console.error('Error creando preferencia MP para suscripción:', error);
+    throw error;
+  }
+};

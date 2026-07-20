@@ -10,7 +10,67 @@ const router = express.Router();
 router.post('/mercadopago', async (req, res) => {
   try {
     const { type, data } = req.body;
-    const { appointmentId } = req.query; // Ahora lo recibimos por la URL
+    const { appointmentId, subscriptionId } = req.query;
+
+    if (type === 'payment' && subscriptionId) {
+      const paymentId = data.id;
+      console.log(`🔔 Webhook MP: Procesando Pago de Suscripción ID ${paymentId} para Suscripción ${subscriptionId}`);
+
+      const platformToken = process.env.MP_ACCESS_TOKEN || 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647';
+      const client = new MercadoPagoConfig({ accessToken: platformToken });
+      const payment = new Payment(client);
+      
+      const paymentData = await payment.get({ id: paymentId });
+      const status = paymentData.status;
+
+      console.log(`📝 Estado del pago de suscripción en MP: ${status}`);
+
+      if (status === 'approved') {
+        const subResult = await query(
+          'SELECT doctor_id, pricing_plan_id FROM subscriptions WHERE id = $1',
+          [subscriptionId]
+        );
+
+        if (subResult.rows.length > 0) {
+          const { doctor_id, pricing_plan_id } = subResult.rows[0];
+
+          const planResult = await query(
+            'SELECT key FROM pricing_plans WHERE id = $1',
+            [pricing_plan_id]
+          );
+
+          if (planResult.rows.length > 0) {
+            const plan = planResult.rows[0];
+            const plan_type = plan.key === 'commission' ? 'commission' : 'monthly';
+
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30);
+
+            await query(
+              `UPDATE doctors
+               SET subscription_status = 'active',
+                   subscription_expires_at = $1,
+                   pricing_plan_id = $2,
+                   plan_type = $3
+               WHERE id = $4`,
+              [expiresAt, pricing_plan_id, plan_type, doctor_id]
+            );
+
+            await query(
+              `UPDATE subscriptions
+               SET status = 'approved',
+                   period_start = CURRENT_TIMESTAMP,
+                   period_end = $1
+               WHERE id = $2`,
+              [expiresAt, subscriptionId]
+            );
+
+            console.log(`✅ Suscripción ${subscriptionId} pagada y aprobada automáticamente vía MP webhook. Doctor ${doctor_id} activado.`);
+          }
+        }
+      }
+      return res.sendStatus(200);
+    }
 
     if (type === 'payment' && appointmentId) {
       const paymentId = data.id;

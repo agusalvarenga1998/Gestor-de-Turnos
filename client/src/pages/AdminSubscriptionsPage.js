@@ -32,6 +32,38 @@ export default function AdminSubscriptionsPage() {
     }
   };
 
+  const handleApproveSubscription = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas aprobar esta suscripción? Esto activará y extenderá el plan del profesional por 30 días.')) return;
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/api/admin/subscriptions/${id}/approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        alert('Suscripción aprobada con éxito.');
+        fetchSubscriptions();
+      }
+    } catch (error) {
+      console.error('Error approving subscription:', error);
+      alert(error.response?.data?.error || 'Error al aprobar la suscripción.');
+    }
+  };
+
+  const handleRejectSubscription = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas rechazar esta solicitud de suscripción?')) return;
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/api/admin/subscriptions/${id}/reject`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        alert('Solicitud rechazada.');
+        fetchSubscriptions();
+      }
+    } catch (error) {
+      console.error('Error rejecting subscription:', error);
+      alert(error.response?.data?.error || 'Error al rechazar la solicitud.');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { color: '#fbbf24', label: 'Pendiente' },
@@ -90,6 +122,7 @@ export default function AdminSubscriptionsPage() {
                 <th>Inicio</th>
                 <th>Fin</th>
                 <th>Fecha Registro</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -104,6 +137,28 @@ export default function AdminSubscriptionsPage() {
                   <td>{formatDate(sub.period_start)}</td>
                   <td>{formatDate(sub.period_end)}</td>
                   <td className={styles.date}>{formatDate(sub.created_at)}</td>
+                  <td>
+                    {sub.status === 'pending' ? (
+                      <div className={styles.actionButtons}>
+                        <button
+                          onClick={() => handleApproveSubscription(sub.id)}
+                          className={styles.approveBtn}
+                          title="Aprobar Suscripción"
+                        >
+                          ✓ Aprobar
+                        </button>
+                        <button
+                          onClick={() => handleRejectSubscription(sub.id)}
+                          className={styles.rejectBtn}
+                          title="Rechazar Suscripción"
+                        >
+                          ✕ Rechazar
+                        </button>
+                      </div>
+                    ) : (
+                      <span className={styles.noAction}>-</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

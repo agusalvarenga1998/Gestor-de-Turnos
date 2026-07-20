@@ -63,7 +63,8 @@ export default function SettingsPage() {
     mercadopago: window.innerWidth > 768,
     profile: true,
     onboarding: false,
-    security: false
+    security: false,
+    subscription: false
   });
 
   // Estados de Seguridad
@@ -78,6 +79,71 @@ export default function SettingsPage() {
   const [loadingSecurity, setLoadingSecurity] = useState(false);
   const [securityError, setSecurityError] = useState('');
   const [securitySuccess, setSecuritySuccess] = useState('');
+
+  // Estados de Suscripción
+  const [plans, setPlans] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loadingSub, setLoadingSub] = useState(false);
+  const [submittingSub, setSubmittingSub] = useState(false);
+
+  const fetchSubscriptionData = async () => {
+    try {
+      setLoadingSub(true);
+      const plansRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5002'}/api/admin/public/plans`);
+      if (plansRes.data.success) {
+        setPlans(plansRes.data.plans);
+      }
+      
+      const historyRes = await apiClient.get('/api/doctor/subscriptions/history');
+      if (historyRes.data.success) {
+        setSubscriptions(historyRes.data.subscriptions);
+      }
+    } catch (err) {
+      console.error('Error al cargar datos de suscripción:', err);
+    } finally {
+      setLoadingSub(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchSubscriptionData();
+    }
+  }, [user]);
+
+  const handleRequestPlan = async (planId) => {
+    if (!window.confirm('¿Confirmas que deseas enviar la solicitud para activar este plan? El administrador revisará tu solicitud.')) return;
+    try {
+      setSubmittingSub(true);
+      const response = await apiClient.post('/api/doctor/subscriptions/request', { pricing_plan_id: planId });
+      if (response.data.success) {
+        alert('✓ Solicitud enviada correctamente. El administrador la revisará a la brevedad.');
+        fetchSubscriptionData();
+      }
+    } catch (err) {
+      console.error('Error al solicitar plan:', err);
+      alert(err.response?.data?.message || 'Error al enviar la solicitud.');
+    } finally {
+      setSubmittingSub(false);
+    }
+  };
+
+  const handlePayPlan = async (planId) => {
+    try {
+      setSubmittingSub(true);
+      const response = await apiClient.post('/api/doctor/subscriptions/mercadopago-preference', { pricing_plan_id: planId });
+      if (response.data.success && response.data.initPoint) {
+        window.location.href = response.data.initPoint;
+      } else {
+        alert('Error al generar la preferencia de pago.');
+      }
+    } catch (err) {
+      console.error('Error en pago de plan:', err);
+      alert(err.response?.data?.message || 'Error al procesar el pago.');
+    } finally {
+      setSubmittingSub(false);
+    }
+  };
 
   const handleSendVerification = async () => {
     setLoadingSecurity(true);
@@ -1280,6 +1346,153 @@ export default function SettingsPage() {
                 </div>
 
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Plan y Suscripción Section */}
+        <div className={`${styles.section} ${openSections.subscription ? styles.sectionOpen : ''}`}>
+          <div className={styles.sectionHeader} onClick={() => toggleSection('subscription')} style={{ cursor: 'pointer' }}>
+            <div className={styles.sectionTitleGroup}>
+              <div className={styles.sectionTitle}>
+                <Icon name="wallet" size={24} color="#3b82f6" />
+                Plan y Suscripción
+              </div>
+              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
+                {openSections.subscription ? 'expand_less' : 'expand_more'}
+              </span>
+            </div>
+            <p className={styles.sectionDescription}>
+              Gestiona tu plan comercial, ve el estado de tu cuenta o realiza la renovación de tu suscripción.
+            </p>
+          </div>
+
+          {openSections.subscription && (
+            <div className={styles.card}>
+              {/* Información del Plan Actual */}
+              <div className={styles.planOverview}>
+                <div className={styles.planOverviewInfo}>
+                  <h3>Tu Estado Actual</h3>
+                  <div className={styles.planInfoGrid}>
+                    <div className={styles.planInfoItem}>
+                      <span className={styles.planInfoLabel}>Plan comercial:</span>
+                      <span className={styles.planInfoValue}>
+                        {user?.plan?.name || (user?.plan_type === 'commission' ? 'Comisión' : 'Mensualidad')}
+                      </span>
+                    </div>
+                    <div className={styles.planInfoItem}>
+                      <span className={styles.planInfoLabel}>Estado de suscripción:</span>
+                      <span className={`${styles.planStatusBadge} ${styles[user?.subscription_status]}`}>
+                        {user?.subscription_status === 'trial' ? 'Prueba Gratis' : 
+                         user?.subscription_status === 'active' ? 'Activo' : 
+                         user?.subscription_status === 'expired' ? 'Expirado' : user?.subscription_status}
+                      </span>
+                    </div>
+                    {(user?.subscription_status === 'active' || user?.subscription_status === 'trial') && (
+                      <div className={styles.planInfoItem}>
+                        <span className={styles.planInfoLabel}>Vence el:</span>
+                        <span className={styles.planInfoValue}>
+                          {user?.subscription_expires_at || user?.trial_ends_at ? new Date(user?.subscription_expires_at || user?.trial_ends_at).toLocaleDateString('es-ES') : '-'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <hr className={styles.sectionDivider} />
+
+              {/* Grid de Planes Disponibles */}
+              <div className={styles.plansSelection}>
+                <h3>Planes Comerciales Disponibles</h3>
+                <p className={styles.subtitle}>Elige el plan que mejor se adapte a tus necesidades. Puedes solicitar la activación al administrador o pagar en línea con Mercado Pago.</p>
+                
+                {loadingSub ? (
+                  <div style={{ textAlign: 'center', padding: '2rem' }}>Cargando planes comerciales...</div>
+                ) : (
+                  <div className={styles.plansGrid}>
+                    {plans.map(p => (
+                      <div key={p.id} className={`${styles.pricingCard} ${p.is_popular ? styles.pricingCardPopular : ''}`}>
+                        {p.is_popular && <span className={styles.popularLabel}>Recomendado</span>}
+                        <h4>{p.name}</h4>
+                        <p className={styles.planDesc}>{p.description}</p>
+                        <div className={styles.priceContainer}>
+                          <span className={styles.currency}>$</span>
+                          <span className={styles.priceNum}>{Math.floor(p.price)}</span>
+                          <span className={styles.period}>/ {p.price_period === 'monthly' ? 'mes' : p.price_period}</span>
+                        </div>
+
+                        {p.features && p.features.length > 0 && (
+                          <ul className={styles.featuresList}>
+                            {p.features.map((f, i) => <li key={i}>✓ {f}</li>)}
+                          </ul>
+                        )}
+
+                        <div className={styles.planActions}>
+                          <button 
+                            onClick={() => handlePayPlan(p.id)} 
+                            className={styles.payOnlineBtn}
+                            disabled={submittingSub}
+                          >
+                            Pagar Online
+                          </button>
+                          <button 
+                            onClick={() => handleRequestPlan(p.id)} 
+                            className={styles.requestManualBtn}
+                            disabled={submittingSub}
+                          >
+                            Solicitar Activación
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <hr className={styles.sectionDivider} />
+
+              {/* Historial de Suscripciones */}
+              <div className={styles.historySection}>
+                <h3>Historial de Solicitudes y Pagos</h3>
+                {subscriptions.length === 0 ? (
+                  <p className={styles.emptyHistory}>No tienes solicitudes o pagos registrados aún.</p>
+                ) : (
+                  <div className={styles.tableWrapper}>
+                    <table className={styles.subTable}>
+                      <thead>
+                        <tr>
+                          <th>Plan</th>
+                          <th>Monto</th>
+                          <th>Estado</th>
+                          <th>Período</th>
+                          <th>Fecha Solicitud</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subscriptions.map(sub => (
+                          <tr key={sub.id}>
+                            <td>{sub.plan_name || 'Plan Comercial'}</td>
+                            <td>${parseFloat(sub.amount).toFixed(2)}</td>
+                            <td>
+                              <span className={`${styles.statusBadge} ${styles[sub.status]}`}>
+                                {sub.status === 'pending' ? 'Pendiente' : 
+                                 sub.status === 'approved' ? 'Aprobado' : 
+                                 sub.status === 'rejected' ? 'Rechazado' : sub.status}
+                              </span>
+                            </td>
+                            <td>
+                              {sub.period_start ? `${new Date(sub.period_start).toLocaleDateString('es-ES')} al ${new Date(sub.period_end).toLocaleDateString('es-ES')}` : '-'}
+                            </td>
+                            <td>{new Date(sub.created_at).toLocaleDateString('es-ES')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
         </div>

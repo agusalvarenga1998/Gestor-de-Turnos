@@ -278,6 +278,7 @@ async function initDatabase(retries = 3) {
       CREATE TABLE IF NOT EXISTS subscriptions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+        pricing_plan_id UUID REFERENCES pricing_plans(id) ON DELETE SET NULL,
         amount DECIMAL(10,2) DEFAULT 0,
         status VARCHAR(50) DEFAULT 'pending',
         period_start TIMESTAMP,
