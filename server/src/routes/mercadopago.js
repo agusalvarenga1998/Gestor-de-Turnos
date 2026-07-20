@@ -10,18 +10,13 @@ dotenv.config();
 const router = express.Router();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-// Funciones auxiliares para obtener las credenciales con valores de contingencia
 const getPlatformToken = () => {
-  const envToken = process.env.MP_ACCESS_TOKEN;
-  // Solo usar el token del entorno si corresponde al nuevo ID de cliente
-  if (envToken && envToken.includes('3334296268871714')) {
-    return envToken;
-  }
-  return 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647';
+  return process.env.MP_ACCESS_TOKEN || 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647';
 };
 
 const getClientId = () => {
-  return process.env.MP_CLIENT_ID || getPlatformToken().split('-')[1] || '3334296268871714';
+  const token = getPlatformToken();
+  return process.env.MP_CLIENT_ID || (token.includes('-') ? token.split('-')[1] : '') || '3334296268871714';
 };
 
 const getClientSecret = () => {
