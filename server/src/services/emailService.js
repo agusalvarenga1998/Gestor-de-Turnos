@@ -837,3 +837,59 @@ export async function sendAppointmentReminder({
     return { sent: false, error: error.message };
   }
 }
+
+export async function sendPasswordResetEmail({ to, doctorName, resetUrl }) {
+  try {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8fafc; padding: 20px; }
+          .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+          .header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 20px; }
+          .header h2 { color: #2563eb; margin: 0; }
+          .btn-container { text-align: center; margin: 35px 0; }
+          .btn { background-color: #2563eb; color: white !important; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+          .btn:hover { background-color: #1d4ed8; }
+          .footer { font-size: 12px; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>TurnoHub - Restablecer Contraseña</h2>
+          </div>
+          <p>Hola, <strong>${doctorName}</strong>.</p>
+          <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta de profesional en TurnoHub.</p>
+          <p>Haz clic en el siguiente botón para elegir una nueva contraseña (este enlace expira en 1 hora):</p>
+          <div class="btn-container">
+            <a href="${resetUrl}" class="btn" target="_blank">Restablecer Contraseña</a>
+          </div>
+          <p>Si no realizaste esta solicitud, puedes ignorar este correo de forma segura. Tu contraseña actual no cambiará.</p>
+          <div class="footer">
+            <p>Este es un correo automático. Por favor, no respondas a este mensaje.</p>
+            <p>© 2026 TurnoHub. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const mailOptions = {
+      from: `"Soporte TurnoHub" <${process.env.SMTP_USER}>`,
+      to,
+      subject: 'Restablecer contraseña - TurnoHub',
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✓ Correo de restablecimiento de contraseña enviado:', info.messageId);
+    return { sent: true };
+  } catch (error) {
+    console.error('Error enviando correo de restablecimiento de contraseña:', error);
+    return { sent: false, error: error.message };
+  }
+}

@@ -245,6 +245,15 @@ async function migrate() {
     `);
     console.log('✓ Tabla admins actualizada.\n');
 
+    // 19. Tabla Doctors: asegurar columnas de recuperación de contraseña
+    console.log('➕ Asegurando columnas de recuperación de contraseña en doctors...');
+    await client.query(`
+      ALTER TABLE doctors
+      ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP;
+    `);
+    console.log('✓ Tabla doctors actualizada.\n');
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {

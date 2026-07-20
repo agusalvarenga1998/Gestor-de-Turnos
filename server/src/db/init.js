@@ -89,7 +89,9 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false,
       ADD COLUMN IF NOT EXISTS verification_token UUID DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT false,
-      ADD COLUMN IF NOT EXISTS two_factor_secret TEXT DEFAULT NULL;
+      ADD COLUMN IF NOT EXISTS two_factor_secret TEXT DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP DEFAULT NULL;
     `);
 
     await client.query(`

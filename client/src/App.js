@@ -29,6 +29,8 @@ import AccountPendingPage from './pages/AccountPendingPage';
 import SubscriptionExpiredPage from './pages/SubscriptionExpiredPage';
 import SuspendedPage from './pages/SuspendedPage';
 import InstallAppPage from './pages/InstallAppPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Páginas - Admin
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -82,6 +84,8 @@ function AppContent() {
       <Route path="/account-pending" element={<AccountPendingPage />} />
       <Route path="/account-suspended" element={<SuspendedPage />} />
       <Route path="/subscription-expired" element={<SubscriptionExpiredPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Páginas Informativas / Landing */}
       <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />} />

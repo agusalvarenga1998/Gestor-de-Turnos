@@ -930,4 +930,108 @@ router.delete('/profile/delete-account', verifyToken, async (req, res) => {
   }
 });
 
+// Solicitud de recuperación de contraseña (Pública)
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'El correo electrónico es requerido.' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Buscar doctor
+    const result = await query(
+      'SELECT id, name, email FROM doctors WHERE LOWER(email) = $1',
+      [normalizedEmail]
+    );
+
+    if (result.rows.length === 0) {
+      // Retornar éxito de todas formas por seguridad (para evitar enumeración de cuentas)
+      return res.json({
+        success: true,
+        message: 'Si el correo electrónico está registrado, recibirás un enlace para restablecer tu contraseña en los próximos minutos.'
+      });
+    }
+
+    const doctor = result.rows[0];
+    const token = uuidv4();
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 1); // Expira en 1 hora
+
+    // Guardar token y expiración
+    await query(
+      `UPDATE doctors 
+       SET reset_password_token = $1, 
+           reset_password_expires = $2 
+       WHERE id = $3`,
+      [token, expires, doctor.id]
+    );
+
+    // Enviar email
+    const resetUrl = `${FRONTEND_URL}/reset-password?token=${token}`;
+    const { sendPasswordResetEmail } = await import('../services/emailService.js');
+    await sendPasswordResetEmail({
+      to: doctor.email,
+      doctorName: doctor.name,
+      resetUrl
+    });
+
+    res.json({
+      success: true,
+      message: 'Si el correo electrónico está registrado, recibirás un enlace para restablecer tu contraseña en los próximos minutos.'
+    });
+  } catch (error) {
+    console.error('Error en forgot-password:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+  }
+});
+
+// Restablecer contraseña con token (Pública)
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ success: false, message: 'El token y la nueva contraseña son requeridos.' });
+    }
+
+    // Buscar doctor con token válido y que no haya expirado
+    const result = await query(
+      `SELECT id FROM doctors 
+       WHERE reset_password_token = $1 
+         AND reset_password_expires > CURRENT_TIMESTAMP`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El enlace de recuperación es inválido o ha expirado.'
+      });
+    }
+
+    const doctor = result.rows[0];
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    // Actualizar contraseña y limpiar campos de token
+    await query(
+      `UPDATE doctors 
+       SET password_hash = $1, 
+           reset_password_token = NULL, 
+           reset_password_expires = NULL,
+           token_version = token_version + 1
+       WHERE id = $2`,
+      [passwordHash, doctor.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Tu contraseña ha sido restablecida exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.'
+    });
+  } catch (error) {
+    console.error('Error en reset-password:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+  }
+});
+
 export default router;
