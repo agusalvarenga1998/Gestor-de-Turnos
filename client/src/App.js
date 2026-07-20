@@ -54,6 +54,7 @@ import TermsOfServicePage from './pages/TermsOfServicePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import Loading from './components/Loading';
+import WhatsAppBubble from './components/WhatsAppBubble';
 
 function AppContent() {
   const location = useLocation();
@@ -182,6 +183,7 @@ function AppContent() {
     {isAuthenticated && isSubscriptionExpired && (
       <SubscriptionExpiredPage />
     )}
+    <WhatsAppBubble />
     </>
   );
 }
