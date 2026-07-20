@@ -11,9 +11,22 @@ export default function AdminSubscriptionsPage() {
   const { token } = useAdminAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [mpAccount, setMpAccount] = useState(null);
+  const [loadingMp, setLoadingMp] = useState(false);
+  const [mpMessage, setMpMessage] = useState('');
 
   useEffect(() => {
     fetchSubscriptions();
+    fetchMpAccount();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mp_connected') === 'true') {
+      setMpMessage('✓ Cuenta de Mercado Pago vinculada correctamente.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('mp_connected') === 'error') {
+      setMpMessage('✕ Error al vincular la cuenta de Mercado Pago.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const fetchSubscriptions = async () => {
@@ -30,6 +43,29 @@ export default function AdminSubscriptionsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchMpAccount = async () => {
+    try {
+      setLoadingMp(true);
+      const response = await axios.get(`${API_BASE_URL}/api/mercadopago/oauth/admin/account`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success && response.data.connected) {
+        setMpAccount(response.data.account || { nickname: 'Cuenta Conectada' });
+      } else {
+        setMpAccount(null);
+      }
+    } catch (err) {
+      console.error('Error fetching admin Mercado Pago account:', err);
+    } finally {
+      setLoadingMp(false);
+    }
+  };
+
+  const handleConnectMp = () => {
+    if (!token) return;
+    window.location.href = `${API_BASE_URL}/api/mercadopago/oauth/admin/auth?token=${token}`;
   };
 
   const handleApproveSubscription = async (id) => {
@@ -104,6 +140,42 @@ export default function AdminSubscriptionsPage() {
       <div className={styles.header}>
         <h1>Historial de Suscripciones</h1>
         <p>Total de registros: {subscriptions.length}</p>
+      </div>
+
+      {mpMessage && (
+        <div className={mpMessage.startsWith('✓') ? styles.mpSuccessAlert : styles.mpErrorAlert}>
+          {mpMessage}
+        </div>
+      )}
+
+      <div className={styles.mpConnectionCard}>
+        <div className={styles.mpCardHeader}>
+          <h3>💰 Cobro de Suscripciones (Mercado Pago)</h3>
+          <p>Vincula la cuenta de Mercado Pago única donde se acreditarán los pagos de todos los planes de suscripción de los médicos.</p>
+        </div>
+        <div className={styles.mpCardBody}>
+          {loadingMp ? (
+            <span className={styles.mpLoading}>Cargando estado de Mercado Pago...</span>
+          ) : mpAccount ? (
+            <div className={styles.mpConnectedInfo}>
+              <div className={styles.mpStatusBadgeConnected}>✓ Cuenta Vinculada</div>
+              <div className={styles.mpAccountDetails}>
+                <strong>Titular:</strong> {mpAccount.name || mpAccount.nickname || 'Administrador'} ({mpAccount.email || 'email no disponible'})
+              </div>
+              <button onClick={handleConnectMp} className={styles.mpReconnectBtn}>
+                Revincular Cuenta
+              </button>
+            </div>
+          ) : (
+            <div className={styles.mpDisconnectedInfo}>
+              <div className={styles.mpStatusBadgeDisconnected}>⚠ Cuenta no vinculada</div>
+              <p className={styles.mpWarningText}>Actualmente se están usando las credenciales estáticas de contingencia. Se recomienda vincular tu cuenta real de producción para recibir los cobros directamente.</p>
+              <button onClick={handleConnectMp} className={styles.mpConnectBtn}>
+                Vincular Mercado Pago
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {subscriptions.length === 0 ? (

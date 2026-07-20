@@ -138,3 +138,131 @@
   color: var(--gray);
   font-size: 0.9rem;
 }
+
+/* Mercado Pago Connection Styles */
+.mpSuccessAlert {
+  background-color: #d1fae5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.mpErrorAlert {
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.mpConnectionCard {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.mpCardHeader h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.15rem;
+  color: var(--dark-gray);
+}
+
+.mpCardHeader p {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.9rem;
+  color: var(--gray);
+  line-height: 1.4;
+}
+
+.mpCardBody {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.25rem;
+}
+
+.mpConnectedInfo, .mpDisconnectedInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.mpStatusBadgeConnected {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mpStatusBadgeDisconnected {
+  background: #fef3c7;
+  color: #d97706;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mpAccountDetails {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.mpWarningText {
+  font-size: 0.85rem;
+  color: var(--gray);
+  margin: 0;
+  flex: 1;
+}
+
+.mpConnectBtn, .mpReconnectBtn {
+  padding: 0.65rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.mpConnectBtn {
+  background: #009ee3;
+  color: white;
+  border: none;
+}
+
+.mpConnectBtn:hover {
+  background: #0081bb;
+}
+
+.mpReconnectBtn {
+  background: white;
+  color: var(--gray);
+  border: 1px solid var(--border-color);
+}
+
+.mpReconnectBtn:hover {
+  background: var(--bg-primary);
+  border-color: #cbd5e1;
+}
+
+.mpLoading {
+  font-size: 0.9rem;
+  color: var(--gray);
+  font-style: italic;
+}

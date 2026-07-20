@@ -236,6 +236,9 @@ async function initDatabase(retries = 3) {
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
+        mp_access_token TEXT,
+        mp_refresh_token TEXT,
+        mp_connected BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);

@@ -16,7 +16,10 @@ router.post('/mercadopago', async (req, res) => {
       const paymentId = data.id;
       console.log(`🔔 Webhook MP: Procesando Pago de Suscripción ID ${paymentId} para Suscripción ${subscriptionId}`);
 
-      const platformToken = process.env.MP_ACCESS_TOKEN || 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647';
+      const adminTokenResult = await query("SELECT mp_access_token FROM admins WHERE mp_connected = true LIMIT 1");
+      const platformToken = (adminTokenResult.rows.length > 0 && adminTokenResult.rows[0].mp_access_token)
+        ? adminTokenResult.rows[0].mp_access_token
+        : (process.env.MP_ACCESS_TOKEN || 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647');
       const client = new MercadoPagoConfig({ accessToken: platformToken });
       const payment = new Payment(client);
       

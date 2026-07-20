@@ -235,6 +235,16 @@ async function migrate() {
     `);
     console.log('✓ Tabla subscriptions actualizada.\n');
 
+    // 18. Tabla Admins: asegurar columnas de Mercado Pago
+    console.log('➕ Asegurando columnas de Mercado Pago en tabla admins...');
+    await client.query(`
+      ALTER TABLE admins
+      ADD COLUMN IF NOT EXISTS mp_access_token TEXT,
+      ADD COLUMN IF NOT EXISTS mp_refresh_token TEXT,
+      ADD COLUMN IF NOT EXISTS mp_connected BOOLEAN DEFAULT false;
+    `);
+    console.log('✓ Tabla admins actualizada.\n');
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {
