@@ -83,7 +83,7 @@ export default function SupportPage() {
                 <div className={styles.iconCircle}><Icon name="mail" size={20} color="#2563eb" /></div>
                 <div>
                   <h4>Correo Electrónico</h4>
-                  <p>soporte@turnohub.com</p>
+                  <p>admin.turnohub@gmail.com</p>
                 </div>
               </div>
 
@@ -91,7 +91,7 @@ export default function SupportPage() {
                 <div className={styles.iconCircle}>💬</div>
                 <div>
                   <h4>WhatsApp Soporte</h4>
-                  <p>+54 9 11 1234-5678</p>
+                  <p>+54 9 3765 40-9032</p>
                 </div>
               </div>
 
