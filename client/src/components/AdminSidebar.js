@@ -44,6 +44,11 @@ export default function AdminSidebar() {
       label: 'Reportes',
       icon: '📊',
       path: '/admin/reports'
+    },
+    {
+      label: 'Tickets de Soporte',
+      icon: '📩',
+      path: '/admin/support-tickets'
     }
   ];
 

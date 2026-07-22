@@ -5,6 +5,7 @@ import { query } from '../db/config.js';
 import { sendProfessionalApprovalEmail } from '../services/emailService.js';
 import multer from 'multer';
 import XLSX from 'xlsx';
+import { getAllTicketsAdmin, updateTicketStatusAdmin } from '../controllers/supportController.js';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -1001,5 +1002,9 @@ router.delete('/template-insurances/:id', verifyAdmin, async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar la obra social base' });
   }
 });
+
+// --- RUTAS DE SOPORTE / TICKETS DE PROBLEMAS ---
+router.get('/support-tickets', verifyAdmin, getAllTicketsAdmin);
+router.put('/support-tickets/:id', verifyAdmin, updateTicketStatusAdmin);
 
 export default router;

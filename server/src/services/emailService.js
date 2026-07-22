@@ -893,3 +893,110 @@ export async function sendPasswordResetEmail({ to, doctorName, resetUrl }) {
     return { sent: false, error: error.message };
   }
 }
+
+// Enviar reporte de soporte / problema al administrador (admin.turnohub@gmail.com)
+export async function sendSupportReportEmail({
+  doctorName,
+  doctorEmail,
+  doctorPhone,
+  clinicName,
+  subject,
+  category,
+  priority,
+  description,
+  ticketId
+}) {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin.turnohub@gmail.com';
+    const categoryMap = {
+      tech: 'Problema Técnico',
+      billing: 'Facturación / Planes',
+      sales: 'Información Comercial',
+      other: 'Otro'
+    };
+    const priorityMap = {
+      low: 'Baja 🟢',
+      medium: 'Media 🟡',
+      high: 'Alta 🟠',
+      urgent: 'URGENTE 🔴'
+    };
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #1e293b; background-color: #f8fafc; padding: 20px; }
+          .card { max-width: 650px; margin: 0 auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+          .header { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+          .header h2 { margin: 0; font-size: 20px; }
+          .badge { display: inline-block; padding: 4px 10px; border-radius: 99px; font-weight: bold; font-size: 13px; background: #e0f2fe; color: #0369a1; }
+          .field { margin-bottom: 15px; }
+          .label { font-weight: bold; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+          .value { font-size: 15px; color: #0f172a; margin-top: 4px; }
+          .box { background: #f1f5f9; padding: 15px; border-radius: 8px; border-left: 4px solid #2563eb; white-space: pre-wrap; font-size: 14px; }
+          .footer { font-size: 12px; color: #94a3b8; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="header">
+            <h2>🚨 Nuevo Reporte de Problema / Soporte</h2>
+            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">TurnoHub Admin Notification</p>
+          </div>
+
+          <div class="field">
+            <div class="label">Asunto</div>
+            <div class="value" style="font-size: 18px; font-weight: bold; color: #1e3a8a;">${subject}</div>
+          </div>
+
+          <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+            <div class="field" style="flex: 1;">
+              <div class="label">Categoría</div>
+              <div class="value"><span class="badge">${categoryMap[category] || category}</span></div>
+            </div>
+            <div class="field" style="flex: 1;">
+              <div class="label">Prioridad</div>
+              <div class="value">${priorityMap[priority] || priority}</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="label">Profesional</div>
+            <div class="value"><strong>${doctorName}</strong> (${doctorEmail})</div>
+            ${doctorPhone ? `<div style="font-size: 13px; color: #64748b;">Tel: ${doctorPhone}</div>` : ''}
+            ${clinicName ? `<div style="font-size: 13px; color: #64748b;">Clínica / Negocio: ${clinicName}</div>` : ''}
+          </div>
+
+          <div class="field">
+            <div class="label">Descripción del Problema</div>
+            <div class="box">${description}</div>
+          </div>
+
+          ${ticketId ? `<div style="font-size: 12px; color: #64748b; margin-top: 10px;">ID Ticket BD: ${ticketId}</div>` : ''}
+
+          <div class="footer">
+            <p>Este reporte fue generado desde el panel de soporte de TurnoHub. Podés gestionar y cambiar su estado en tu panel de administración.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const mailOptions = {
+      from: `"TurnoHub Soporte" <${process.env.SMTP_USER}>`,
+      to: adminEmail,
+      replyTo: doctorEmail,
+      subject: `[SOPORTE] ${subject} - ${doctorName}`,
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✓ Reporte de soporte enviado a ${adminEmail}:`, info.messageId);
+    return { sent: true };
+  } catch (error) {
+    console.error('❌ Error enviando correo de reporte de soporte:', error);
+    return { sent: false, error: error.message };
+  }
+}

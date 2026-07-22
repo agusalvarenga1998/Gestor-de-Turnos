@@ -41,6 +41,7 @@ import AdminPlansPage from './pages/AdminPlansPage';
 import AdminTemplateServicesPage from './pages/AdminTemplateServicesPage';
 import AdminTemplateInsurancesPage from './pages/AdminTemplateInsurancesPage';
 import AdminReportsPage from './pages/AdminReportsPage';
+import AdminSupportTicketsPage from './pages/AdminSupportTicketsPage';
 
 // Páginas - Info / Landing
 import LandingPage from './pages/LandingPage';
@@ -152,6 +153,14 @@ function AppContent() {
         element={
           <ProtectedAdminRoute>
             <AdminReportsPage />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/support-tickets"
+        element={
+          <ProtectedAdminRoute>
+            <AdminSupportTicketsPage />
           </ProtectedAdminRoute>
         }
       />

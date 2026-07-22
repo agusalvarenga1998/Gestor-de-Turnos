@@ -1,88 +1,285 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../hooks/useAuth';
 import Icon from '../components/Icon';
+import DoctorLayout from '../components/DoctorLayout';
 import styles from './SupportPage.module.css';
 
 export default function SupportPage() {
-  const [sent, setSent] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSent(true);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    category: 'tech',
+    priority: 'medium',
+    description: ''
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [myTickets, setMyTickets] = useState([]);
+  const [fetchingTickets, setFetchingTickets] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || ''
+      }));
+    }
+  }, [user]);
+
+  // Cargar tickets del profesional si está autenticado
+  const fetchMyTickets = async () => {
+    if (!isAuthenticated) return;
+    try {
+      setFetchingTickets(true);
+      const token = localStorage.getItem('token');
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5002';
+      const response = await axios.get(`${baseUrl}/api/support/tickets/my-tickets`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setMyTickets(response.data.tickets || []);
+      }
+    } catch (err) {
+      console.error('Error al obtener mis tickets de soporte:', err);
+    } finally {
+      setFetchingTickets(false);
+    }
   };
 
-  return (
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchMyTickets();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5002';
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await axios.post(`${baseUrl}/api/support/tickets`, formData, { headers });
+
+      if (response.data.success) {
+        setSent(true);
+        setFormData(prev => ({
+          ...prev,
+          subject: '',
+          description: ''
+        }));
+        if (isAuthenticated) {
+          fetchMyTickets();
+        }
+      } else {
+        setErrorMessage(response.data.message || 'Error al enviar el reporte.');
+      }
+    } catch (err) {
+      console.error('Error al enviar ticket:', err);
+      setErrorMessage(err.response?.data?.message || 'Error de conexión con el servidor.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statusBadge = (status) => {
+    switch (status) {
+      case 'pending':
+        return <span className={`${styles.badge} ${styles.badgePending}`}>Pendiente ⏳</span>;
+      case 'in_progress':
+        return <span className={`${styles.badge} ${styles.badgeInProgress}`}>En Proceso 🛠️</span>;
+      case 'resolved':
+        return <span className={`${styles.badge} ${styles.badgeResolved}`}>Resuelto ✅</span>;
+      case 'closed':
+        return <span className={`${styles.badge} ${styles.badgeClosed}`}>Cerrado 📁</span>;
+      default:
+        return <span className={styles.badge}>{status}</span>;
+    }
+  };
+
+  const mainContent = (
     <div className={styles.container}>
-      {/* Navbar Minimalista */}
-      <nav className={styles.navbar}>
-        <div className={styles.navContent}>
-          <Link to="/" className={styles.logo}>
-            <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
-            <span>TurnoHub Support</span>
-          </Link>
-          <Link to="/" className={styles.backLink}>Regresar</Link>
-        </div>
-      </nav>
+      {!isAuthenticated && (
+        <nav className={styles.navbar}>
+          <div className={styles.navContent}>
+            <Link to="/" className={styles.logo}>
+              <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
+              <span>TurnoHub Support</span>
+            </Link>
+            <Link to="/" className={styles.backLink}>Regresar</Link>
+          </div>
+        </nav>
+      )}
 
       <main className={styles.main}>
         <div className={styles.layout}>
           {/* Columna Izquierda: Formulario */}
           <section className={styles.formSection}>
             <div className={styles.intro}>
-              <h1>Contacta con nosotros</h1>
-              <p>¿Tienes alguna duda técnica o comercial? Nuestro equipo de expertos está listo para ayudarte.</p>
+              <h1>Reportar un Problema / Soporte</h1>
+              <p>¿Tienes alguna duda técnica, falla o consulta? Tu mensaje nos llegará inmediatamente por email a <strong>admin.turnohub@gmail.com</strong> y a nuestro panel central.</p>
             </div>
+
+            {errorMessage && (
+              <div className={styles.errorAlert}>
+                ⚠️ {errorMessage}
+              </div>
+            )}
 
             {sent ? (
               <div className={styles.successCard}>
                 <div className={styles.successIcon}>✓</div>
-                <h2>¡Mensaje enviado!</h2>
-                <p>Hemos recibido tu consulta. Un miembro de nuestro equipo te contactará en las próximas 24 horas.</p>
-                <button onClick={() => setSent(false)} className={styles.resetBtn}>Enviar otro mensaje</button>
+                <h2>¡Reporte Enviado con Éxito!</h2>
+                <p>Hemos recibido tu consulta y se notificó al administrador a <strong>admin.turnohub@gmail.com</strong>. Un miembro del equipo te responderá a la brevedad.</p>
+                <button onClick={() => setSent(false)} className={styles.resetBtn}>Enviar otro reporte</button>
               </div>
             ) : (
               <form className={styles.form} onSubmit={handleSubmit}>
                 <div className={styles.row}>
                   <div className={styles.group}>
                     <label>Nombre Completo</label>
-                    <input type="text" placeholder="Ej: Dr. Juan Pérez" required />
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Ej: Dr. Juan Pérez"
+                      required
+                    />
                   </div>
                   <div className={styles.group}>
-                    <label>Email Profesional</label>
-                    <input type="email" placeholder="juan@clinica.com" required />
+                    <label>Email de Contacto</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="juan@clinica.com"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.row}>
+                  <div className={styles.group}>
+                    <label>Categoría</label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="tech">Problema Técnico / Falla</option>
+                      <option value="billing">Facturación / Suscripción</option>
+                      <option value="sales">Información sobre Planes</option>
+                      <option value="other">Otro / Sugerencia</option>
+                    </select>
+                  </div>
+                  <div className={styles.group}>
+                    <label>Prioridad</label>
+                    <select
+                      name="priority"
+                      value={formData.priority}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="low">Baja 🟢</option>
+                      <option value="medium">Media 🟡</option>
+                      <option value="high">Alta 🟠</option>
+                      <option value="urgent">URGENTE 🔴</option>
+                    </select>
                   </div>
                 </div>
 
                 <div className={styles.group}>
                   <label>Asunto</label>
-                  <select required>
-                    <option value="">Selecciona una opción</option>
-                    <option value="tech">Problema Técnico</option>
-                    <option value="billing">Facturación</option>
-                    <option value="sales">Información sobre Planes</option>
-                    <option value="other">Otro</option>
-                  </select>
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    placeholder="Ej: Error al sincronizar Google Calendar"
+                    required
+                  />
                 </div>
 
                 <div className={styles.group}>
-                  <label>Mensaje</label>
-                  <textarea rows="5" placeholder="Cuéntanos en qué podemos ayudarte..." required></textarea>
+                  <label>Descripción detallada del problema</label>
+                  <textarea
+                    rows="5"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Describe qué sucedió, qué pantalla estabas usando o cómo podemos ayudarte..."
+                    required
+                  ></textarea>
                 </div>
 
-                <button type="submit" className={styles.submitBtn}>Enviar consulta</button>
+                <button type="submit" className={styles.submitBtn} disabled={loading}>
+                  {loading ? 'Enviando reporte...' : 'Enviar reporte de soporte'}
+                </button>
               </form>
+            )}
+
+            {/* Historial de reportes del profesional */}
+            {isAuthenticated && (
+              <div className={styles.myTicketsSection}>
+                <h2>Mis Reportes Enviados</h2>
+                {fetchingTickets ? (
+                  <p>Cargando reportes anteriores...</p>
+                ) : myTickets.length === 0 ? (
+                  <p className={styles.emptyText}>No has registrado reportes previamente.</p>
+                ) : (
+                  <div className={styles.ticketsList}>
+                    {myTickets.map(t => (
+                      <div key={t.id} className={styles.ticketCard}>
+                        <div className={styles.ticketHeader}>
+                          <span className={styles.ticketSubject}>{t.subject}</span>
+                          {statusBadge(t.status)}
+                        </div>
+                        <p className={styles.ticketDesc}>{t.description}</p>
+                        <div className={styles.ticketMeta}>
+                          <span>Categoría: {t.category}</span> • <span>Enviado: {new Date(t.created_at).toLocaleDateString()}</span>
+                        </div>
+                        {t.admin_notes && (
+                          <div className={styles.adminNotesBox}>
+                            <strong>Respuesta del Administrador:</strong> {t.admin_notes}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </section>
 
           {/* Columna Derecha: Canales Directos */}
           <aside className={styles.infoSection}>
             <div className={styles.infoCard}>
-              <h3>Canales Directos</h3>
+              <h3>Contacto Directo</h3>
               
               <div className={styles.contactItem}>
                 <div className={styles.iconCircle}><Icon name="mail" size={20} color="#2563eb" /></div>
                 <div>
-                  <h4>Correo Electrónico</h4>
+                  <h4>Correo Directo</h4>
                   <p>admin.turnohub@gmail.com</p>
                 </div>
               </div>
@@ -107,15 +304,23 @@ export default function SupportPage() {
 
             <div className={styles.statusCard}>
               <div className={styles.statusDot}></div>
-              <span>Todos los sistemas operativos</span>
+              <span>Sistemas funcionando al 100%</span>
             </div>
           </aside>
         </div>
       </main>
 
-      <footer className={styles.footer}>
-        <p>© 2026 TurnoHub Global Support center.</p>
-      </footer>
+      {!isAuthenticated && (
+        <footer className={styles.footer}>
+          <p>© 2026 TurnoHub Global Support center.</p>
+        </footer>
+      )}
     </div>
   );
+
+  if (isAuthenticated) {
+    return <DoctorLayout>{mainContent}</DoctorLayout>;
+  }
+
+  return mainContent;
 }

@@ -414,6 +414,22 @@ async function initDatabase(retries = 3) {
     `);
     console.log('✓ Trigger trg_record_appointment_movements creado/verificado');
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS support_tickets (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID REFERENCES doctors(id) ON DELETE CASCADE,
+        subject VARCHAR(255) NOT NULL,
+        category VARCHAR(50) DEFAULT 'tech',
+        priority VARCHAR(20) DEFAULT 'medium',
+        description TEXT NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending',
+        admin_notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla support_tickets creada');
+
     // Crear usuario admin por defecto
     const adminEmail = 'admin@example.com';
     const adminPass = 'adminpass123';
