@@ -111,9 +111,29 @@ export default function LandingPage() {
           <h1>Impulsa tu negocio y agenda <br /><span>sin interrupciones</span></h1>
           <p>La plataforma definitiva para médicos, esteticistas, barberos y profesionales independientes. Automatiza tu agenda, sincroniza con Google Calendar y potencia tu rentabilidad.</p>
           
-          <div className={styles.heroCta}>
-            <Link to="/register" className={styles.primaryBtnLarge}>Comenzar prueba gratis</Link>
-            <a href="#planes" className={styles.outlineBtnLarge}>Ver Planes de Precios</a>
+          <div className={styles.ctaGroup}>
+            <Link to="/register" className={styles.heroPrimaryBtn}>
+              Comenzar prueba gratis
+              <Icon name="arrowRight" size={20} />
+            </Link>
+            <a href="#planes" className={styles.heroSecondaryBtn}>
+              Ver Planes de Precios
+            </a>
+          </div>
+          
+          <div className={styles.trustBadges}>
+            <span className={styles.badgeItem}>
+              <Icon name="check" size={16} color="#10b981" />
+              15 días de prueba <strong>gratis</strong>
+            </span>
+            <span className={styles.badgeItem}>
+              <Icon name="check" size={16} color="#10b981" />
+              Sin tarjeta de crédito
+            </span>
+            <span className={styles.badgeItem}>
+              <Icon name="check" size={16} color="#10b981" />
+              Configura en 2 min
+            </span>
           </div>
         </div>
       </header>
@@ -204,7 +224,7 @@ export default function LandingPage() {
               </ul>
               <Link 
                 to="/register" 
-                className={`${styles.pricingBtn} ${plan.is_popular ? styles.primary : styles.outline}`}
+                className={`${styles.pricingBtn} ${plan.is_popular ? styles.pricingBtnPrimary : styles.pricingBtnOutline}`}
               >
                 Empezar prueba gratis
               </Link>
