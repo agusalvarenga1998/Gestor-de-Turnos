@@ -1089,7 +1089,8 @@ export default function PatientPortalHomePage() {
                                   }
                                 }
 
-                                const systemFee = d?.plan_type === 'commission' ? (servicePrice * 0.03) : 0;
+                                const ratePercent = parseFloat(d?.commission_rate !== undefined && d?.commission_rate !== null ? d.commission_rate : 3);
+                                const systemFee = d?.plan_type === 'commission' ? (servicePrice * (ratePercent / 100)) : 0;
                                 const professionalFee = (selectedService.booking_fee !== null && selectedService.booking_fee !== undefined) 
                                   ? parseFloat(selectedService.booking_fee) 
                                   : parseFloat(d?.booking_fee || 0);
@@ -1106,7 +1107,7 @@ export default function PatientPortalHomePage() {
                                     </div>
                                     {systemFee > 0 && (
                                       <div className={styles.paymentRow}>
-                                        <span>Uso de la Aplicación (3%):</span>
+                                        <span>Uso de la Aplicación ({ratePercent}%):</span>
                                         <span>${systemFee.toLocaleString()}</span>
                                       </div>
                                     )}

@@ -121,7 +121,7 @@ router.get('/public/all-doctors', async (req, res) => {
   try {
     console.log('🔓 Obtener todos los médicos aprobados');
     const result = await query(
-      `SELECT d.id, d.name, d.specialization, d.clinic_name, d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, d.plan_type
+      `SELECT d.id, d.name, d.specialization, d.clinic_name, d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, d.plan_type, d.commission_rate
        FROM doctors d
        LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
        WHERE d.status = 'approved'
@@ -150,7 +150,7 @@ router.get('/public/doctors/:specialization', async (req, res) => {
     console.log('🔓 Obtener médicos de especialidad:', specialization);
 
     const result = await query(
-      `SELECT d.id, d.name, d.specialization, d.clinic_name, d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, d.plan_type
+      `SELECT d.id, d.name, d.specialization, d.clinic_name, d.phone, d.address, d.latitude, d.longitude, d.booking_fee, d.appointment_price, d.plan_type, d.commission_rate
        FROM doctors d
        LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
        WHERE d.status = 'approved'

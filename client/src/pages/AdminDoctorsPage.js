@@ -109,7 +109,10 @@ export default function AdminDoctorsPage() {
         case 'change-plan':
           response = await axios.patch(
             `${API_BASE_URL}/api/admin/doctors/${doctorId}/plan`,
-            { pricing_plan_id: selectedPlanId, commission_rate: parseFloat(commissionRate) || 3 },
+            { 
+              pricing_plan_id: selectedPlanId, 
+              commission_rate: (commissionRate !== '' && !isNaN(parseFloat(commissionRate))) ? parseFloat(commissionRate) : 3 
+            },
             { headers: { Authorization: `Bearer ${token}` } }
           );
           break;
