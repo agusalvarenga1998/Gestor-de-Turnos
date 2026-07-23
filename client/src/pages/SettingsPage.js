@@ -1417,8 +1417,16 @@ export default function SettingsPage() {
                         <h4>{p.name}</h4>
                         <p className={styles.planDesc}>{p.description}</p>
                         <div className={styles.priceContainer}>
-                          <span className={styles.currency}>$</span>
-                          <span className={styles.priceNum}>{Math.floor(p.price)}</span>
+                          <span className={styles.priceNum}>
+                            {(() => {
+                              if (p.price === null || p.price === undefined || p.price === '') return 'Consultar';
+                              const str = String(p.price).trim();
+                              if (str.includes('%')) return str;
+                              const num = parseFloat(str);
+                              if (!isNaN(num)) return `$${num.toLocaleString('es-AR')}`;
+                              return str.startsWith('$') ? str : `$${str}`;
+                            })()}
+                          </span>
                           <span className={styles.period}>/ {p.price_period === 'monthly' ? 'mes' : p.price_period}</span>
                         </div>
 

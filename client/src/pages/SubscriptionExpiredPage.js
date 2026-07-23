@@ -121,9 +121,17 @@ export default function SubscriptionExpiredPage() {
                   {p.is_popular && <span className={styles.popularLabel}>Recomendado</span>}
                   <h3>{p.name}</h3>
                   <div className={styles.price}>
-                    <span className={styles.currency}>$</span>
-                    <span className={styles.amount}>{Math.floor(p.price)}</span>
-                    <span className={styles.period}>/ mes</span>
+                    <span className={styles.amount}>
+                      {(() => {
+                        if (p.price === null || p.price === undefined || p.price === '') return 'Consultar';
+                        const str = String(p.price).trim();
+                        if (str.includes('%')) return str;
+                        const num = parseFloat(str);
+                        if (!isNaN(num)) return `$${num.toLocaleString('es-AR')}`;
+                        return str.startsWith('$') ? str : `$${str}`;
+                      })()}
+                    </span>
+                    <span className={styles.period}>/ {p.price_period === 'monthly' ? 'mes' : (p.price_period || 'mes')}</span>
                   </div>
                   <p className={styles.planDesc}>{p.description}</p>
                   

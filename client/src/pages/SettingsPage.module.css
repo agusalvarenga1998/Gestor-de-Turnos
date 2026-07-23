@@ -889,16 +889,37 @@
 }
 
 /* Subscriptions Table styles */
-.subTable {
-  width: 100%;
-  border-collapse: collapse;
+.historySection {
+  margin-top: 2rem;
+}
+
+.emptyHistory {
+  color: #64748b;
+  font-size: 0.9rem;
   margin-top: 1rem;
 }
 
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 1rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+}
+
+.subTable {
+  width: 100%;
+  min-width: 580px;
+  border-collapse: collapse;
+}
+
 .subTable th, .subTable td {
-  padding: 1rem;
+  padding: 0.85rem 1rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
 .subTable th {
@@ -917,11 +938,12 @@
 
 .statusBadge {
   display: inline-block;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .statusBadge.pending {
@@ -937,6 +959,13 @@
 .statusBadge.rejected {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+@media (max-width: 768px) {
+  .subTable th, .subTable td {
+    padding: 0.75rem 0.85rem;
+    font-size: 0.82rem;
+  }
 }
 
 
