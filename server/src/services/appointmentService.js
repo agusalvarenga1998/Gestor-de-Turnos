@@ -125,12 +125,11 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
     console.log('✓ Cita insertada en BD');
     console.log('🔐 Token de confirmación:', confirmationToken.substring(0, 8) + '...');
 
-    // Obtener datos del paciente para enviar email (el doctor ya lo tenemos)
-    console.log('📧 Obteniendo datos para enviar email...');
-    const patientResult = await query('SELECT name, email FROM patients WHERE id = $1', [patientId]);
+    // Obtener datos del paciente para enviar email y WhatsApp
+    console.log('📧 Obteniendo datos para enviar email y WhatsApp...');
+    const patientResult = await query('SELECT name, email, phone FROM patients WHERE id = $1', [patientId]);
 
     const patient = patientResult.rows[0];
-    // const doctor = doctorInfoResult.rows[0]; // Ya está declarado arriba
 
     // Enviar email de confirmación (en segundo plano / no bloqueante)
     if (patient && patient.email) {
@@ -147,6 +146,22 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
         confirmUrl: confirmUrl
       }).catch(err => {
         console.error('❌ Error enviando email de confirmación en segundo plano:', err.message);
+      });
+    }
+
+    // Enviar WhatsApp de confirmación desde el número oficial de TurnoHub (en segundo plano)
+    if (patient && patient.phone) {
+      const { sendWhatsAppConfirmationServer } = require('./whatsappService');
+      sendWhatsAppConfirmationServer({
+        toPhone: patient.phone,
+        patientName: patient.name,
+        doctorName: doctor?.name,
+        date: appointment_date,
+        time: appointment_time,
+        serviceName: reason_for_visit,
+        clinicAddress: doctor?.clinic_address
+      }).catch(err => {
+        console.error('❌ Error enviando WhatsApp automático de TurnoHub:', err.message);
       });
     }
 
