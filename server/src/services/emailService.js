@@ -8,24 +8,34 @@ dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 
-// Crear transportador de email con configuración dinámica (Gmail, DonWeb, etc.)
+const getSender = () => {
+  const user = process.env.SMTP_USER || 'turno-no-reply@turnohub.com.ar';
+  return `"TurnoHub" <${user}>`;
+};
+
+// Crear transportador de email con configuración dinámica y respaldos seguros
+const smtpPort = String(process.env.SMTP_PORT || '465');
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_PORT === '465', // true para puerto 465, false para otros (como 587)
+  host: process.env.SMTP_HOST || 'mail.turnohub.com.ar',
+  port: parseInt(smtpPort),
+  secure: smtpPort === '465',
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD
+    user: process.env.SMTP_USER || 'turno-no-reply@turnohub.com.ar',
+    pass: process.env.SMTP_PASSWORD || 'Agusagusbmx15*'
   },
   tls: {
-    rejectUnauthorized: false // Evita problemas de certificado en algunos servidores SMTP compartidos
+    rejectUnauthorized: false
   }
 });
 
-// Verificar que las credenciales estén configuradas
-if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-  console.warn('⚠️  SMTP_USER o SMTP_PASSWORD no están configurados en .env');
-}
+// Verificar servidor SMTP al arrancar
+transporter.verify((error) => {
+  if (error) {
+    console.error('❌ Error verificando servidor SMTP de TurnoHub:', error.message);
+  } else {
+    console.log('📧 Servidor SMTP de TurnoHub verificado y listo para enviar correos');
+  }
+});
 
 // Enviar email de confirmación de cita
 export async function sendAppointmentConfirmation({
@@ -231,7 +241,7 @@ export async function sendAppointmentConfirmation({
     console.log('📧 Enviando email a:', to);
 
     const info = await transporter.sendMail({
-      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      from: getSender(),
       to: to,
       subject: `Cita Confirmada - ${doctorName}`,
       html: htmlContent
@@ -378,7 +388,7 @@ export async function sendDelayNotification({
     console.log('📧 Enviando notificación de retraso a:', to);
 
     const info = await transporter.sendMail({
-      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      from: getSender(),
       to: to,
       subject: `⏱️ Tu cita con ${doctorName} se ha retrasado ${delayMinutes} minutos`,
       html: htmlContent
@@ -555,7 +565,7 @@ export async function sendAppointmentRejectionEmail({
     console.log('📧 Enviando notificación de rechazo a:', to);
 
     const info = await transporter.sendMail({
-      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      from: getSender(),
       to: to,
       subject: `❌ Tu cita con ${doctorName} ha sido rechazada`,
       html: htmlContent
@@ -654,7 +664,7 @@ export async function sendProfessionalApprovalEmail({
     `;
 
     const info = await transporter.sendMail({
-      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      from: getSender(),
       to: to,
       subject: '¡Tu cuenta de TurnoHub ha sido aprobada!',
       html: htmlContent
@@ -753,7 +763,7 @@ export async function sendNewAppointmentNotificationToDoctor({
     `;
 
     const info = await transporter.sendMail({
-      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      from: getSender(),
       to: to,
       subject: `Nuevo turno pendiente: ${patientName}`,
       html: htmlContent
@@ -825,7 +835,7 @@ export async function sendAppointmentReminder({
     `;
 
     const info = await transporter.sendMail({
-      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      from: getSender(),
       to: to,
       subject: `Recordatorio: Tu turno con ${doctorName} es mañana`,
       html: htmlContent
