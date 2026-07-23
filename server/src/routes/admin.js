@@ -1007,4 +1007,125 @@ router.delete('/template-insurances/:id', verifyAdmin, async (req, res) => {
 router.get('/support-tickets', verifyAdmin, getAllTicketsAdmin);
 router.put('/support-tickets/:id', verifyAdmin, updateTicketStatusAdmin);
 
+// --- RUTAS DE TRANSACCIONES Y ACTIVIDAD DE PROFESIONALES ---
+router.get('/transactions', verifyAdmin, async (req, res) => {
+  try {
+    const { doctorId, type, paymentMethod, startDate, endDate } = req.query;
+
+    let queryText = `
+      SELECT 
+        m.id,
+        m.doctor_id,
+        m.appointment_id,
+        m.amount,
+        m.type,
+        m.payment_method,
+        m.description,
+        m.created_at,
+        d.name as doctor_name,
+        d.email as doctor_email,
+        d.clinic_name,
+        p.name as patient_name
+      FROM movements m
+      JOIN doctors d ON m.doctor_id = d.id
+      LEFT JOIN appointments a ON m.appointment_id = a.id
+      LEFT JOIN patients p ON a.patient_id = p.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (doctorId && doctorId !== 'all') {
+      params.push(doctorId);
+      queryText += ` AND m.doctor_id = $${params.length}`;
+    }
+
+    if (type && type !== 'all') {
+      params.push(type);
+      queryText += ` AND m.type = $${params.length}`;
+    }
+
+    if (paymentMethod && paymentMethod !== 'all') {
+      params.push(paymentMethod);
+      queryText += ` AND m.payment_method = $${params.length}`;
+    }
+
+    if (startDate) {
+      params.push(startDate);
+      queryText += ` AND m.created_at >= $${params.length}`;
+    }
+
+    if (endDate) {
+      params.push(endDate);
+      queryText += ` AND m.created_at <= $${params.length}`;
+    }
+
+    queryText += ` ORDER BY m.created_at DESC LIMIT 500`;
+
+    const result = await query(queryText, params);
+
+    res.json({
+      success: true,
+      movements: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching admin transactions:', error);
+    res.status(500).json({ error: 'Error al obtener transacciones' });
+  }
+});
+
+router.get('/activity-logs', verifyAdmin, async (req, res) => {
+  try {
+    const { doctorId, action, startDate, endDate } = req.query;
+
+    let queryText = `
+      SELECT 
+        al.id,
+        al.doctor_id,
+        al.action,
+        al.details,
+        al.ip_address,
+        al.created_at,
+        d.name as doctor_name,
+        d.email as doctor_email,
+        d.clinic_name
+      FROM audit_logs al
+      JOIN doctors d ON al.doctor_id = d.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (doctorId && doctorId !== 'all') {
+      params.push(doctorId);
+      queryText += ` AND al.doctor_id = $${params.length}`;
+    }
+
+    if (action && action !== 'all') {
+      params.push(action);
+      queryText += ` AND al.action = $${params.length}`;
+    }
+
+    if (startDate) {
+      params.push(startDate);
+      queryText += ` AND al.created_at >= $${params.length}`;
+    }
+
+    if (endDate) {
+      params.push(endDate);
+      queryText += ` AND al.created_at <= $${params.length}`;
+    }
+
+    queryText += ` ORDER BY al.created_at DESC LIMIT 500`;
+
+    const result = await query(queryText, params);
+
+    res.json({
+      success: true,
+      logs: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching admin activity logs:', error);
+    res.status(500).json({ error: 'Error al obtener historial de actividad' });
+  }
+});
+
 export default router;

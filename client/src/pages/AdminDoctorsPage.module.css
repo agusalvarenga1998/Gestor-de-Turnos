@@ -344,3 +344,20 @@
   outline: none;
   border-color: #8b5cf6;
 }
+
+.historyBtn {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.historyBtn:hover {
+  background: #0284c7;
+  color: white;
+}

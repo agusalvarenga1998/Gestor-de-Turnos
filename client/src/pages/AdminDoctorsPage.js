@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import AdminLayout from '../components/AdminLayout';
 import Loading from '../components/Loading';
@@ -8,6 +9,7 @@ import styles from './AdminDoctorsPage.module.css';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
 
 export default function AdminDoctorsPage() {
+  const navigate = useNavigate();
   const { token } = useAdminAuth();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -264,6 +266,13 @@ export default function AdminDoctorsPage() {
                 </td>
                 <td>
                   <div className={styles.actionButtons}>
+                    <button
+                      className={styles.historyBtn}
+                      onClick={() => navigate(`/admin/activity?doctorId=${doctor.id}`)}
+                      title="Ver transacciones y actividad de este profesional"
+                    >
+                      📈 Historial
+                    </button>
                     {doctor.status === 'pending' && (
                       <>
                         <button

@@ -49,6 +49,11 @@ export default function AdminSidebar() {
       label: 'Tickets de Soporte',
       icon: '📩',
       path: '/admin/support-tickets'
+    },
+    {
+      label: 'Transacciones y Actividad',
+      icon: '📈',
+      path: '/admin/activity'
     }
   ];
 
