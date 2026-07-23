@@ -8,6 +8,14 @@
   margin-bottom: 2rem;
 }
 
+.titleWrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 .title {
   font-size: 2rem;
   font-weight: 700;
@@ -19,6 +27,56 @@
   font-size: 1rem;
   color: var(--text-secondary);
   margin: 0.5rem 0 0 0;
+}
+
+.autoSaveStatusContainer {
+  display: flex;
+  align-items: center;
+}
+
+.autoSaveBadgeSaving {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  animation: pulse 1.5s infinite;
+}
+
+.autoSaveBadgeSaved {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.autoSaveBadgeError {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .message {
