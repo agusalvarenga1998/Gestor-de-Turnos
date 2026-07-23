@@ -1000,3 +1000,125 @@ export async function sendSupportReportEmail({
     return { sent: false, error: error.message };
   }
 }
+
+// Enviar notificación de error del sistema / log al administrador (admin.turnohub@gmail.com)
+export async function sendErrorLogEmail({
+  error,
+  req,
+  doctor,
+  source = 'Backend Server Exception'
+}) {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin.turnohub@gmail.com';
+    const timestamp = new Date().toLocaleString();
+
+    const errorMessage = error?.message || (typeof error === 'string' ? error : 'Error no especificado');
+    const stackTrace = error?.stack || JSON.stringify(error, null, 2) || 'Sin Stack Trace disponible';
+
+    // Formatear body limpiando contraseñas
+    let sanitizedBody = 'N/A';
+    if (req && req.body && Object.keys(req.body).length > 0) {
+      const bodyCopy = { ...req.body };
+      if (bodyCopy.password) bodyCopy.password = '*** [REDACTED] ***';
+      if (bodyCopy.password_hash) bodyCopy.password_hash = '*** [REDACTED] ***';
+      if (bodyCopy.currentPassword) bodyCopy.currentPassword = '*** [REDACTED] ***';
+      if (bodyCopy.newPassword) bodyCopy.newPassword = '*** [REDACTED] ***';
+      sanitizedBody = JSON.stringify(bodyCopy, null, 2);
+    }
+
+    const doctorInfo = doctor || (req && req.user ? req.user : null);
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #1e293b; background-color: #f8fafc; padding: 20px; }
+          .card { max-width: 700px; margin: 0 auto; background: white; border-radius: 12px; border: 1px solid #fca5a5; padding: 30px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); }
+          .header { background: linear-gradient(135deg, #991b1b, #dc2626); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+          .header h2 { margin: 0; font-size: 20px; }
+          .field { margin-bottom: 15px; }
+          .label { font-weight: bold; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+          .value { font-size: 14px; color: #0f172a; margin-top: 4px; }
+          .codebox { background: #0f172a; color: #f8fafc; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+          .footer { font-size: 12px; color: #94a3b8; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="header">
+            <h2>🚨 Alerta de Error en TurnoHub (${source})</h2>
+            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Fecha: ${timestamp}</p>
+          </div>
+
+          <div class="field">
+            <div class="label">Mensaje de Error</div>
+            <div style="color: #dc2626; font-size: 16px; font-weight: bold;">${errorMessage}</div>
+          </div>
+
+          ${req ? `
+          <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+            <div class="field" style="flex: 1;">
+              <div class="label">Método HTTP</div>
+              <div class="value"><strong>${req.method || 'N/A'}</strong></div>
+            </div>
+            <div class="field" style="flex: 2;">
+              <div class="label">Ruta / Endpoint</div>
+              <div class="value"><code>${req.originalUrl || req.url || 'N/A'}</code></div>
+            </div>
+          </div>
+          ` : ''}
+
+          ${doctorInfo ? `
+          <div class="field">
+            <div class="label">Usuario / Profesional Afectado</div>
+            <div class="value">
+              <strong>${doctorInfo.name || 'Profesional'}</strong> (${doctorInfo.email || 'Sin Email'})
+              <div style="font-size: 12px; color: #64748b;">ID: ${doctorInfo.id || 'N/A'}</div>
+            </div>
+          </div>
+          ` : ''}
+
+          ${req && req.headers ? `
+          <div class="field">
+            <div class="label">Dispositivo / User-Agent</div>
+            <div class="value" style="font-size: 12px; color: #475569;">${req.headers['user-agent'] || 'N/A'}</div>
+          </div>
+          ` : ''}
+
+          ${sanitizedBody !== 'N/A' ? `
+          <div class="field">
+            <div class="label">Payload / Body de la Petición</div>
+            <div class="codebox">${sanitizedBody}</div>
+          </div>
+          ` : ''}
+
+          <div class="field">
+            <div class="label">Stack Trace Técnico</div>
+            <div class="codebox">${stackTrace}</div>
+          </div>
+
+          <div class="footer">
+            <p>Este informe de error fue generado automáticamente por el sistema de captura de logs de TurnoHub.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const mailOptions = {
+      from: `"TurnoHub Error Monitor" <${process.env.SMTP_USER}>`,
+      to: adminEmail,
+      subject: `🚨 [ERROR SYSTEM] ${errorMessage.substring(0, 60)}`,
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✓ Email de log de error enviado a ${adminEmail}:`, info.messageId);
+    return { sent: true };
+  } catch (err) {
+    console.error('❌ Error enviando email de log de error:', err);
+    return { sent: false, error: err.message };
+  }
+}

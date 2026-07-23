@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyToken } from '../middleware/auth.js';
-import { createTicket, getMyTickets } from '../controllers/supportController.js';
+import { createTicket, getMyTickets, reportClientError } from '../controllers/supportController.js';
 
 const router = express.Router();
 
@@ -18,5 +18,8 @@ router.post('/tickets', optionalAuth, createTicket);
 
 // Obtener mis tickets de soporte (requiere autenticación de profesional)
 router.get('/tickets/my-tickets', verifyToken, getMyTickets);
+
+// Reportar error no capturado del cliente (ErrorBoundary React)
+router.post('/client-error', optionalAuth, reportClientError);
 
 export default router;

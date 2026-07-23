@@ -1,5 +1,5 @@
 import { query } from '../db/config.js';
-import { sendSupportReportEmail } from '../services/emailService.js';
+import { sendSupportReportEmail, sendErrorLogEmail } from '../services/emailService.js';
 
 // Crear ticket de soporte (Profesional o visitante)
 export async function createTicket(req, res) {
@@ -155,5 +155,31 @@ export async function updateTicketStatusAdmin(req, res) {
       success: false,
       message: 'Error al actualizar el ticket.'
     });
+  }
+}
+
+// Reportar error del frontend cliente (capturado por ErrorBoundary)
+export async function reportClientError(req, res) {
+  try {
+    const { errorMessage, errorStack, componentStack, url } = req.body;
+    const doctor = req.user || null;
+
+    sendErrorLogEmail({
+      error: {
+        message: errorMessage || 'Error no capturado en interfaz del cliente',
+        stack: `[Client URL: ${url || 'N/A'}]\n[Component Stack]: ${componentStack || 'N/A'}\n\n[Error Stack]: ${errorStack || 'N/A'}`
+      },
+      req,
+      doctor,
+      source: 'Frontend React Error'
+    }).catch(e => console.error('Error enviando mail de log cliente:', e));
+
+    return res.json({
+      success: true,
+      message: 'Log de error cliente registrado y notificado a administración.'
+    });
+  } catch (error) {
+    console.error('Error en reportClientError:', error);
+    return res.status(500).json({ success: false });
   }
 }

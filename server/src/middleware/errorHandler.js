@@ -1,6 +1,8 @@
+import { sendErrorLogEmail } from '../services/emailService.js';
+
 // Manejador centralizado de errores
 export const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('❌ Error capturado en errorHandler:', err);
 
   // Errores de validación
   if (err.name === 'ValidationError') {
@@ -19,18 +21,31 @@ export const errorHandler = (err, req, res, next) => {
     });
   }
 
-  // Errores de base de datos
+  // Errores de base de datos / conexión
   if (err.code === 'ECONNREFUSED') {
+    sendErrorLogEmail({ error: err, req, source: 'DB Connection Error' })
+      .catch(e => console.error('Error enviando mail de log de DB:', e));
+
     return res.status(503).json({
       success: false,
-      message: 'Error de conexión a la base de datos'
+      message: 'No pudimos conectar con la base de datos. Por favor, comunícate con Soporte Técnico.',
+      supportUrl: '/support'
     });
   }
 
-  // Error por defecto
-  res.status(err.statusCode || 500).json({
+  // Para errores 500 o no clasificados, notificar por email al admin automáticamente
+  const statusCode = err.statusCode || 500;
+  if (statusCode >= 500) {
+    sendErrorLogEmail({ error: err, req, source: 'Backend Server Error (500)' })
+      .catch(e => console.error('Error enviando mail de log de error al admin:', e));
+  }
+
+  // Error por defecto al cliente
+  res.status(statusCode).json({
     success: false,
-    message: err.message || 'Error interno del servidor'
+    message: 'Ocurrió un problema inesperado. El equipo técnico ha sido notificado automáticamente. Por favor, comunícate con Soporte Técnico si necesitas ayuda.',
+    supportUrl: '/support',
+    contactSupportMessage: 'Comunícate con Soporte Técnico a admin.turnohub@gmail.com o ingresa a /support'
   });
 };
 

@@ -56,6 +56,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import Loading from './components/Loading';
 import WhatsAppBubble from './components/WhatsAppBubble';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function AppContent() {
   const location = useLocation();
@@ -199,15 +200,17 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AdminAuthProvider>
-        <AuthProvider>
-          <WebSocketProvider>
-            <AppContent />
-          </WebSocketProvider>
-        </AuthProvider>
-      </AdminAuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AdminAuthProvider>
+          <AuthProvider>
+            <WebSocketProvider>
+              <AppContent />
+            </WebSocketProvider>
+          </AuthProvider>
+        </AdminAuthProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
