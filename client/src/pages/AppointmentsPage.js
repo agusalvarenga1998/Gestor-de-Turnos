@@ -397,9 +397,20 @@ export default function AppointmentsPage() {
       const response = await appointmentAPI.createAppointment(formData);
 
       if (response.success) {
-        setAppointments(prev => [response.appointment, ...prev]);
+        const newAppt = response.appointment;
+        setAppointments(prev => [newAppt, ...prev]);
         resetForm();
         setShowForm(false);
+
+        const phone = newAppt?.patient_phone || newAppt?.phone;
+        if (phone) {
+          const confirmSend = window.confirm('✓ Turno agendado correctamente.\n\n¿Deseas notificar la confirmación con todos los detalles al paciente por WhatsApp?');
+          if (confirmSend) {
+            handleWhatsAppConfirmation(newAppt);
+          }
+        } else {
+          alert('✓ Turno agendado correctamente');
+        }
       }
     } catch (err) {
       console.error('Error creando cita:', err);
@@ -441,12 +452,21 @@ export default function AppointmentsPage() {
       setLoading(true);
       const response = await appointmentAPI.acceptAppointment(appointmentId);
       if (response.success) {
-        // Actualizar la cita en el estado local
+        const targetAppt = appointments.find(a => a.id === appointmentId);
         const updated = appointments.map(a =>
           a.id === appointmentId ? { ...a, status: 'scheduled' } : a
         );
         setAppointments(updated);
-        alert('✓ Cita aceptada y confirmación enviada al paciente');
+
+        const phone = targetAppt?.patient_phone || targetAppt?.phone;
+        if (targetAppt && phone) {
+          const confirmSend = window.confirm('✓ Turno confirmado con éxito.\n\n¿Deseas enviar la confirmación del turno al paciente por WhatsApp ahora mismo?');
+          if (confirmSend) {
+            handleWhatsAppConfirmation({ ...targetAppt, status: 'scheduled' });
+          }
+        } else {
+          alert('✓ Cita aceptada correctamente');
+        }
       }
     } catch (err) {
       console.error('Error aceptando cita:', err);
@@ -464,7 +484,6 @@ export default function AppointmentsPage() {
       setLoading(true);
       const response = await appointmentAPI.rejectAppointment(appointmentId, reason);
       if (response.success) {
-        // Actualizar la cita en el estado local
         const updated = appointments.map(a =>
           a.id === appointmentId ? { ...a, status: 'rejected' } : a
         );
@@ -479,30 +498,43 @@ export default function AppointmentsPage() {
     }
   };
 
-  const handleWhatsAppReminder = (appt) => {
-    if (!appt.patient_phone) {
-      alert('Este cliente no tiene un teléfono registrado');
+  const handleWhatsAppConfirmation = (appt) => {
+    const phone = appt.patient_phone || appt.phone;
+    if (!phone) {
+      alert('Este paciente no posee número de teléfono registrado');
       return;
     }
 
-    // Limpiar el teléfono (solo números)
-    const cleanPhone = appt.patient_phone.replace(/\D/g, '');
-    
-    // Formatear fecha para el mensaje
+    const cleanPhone = String(phone).replace(/\D/g, '');
     const dateStr = String(appt.appointment_date).split('T')[0];
     const d = new Date(dateStr + 'T12:00:00');
-    const formattedDate = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
-    
-    let message = `Hola ${appt.patient_name}, te recuerdo tu cita con ${user.name} el día ${formattedDate} a las ${appt.appointment_time}. ¡Te esperamos!`;
-    
-    if (appt.meet_link) {
-      message = `Hola ${appt.patient_name}, te recuerdo tu CONSULTA ONLINE con ${user.name} el día ${formattedDate} a las ${appt.appointment_time}.\n\n📹 Link de Videollamada: ${appt.meet_link}\n\n¡Te esperamos!`;
+    const formattedDate = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    const timeStr = String(appt.appointment_time || '').substring(0, 5);
+
+    let message = `*¡Hola ${appt.patient_name || 'Paciente'}!* 👋\n\n`;
+    message += `Tu turno con *${user?.name || 'el profesional'}* ha sido *CONFIRMADO* ✅\n\n`;
+    message += `📅 *Fecha:* ${formattedDate}\n`;
+    message += `⏰ *Hora:* ${timeStr} hs\n`;
+
+    if (appt.service_name) {
+      message += `📋 *Servicio:* ${appt.service_name}\n`;
     }
 
+    if (appt.meet_link) {
+      message += `📹 *Modalidad:* Online (Videollamada)\n🔗 *Link de ingreso:* ${appt.meet_link}\n`;
+    } else if (user?.clinic_address) {
+      message += `📍 *Lugar:* ${user.clinic_address}\n`;
+    }
+
+    message += `\n¡Te esperamos! Por cualquier consulta puedes responder a este mensaje.`;
+
     const encodedMessage = encodeURIComponent(message);
-    
     const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
+  };
+
+  const handleWhatsAppReminder = (appt) => {
+    handleWhatsAppConfirmation(appt);
   };
 
   const renderMobileAgendaList = (slots) => {

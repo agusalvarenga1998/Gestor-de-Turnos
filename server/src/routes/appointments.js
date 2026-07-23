@@ -1145,8 +1145,8 @@ router.patch('/:appointmentId/accept', async (req, res) => {
     // Verificar que el doctor es el propietario de la cita
     const appointmentCheck = await query(
       `SELECT a.status, a.doctor_id, a.appointment_date, a.appointment_time,
-              p.name as patient_name, p.email as patient_email,
-              d.name as doctor_name, d.specialization as doctor_specialization,
+              p.name as patient_name, p.email as patient_email, p.phone as patient_phone,
+              d.name as doctor_name, d.specialization as doctor_specialization, d.clinic_address,
               a.appointment_code, a.patient_id, a.meet_link,
               s.is_online, s.name as service_name
        FROM appointments a
@@ -1174,8 +1174,6 @@ router.patch('/:appointmentId/accept', async (req, res) => {
     }
 
     if (appointmentData.status === 'scheduled') {
-      // Si ya estaba programada (ej. por un clic anterior que falló en la UI), 
-      // devolvemos éxito para que la UI se sincronice
       return res.json({
         success: true,
         message: 'La cita ya se encontraba aceptada',
@@ -1219,8 +1217,6 @@ router.patch('/:appointmentId/accept', async (req, res) => {
         meetLink = calResult?.meetLink || null;
         if (meetLink) {
           console.log('🎥 Meet link generado en la aceptación:', meetLink);
-        } else {
-          console.log('📅 Evento de calendario creado al aceptar (sin link generado)');
         }
       } catch (err) {
         console.error('⚠️ Error en Google Calendar al aceptar la cita:', err.message);
@@ -1241,6 +1237,25 @@ router.patch('/:appointmentId/accept', async (req, res) => {
         meetLink: meetLink
       }).catch(err => console.error('Error asíncrono enviando confirmación:', err));
       console.log('📧 Email de confirmación programado para:', appointmentData.patient_email);
+    }
+
+    // Notificación por WhatsApp
+    if (appointmentData.patient_phone) {
+      try {
+        const { sendWhatsAppConfirmationServer } = require('../services/whatsappService');
+        sendWhatsAppConfirmationServer({
+          toPhone: appointmentData.patient_phone,
+          patientName: appointmentData.patient_name,
+          doctorName: appointmentData.doctor_name,
+          date: appointmentData.appointment_date,
+          time: appointmentData.appointment_time,
+          serviceName: appointmentData.service_name,
+          meetLink: meetLink,
+          clinicAddress: appointmentData.clinic_address
+        }).catch(err => console.error('Error enviando notificación por WhatsApp:', err));
+      } catch (err) {
+        console.error('Error llamando a servicio WhatsApp:', err);
+      }
     }
 
     res.json({
