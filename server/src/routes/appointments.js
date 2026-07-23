@@ -691,7 +691,7 @@ router.post('/public/create', async (req, res) => {
         console.log('🎥 Cita online detectada. El evento de calendario y meet link se generarán al ser aceptada por el doctor.');
       }
 
-      // NOTIFICAR AL PACIENTE (Cobertura Total / Efectivo)
+      // NOTIFICAR AL PACIENTE (Solicitud Registrada - Pendiente de Aprobación del Profesional)
       sendAppointmentConfirmation({
         to: patientEmail,
         patientName: `${patientName} ${patientLastName}`,
@@ -701,7 +701,8 @@ router.post('/public/create', async (req, res) => {
         appointmentTime: appointmentTime,
         appointmentCode: appointment.appointment_code,
         confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointment.id}`,
-        meetLink: meetLink
+        meetLink: meetLink,
+        status: 'pending'
       }).catch(err => console.error("Error asíncrono enviando email al paciente:", err));
 
       console.log('✅ Cobertura total/Efectivo detectada: Turno notificado a ambos por mail.');
@@ -1223,7 +1224,7 @@ router.patch('/:appointmentId/accept', async (req, res) => {
       }
     }
 
-    // Enviar email de confirmación al paciente de manera asíncrona
+    // Enviar email de confirmación (estado confirmado) al paciente de manera asíncrona
     if (appointmentData.patient_email) {
       sendAppointmentConfirmation({
         to: appointmentData.patient_email,
@@ -1234,7 +1235,8 @@ router.patch('/:appointmentId/accept', async (req, res) => {
         appointmentTime: appointmentData.appointment_time,
         appointmentCode: appointmentData.appointment_code,
         confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`,
-        meetLink: meetLink
+        meetLink: meetLink,
+        status: 'scheduled'
       }).catch(err => console.error('Error asíncrono enviando confirmación:', err));
       console.log('📧 Email de confirmación programado para:', appointmentData.patient_email);
     }

@@ -37,7 +37,7 @@ transporter.verify((error) => {
   }
 });
 
-// Enviar email de confirmación de cita
+// Enviar email de confirmación o solicitud de cita
 export async function sendAppointmentConfirmation({
   to,
   patientName,
@@ -48,14 +48,41 @@ export async function sendAppointmentConfirmation({
   reason,
   appointmentCode,
   confirmUrl,
-  meetLink
+  meetLink,
+  status = 'scheduled'
 }) {
   try {
-    // Si no hay email del paciente, omitir sin error
     if (!to) {
       console.log('⚠️  Paciente sin email, se omite envío');
       return { sent: false, reason: 'No email' };
     }
+
+    const isPending = status === 'pending' || status === 'pending_payment';
+    const emailSubject = isPending
+      ? `⏳ Solicitud de Turno Recibida - Pendiente de Confirmación (${doctorName})`
+      : `✅ Turno Confirmado - ${doctorName}`;
+
+    const headerTitle = isPending
+      ? `⏳ Solicitud de Turno Recibida`
+      : `✅ Tu Cita ha sido Confirmada`;
+
+    const statusBannerHtml = isPending
+      ? `
+        <div style="background-color: #fffbe5; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; padding: 16px; border-radius: 6px; margin: 20px 0;">
+          <h3 style="margin: 0 0 8px 0; color: #b45309; font-size: 16px;">⏳ Cita Solicitada (Pendiente de Confirmación)</h3>
+          <p style="margin: 0; color: #92400e; font-size: 14px;">
+            Tu solicitud de turno fue registrada correctamente. Falta que el profesional <strong>${doctorName}</strong> confirme la cita. Te avisaremos por este correo tan pronto como sea confirmada.
+          </p>
+        </div>
+      `
+      : `
+        <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-left: 5px solid #10b981; padding: 16px; border-radius: 6px; margin: 20px 0;">
+          <h3 style="margin: 0 0 8px 0; color: #065f46; font-size: 16px;">✅ ¡Turno Confirmado por ${doctorName}!</h3>
+          <p style="margin: 0; color: #047857; font-size: 14px;">
+            ¡Excelente noticia! El profesional <strong>${doctorName}</strong> ha confirmado tu turno. Te esperamos en la fecha y hora indicadas.
+          </p>
+        </div>
+      `;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -79,13 +106,13 @@ export async function sendAppointmentConfirmation({
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           }
           .header {
-            border-bottom: 3px solid #2563eb;
+            border-bottom: 3px solid ${isPending ? '#f59e0b' : '#2563eb'};
             padding-bottom: 20px;
             margin-bottom: 20px;
           }
           .header h1 {
             margin: 0;
-            color: #2563eb;
+            color: ${isPending ? '#d97706' : '#2563eb'};
             font-size: 24px;
           }
           .content {
@@ -93,7 +120,7 @@ export async function sendAppointmentConfirmation({
           }
           .appointment-details {
             background-color: #f9fafb;
-            border-left: 4px solid #2563eb;
+            border-left: 4px solid ${isPending ? '#f59e0b' : '#2563eb'};
             padding: 15px;
             margin: 20px 0;
             border-radius: 4px;
@@ -159,12 +186,13 @@ export async function sendAppointmentConfirmation({
       <body>
         <div class="container">
           <div class="header">
-            <h1>📅 Tu Cita ha sido Programada</h1>
+            <h1>${headerTitle}</h1>
           </div>
 
           <div class="content">
             <p>Hola <strong>${patientName}</strong>,</p>
-            <p>Tu cita médica ha sido programada exitosamente. Aquí están los detalles:</p>
+
+            ${statusBannerHtml}
 
             <div class="appointment-details">
               <div class="detail-row">
@@ -231,7 +259,7 @@ export async function sendAppointmentConfirmation({
 
           <div class="footer">
             <p>Este es un email automático, por favor no respondas a este correo.</p>
-            <p>&copy; 2026 Sistema de Gestión de Citas Médicas. Todos los derechos reservados.</p>
+            <p>&copy; 2026 TurnoHub - Sistema de Gestión de Citas Médicas. Todos los derechos reservados.</p>
           </div>
         </div>
       </body>
@@ -243,7 +271,7 @@ export async function sendAppointmentConfirmation({
     const info = await transporter.sendMail({
       from: getSender(),
       to: to,
-      subject: `Cita Confirmada - ${doctorName}`,
+      subject: emailSubject,
       html: htmlContent
     });
 
@@ -252,7 +280,6 @@ export async function sendAppointmentConfirmation({
 
   } catch (error) {
     console.error('❌ Error enviando email:', error.message);
-    // No lanzar error para no romper el flujo de creación de cita
     return { sent: false, error: error.message };
   }
 }
