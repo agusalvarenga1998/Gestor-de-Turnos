@@ -21,6 +21,7 @@ export default function AdminActivityPage() {
   const [selectedDoctorId, setSelectedDoctorId] = useState(initialDoctorId);
   const [typeFilter, setTypeFilter] = useState('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
+  const [actionFilter, setActionFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Datos
@@ -40,7 +41,7 @@ export default function AdminActivityPage() {
       fetchActivityLogs();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, selectedDoctorId, typeFilter, paymentMethodFilter]);
+  }, [activeTab, selectedDoctorId, typeFilter, paymentMethodFilter, actionFilter]);
 
   const fetchDoctors = async () => {
     try {
@@ -83,7 +84,8 @@ export default function AdminActivityPage() {
     try {
       setLoading(true);
       const params = {
-        doctorId: selectedDoctorId
+        doctorId: selectedDoctorId,
+        action: actionFilter
       };
 
       const response = await axios.get(`${API_BASE_URL}/api/admin/activity-logs`, {
@@ -273,10 +275,22 @@ export default function AdminActivityPage() {
             </>
           )}
 
+          {activeTab === 'activity' && (
+            <select
+              className={styles.selectInput}
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+            >
+              <option value="all">Todas las actividades</option>
+              <option value="page_view">📱 Ingreso a Pantallas (Vistas)</option>
+              <option value="login">🔑 Inicios de Sesión</option>
+            </select>
+          )}
+
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="Buscar por profesional, paciente o detalle..."
+            placeholder="Buscar por profesional, pantalla, acción o IP..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -356,7 +370,7 @@ export default function AdminActivityPage() {
                     <th>Fecha y Hora</th>
                     <th>Profesional</th>
                     <th>Acción</th>
-                    <th>Detalles / Payload</th>
+                    <th>Pantalla / Detalle de Actividad</th>
                     <th>IP Address</th>
                   </tr>
                 </thead>
@@ -371,12 +385,28 @@ export default function AdminActivityPage() {
                         <div className={styles.doctorMeta}>{l.doctor_email}</div>
                       </td>
                       <td>
-                        <span className={styles.badge} style={{ background: '#e0f2fe', color: '#0369a1' }}>
-                          {l.action}
-                        </span>
+                        {l.action === 'page_view' ? (
+                          <span className={styles.badge} style={{ background: '#dbeafe', color: '#1d4ed8', fontWeight: 800 }}>
+                            📱 Ingreso a Pantalla
+                          </span>
+                        ) : l.action === 'login' ? (
+                          <span className={styles.badge} style={{ background: '#dcfce7', color: '#166534', fontWeight: 800 }}>
+                            🔑 Inicio de Sesión
+                          </span>
+                        ) : (
+                          <span className={styles.badge} style={{ background: '#f1f5f9', color: '#334155' }}>
+                            {l.action}
+                          </span>
+                        )}
                       </td>
                       <td>
-                        <div className={styles.codeBox}>{l.details || 'Sin detalles adicionales'}</div>
+                        {l.action === 'page_view' ? (
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>
+                            🖥️ {l.details}
+                          </div>
+                        ) : (
+                          <div className={styles.codeBox}>{l.details || 'Sin detalles adicionales'}</div>
+                        )}
                       </td>
                       <td><code style={{ fontSize: '0.85rem' }}>{l.ip_address || 'N/A'}</code></td>
                     </tr>

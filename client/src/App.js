@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import { AuthProvider } from './context/AuthContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
@@ -59,6 +60,65 @@ import Loading from './components/Loading';
 import WhatsAppBubble from './components/WhatsAppBubble';
 import ErrorBoundary from './components/ErrorBoundary';
 
+function PageTracker() {
+  const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
+  const lastTracked = useRef({ path: '', time: 0 });
+
+  useEffect(() => {
+    if (!isAuthenticated || !user || user.role === 'admin') return;
+
+    const currentPath = location.pathname;
+    const now = Date.now();
+
+    // Evitar enviar duplicados si navega rápido o recarga la misma ruta (5 seg)
+    if (lastTracked.current.path === currentPath && (now - lastTracked.current.time) < 5000) {
+      return;
+    }
+
+    lastTracked.current = { path: currentPath, time: now };
+
+    const screenMap = {
+      '/dashboard': 'Dashboard Principal',
+      '/appointments': 'Agenda y Gestión de Turnos',
+      '/patients': 'Listado de Clientes / Pacientes',
+      '/services': 'Mis Servicios',
+      '/reports': 'Estadísticas y Reportes',
+      '/movements': 'Caja y Movimientos de Dinero',
+      '/insurance': 'Convenios y Obras Sociales',
+      '/working-hours': 'Horarios de Atención',
+      '/notifications': 'Centro de Notificaciones',
+      '/settings': 'Configuración de Perfil',
+      '/support': 'Soporte Técnico',
+      '/onboarding': 'Guía de Inicio'
+    };
+
+    let pageName = screenMap[currentPath];
+    if (!pageName) {
+      if (currentPath.startsWith('/patients/')) pageName = 'Detalle de Paciente';
+      else if (currentPath.startsWith('/admin/')) return;
+      else pageName = currentPath;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+
+    axios.post(`${baseUrl}/api/doctor/page-view`, {
+      path: currentPath,
+      pageName
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).catch(() => {
+      // Ignorar errores silenciosamente
+    });
+
+  }, [location.pathname, isAuthenticated, user]);
+
+  return null;
+}
+
 function AppContent() {
   const location = useLocation();
   const { isAuthenticated, loading, isSubscriptionExpired, user } = useAuth();
@@ -75,6 +135,7 @@ function AppContent() {
 
   return (
     <>
+    <PageTracker />
     <Routes>
       {/* Portal del Cliente (públicas) - siempre disponible */}
       <Route path="/patient" element={<PatientPortalHomePage />} />

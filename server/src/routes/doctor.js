@@ -9,10 +9,36 @@ import webpush from 'web-push';
 import fs from 'fs';
 import path from 'path';
 
+import { logAction } from '../services/auditService.js';
+
 const router = express.Router();
 
 // Middleware global para todas las rutas de doctor (protegidas)
 router.use(verifyToken);
+
+// Registrar navegación de pantallas (auditoría para el administrador)
+router.post('/page-view', async (req, res) => {
+  try {
+    const { path, pageName } = req.body;
+    if (!path) {
+      return res.status(400).json({ success: false, message: 'path is required' });
+    }
+
+    const doctorId = req.user.id;
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || '';
+    
+    const details = pageName 
+      ? `Accedió a pantalla: ${pageName} (${path})` 
+      : `Accedió a ruta: ${path}`;
+
+    await logAction(doctorId, 'page_view', details, ipAddress);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error logging page view:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 // --- RUTAS DE SUSCRIPCIÓN (Accesibles aunque la suscripción esté expirada) ---
 const verifyOnlyDoctorRole = (req, res, next) => {
