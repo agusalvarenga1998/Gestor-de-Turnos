@@ -128,7 +128,7 @@ export default function RegisterPage() {
           <div className={styles.headerGroup}>
             <div className={styles.trialBadge}>
               <span className={styles.badgeDot}></span>
-              15 días de prueba gratis • Sin tarjeta de crédito
+              30 días de prueba gratis • Sin tarjeta de crédito
             </div>
 
             <h1 className={styles.cardTitle}>Crea tu cuenta profesional</h1>

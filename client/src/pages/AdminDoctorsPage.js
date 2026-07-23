@@ -354,7 +354,7 @@ export default function AdminDoctorsPage() {
 
             <p>
               {actionModal === 'approve' &&
-                `¿Aprobar a ${selectedDoctor.name}? Obtendrá 15 días de trial.`}
+                `¿Aprobar a ${selectedDoctor.name}? Obtendrá 30 días de trial.`}
               {actionModal === 'reject' && `¿Rechazar solicitud de ${selectedDoctor.name}?`}
               {actionModal === 'suspend' && `¿Suspender la cuenta de ${selectedDoctor.name}?`}
               {actionModal === 'extend' && `Extender suscripción de ${selectedDoctor.name}`}

@@ -124,7 +124,7 @@ export default function LandingPage() {
           <div className={styles.trustBadges}>
             <span className={styles.badgeItem}>
               <Icon name="check" size={16} color="#10b981" />
-              15 días de prueba <strong>gratis</strong>
+              30 días de prueba <strong>gratis</strong>
             </span>
             <span className={styles.badgeItem}>
               <Icon name="check" size={16} color="#10b981" />
@@ -197,7 +197,7 @@ export default function LandingPage() {
       <section id="planes" className={styles.pricing}>
         <div className={styles.sectionHeader}>
           <h2>Planes Simples y Transparentes</h2>
-          <p>Elige la opción que mejor se adapte a tu volumen de trabajo. Todos los planes incluyen 15 días de prueba sin cargo.</p>
+          <p>Elige la opción que mejor se adapte a tu volumen de trabajo. Todos los planes incluyen 30 días de prueba sin cargo.</p>
         </div>
         
         <div className={styles.pricingGrid}>

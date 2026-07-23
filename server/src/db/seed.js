@@ -17,7 +17,7 @@ async function seedDatabase() {
     const hashedPassword = await bcrypt.hash('password123', 10);
 
     const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 15); // 15 días de prueba
+    trialEndsAt.setDate(trialEndsAt.getDate() + 30); // 30 días de prueba
 
     // Buscar ID del plan mensual por defecto
     const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key = 'monthly' LIMIT 1");

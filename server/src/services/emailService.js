@@ -632,7 +632,7 @@ export async function sendProfessionalApprovalEmail({
             <div class="info-card">
               <div class="info-item">
                 <span class="info-icon">🎁</span>
-                <span>Has recibido <strong>15 días de prueba GRATIS</strong> para explorar todas las herramientas.</span>
+                <span>Has recibido <strong>30 días de prueba GRATIS</strong> para explorar todas las herramientas.</span>
               </div>
               <div class="info-item">
                 <span class="info-icon">⚙️</span>
