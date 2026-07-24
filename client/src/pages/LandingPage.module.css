@@ -809,13 +809,46 @@
     margin-bottom: 0.75rem;
   }
   
+  .pricing {
+    padding: 4rem 1rem;
+    overflow: hidden;
+  }
+  
   .pricingGrid {
-    flex-direction: column;
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 1.25rem;
+    padding: 1.5rem 1rem 2rem;
+    margin: 0 -1rem;
+    scroll-padding: 0 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .pricingGrid::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .pricingGrid::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .pricingGrid::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 99px;
   }
   
   .pricingCard {
+    flex: 0 0 85%;
+    min-width: 275px;
+    max-width: 320px;
+    scroll-snap-align: center;
     padding: 2.5rem 1.5rem;
+    border-radius: 24px;
   }
   
   .pricingCard.popular {
@@ -823,7 +856,16 @@
   }
   
   .pricingCard.popular:hover {
-    transform: translateY(-5px);
+    transform: none;
+  }
+
+  .swipeHint {
+    display: block;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+    font-weight: 600;
   }
   
   .trust h2 {

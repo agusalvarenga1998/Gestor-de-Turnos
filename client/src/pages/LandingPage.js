@@ -231,6 +231,7 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+        <p className={styles.swipeHint}>Desliza hacia los lados para comparar todos los planes ↔</p>
       </section>
 
       {/* CTA Section */}
