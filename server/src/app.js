@@ -211,6 +211,7 @@ httpServer.listen(PORT, HOST, async () => {
     await query(`ALTER TABLE services ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE`);
     await query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS meet_link TEXT`);
     await query(`ALTER TABLE pricing_plans ADD COLUMN IF NOT EXISTS allow_patient_booking BOOLEAN DEFAULT TRUE`);
+    await query(`ALTER TABLE pricing_plans ADD COLUMN IF NOT EXISTS allow_whatsapp BOOLEAN NOT NULL DEFAULT FALSE`);
     
     // Crear tabla de planes comerciales si no existe
     await query(`
@@ -230,6 +231,7 @@ httpServer.listen(PORT, HOST, async () => {
         allow_reminders BOOLEAN DEFAULT TRUE,
         allow_insurance BOOLEAN DEFAULT TRUE,
         allow_patient_booking BOOLEAN DEFAULT TRUE,
+        allow_whatsapp BOOLEAN NOT NULL DEFAULT FALSE,
         max_patients INTEGER DEFAULT NULL,
         max_appointments_monthly INTEGER DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

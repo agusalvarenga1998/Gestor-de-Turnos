@@ -27,6 +27,7 @@ export default function AdminPlansPage() {
     allow_reminders: true,
     allow_insurance: true,
     allow_patient_booking: true,
+    allow_whatsapp: false,
     max_patients: '',
     max_appointments_monthly: ''
   });
@@ -72,6 +73,7 @@ export default function AdminPlansPage() {
       allow_reminders: plan.allow_reminders !== false,
       allow_insurance: plan.allow_insurance !== false,
       allow_patient_booking: plan.allow_patient_booking !== false,
+      allow_whatsapp: plan.allow_whatsapp === true,
       max_patients: plan.max_patients !== null && plan.max_patients !== undefined ? plan.max_patients : '',
       max_appointments_monthly: plan.max_appointments_monthly !== null && plan.max_appointments_monthly !== undefined ? plan.max_appointments_monthly : ''
     });
@@ -96,6 +98,7 @@ export default function AdminPlansPage() {
       allow_reminders: true,
       allow_insurance: true,
       allow_patient_booking: true,
+      allow_whatsapp: false,
       max_patients: '',
       max_appointments_monthly: ''
     });
@@ -279,6 +282,7 @@ export default function AdminPlansPage() {
                     <div><strong>Remisiones Email:</strong> {plan.allow_reminders ? 'Habilitadas' : 'Bloqueadas'}</div>
                     <div><strong>Convenios OS:</strong> {plan.allow_insurance ? 'Habilitados' : 'Bloqueados'}</div>
                     <div><strong>Auto-reserva Pacientes:</strong> {plan.allow_patient_booking ? 'Habilitada' : 'Bloqueada'}</div>
+                    <div><strong>WhatsApp:</strong> {plan.allow_whatsapp ? 'Habilitado' : 'Bloqueado'}</div>
                     <div><strong>Pacientes Máx:</strong> {plan.max_patients || 'Ilimitados'}</div>
                     <div><strong>Turnos/Mes Máx:</strong> {plan.max_appointments_monthly || 'Ilimitados'}</div>
                   </div>
@@ -445,6 +449,16 @@ export default function AdminPlansPage() {
                         onChange={handleInputChange} 
                       />
                       Permitir auto-agendamiento de pacientes
+                    </label>
+
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        name="allow_whatsapp"
+                        checked={editFormData.allow_whatsapp}
+                        onChange={handleInputChange}
+                      />
+                      Mensajería y recordatorios por WhatsApp
                     </label>
                   </div>
 

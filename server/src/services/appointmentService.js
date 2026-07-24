@@ -2,6 +2,7 @@ import { query, transaction } from '../db/config.js';
 import { v4 as uuidv4 } from 'uuid';
 import * as googleCalendarService from './googleCalendarService.js';
 import * as emailService from './emailService.js';
+import { sendWhatsAppConfirmationServer } from './whatsappService.js';
 const generateAppointmentCode = (doctorName, doctorId, appointmentDate, appointmentTime) => {
   const getInitials = (name) => {
     if (!name) return 'TH';
@@ -151,8 +152,8 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
 
     // Enviar WhatsApp de confirmación desde el número oficial de TurnoHub (en segundo plano)
     if (patient && patient.phone) {
-      const { sendWhatsAppConfirmationServer } = require('./whatsappService');
       sendWhatsAppConfirmationServer({
+        doctorId,
         toPhone: patient.phone,
         patientName: patient.name,
         doctorName: doctor?.name,

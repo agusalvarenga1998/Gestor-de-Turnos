@@ -11,6 +11,7 @@ import styles from './AppointmentsPage.module.css';
 
 export default function AppointmentsPage() {
   const { user } = useAuth();
+  const canUseWhatsApp = user?.plan?.allow_whatsapp === true;
   const [searchParams, setSearchParams] = useSearchParams();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -403,7 +404,7 @@ export default function AppointmentsPage() {
         setShowForm(false);
 
         const phone = newAppt?.patient_phone || newAppt?.phone;
-        if (phone) {
+        if (phone && canUseWhatsApp) {
           const confirmSend = window.confirm('✓ Turno agendado correctamente.\n\n¿Deseas notificar la confirmación con todos los detalles al paciente por WhatsApp?');
           if (confirmSend) {
             handleWhatsAppConfirmation(newAppt);
@@ -459,7 +460,7 @@ export default function AppointmentsPage() {
         setAppointments(updated);
 
         const phone = targetAppt?.patient_phone || targetAppt?.phone;
-        if (targetAppt && phone) {
+        if (targetAppt && phone && canUseWhatsApp) {
           const confirmSend = window.confirm('✓ Turno confirmado con éxito.\n\n¿Deseas enviar la confirmación del turno al paciente por WhatsApp ahora mismo?');
           if (confirmSend) {
             handleWhatsAppConfirmation({ ...targetAppt, status: 'scheduled' });
@@ -499,6 +500,11 @@ export default function AppointmentsPage() {
   };
 
   const handleWhatsAppConfirmation = (appt) => {
+    if (!canUseWhatsApp) {
+      alert('La mensajería por WhatsApp no está incluida en tu plan actual.');
+      return;
+    }
+
     const phone = appt.patient_phone || appt.phone;
     if (!phone) {
       alert('Este paciente no posee número de teléfono registrado');
@@ -620,7 +626,7 @@ export default function AppointmentsPage() {
                       </button>
                     </div>
                   ) : null}
-                  {!['cancelled', 'rejected'].includes(appt.status) && (
+                  {canUseWhatsApp && !['cancelled', 'rejected'].includes(appt.status) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
                       className={styles.mobileWhatsappBtn}
@@ -782,7 +788,7 @@ export default function AppointmentsPage() {
                               </div>
                             )}
                             
-                            {!['cancelled', 'rejected'].includes(appt.status) && (
+                            {canUseWhatsApp && !['cancelled', 'rejected'].includes(appt.status) && (
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
@@ -1300,8 +1306,8 @@ export default function AppointmentsPage() {
                               </div>
                             )}
                             
-                            {/* WhatsApp siempre disponible si hay teléfono y no es estado final negativo */}
-                            {!['cancelled', 'rejected'].includes(appt.status) && (
+                            {/* WhatsApp está disponible solo para planes habilitados. */}
+                            {canUseWhatsApp && !['cancelled', 'rejected'].includes(appt.status) && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
                                 className={styles.whatsappBtn}
@@ -1428,7 +1434,7 @@ export default function AppointmentsPage() {
                         </>
                       ) : null}
 
-                      {!['cancelled', 'rejected'].includes(appt.status) && (
+                      {canUseWhatsApp && !['cancelled', 'rejected'].includes(appt.status) && (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleWhatsAppReminder(appt); }}
                           className={styles.mobileWhatsappBtn}

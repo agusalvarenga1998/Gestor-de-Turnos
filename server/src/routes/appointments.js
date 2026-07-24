@@ -9,6 +9,7 @@ import * as mpService from '../services/mercadopagoService.js';
 import axios from 'axios';
 import * as wss from '../websocket/server.js';
 import { sendPushToDoctor } from '../cron/reminderCron.js';
+import { sendWhatsAppConfirmationServer } from '../services/whatsappService.js';
 
 const router = express.Router();
 const generateAppointmentCode = (doctorName, doctorId, appointmentDate, appointmentTime) => {
@@ -1244,8 +1245,8 @@ router.patch('/:appointmentId/accept', async (req, res) => {
     // Notificación por WhatsApp
     if (appointmentData.patient_phone) {
       try {
-        const { sendWhatsAppConfirmationServer } = require('../services/whatsappService');
         sendWhatsAppConfirmationServer({
+          doctorId,
           toPhone: appointmentData.patient_phone,
           patientName: appointmentData.patient_name,
           doctorName: appointmentData.doctor_name,

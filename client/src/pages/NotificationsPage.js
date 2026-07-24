@@ -100,6 +100,32 @@ export default function NotificationsPage() {
           </p>
 
           <div className={styles.notificationList}>
+            {/* Acceso a WhatsApp administrado por el plan */}
+            <div className={styles.settingItem}>
+              <div className={styles.settingInfo}>
+                <div className={styles.iconWrapper} style={{ backgroundColor: '#ecfdf5', color: '#16a34a' }}>
+                  <Icon name="whatsapp" size={20} />
+                </div>
+                <div className={styles.settingText}>
+                  <h3 className={styles.settingTitle}>Mensajería por WhatsApp</h3>
+                  <p className={styles.settingDesc}>
+                    {user?.plan?.allow_whatsapp === true
+                      ? 'Tu plan incluye confirmaciones y recordatorios por WhatsApp.'
+                      : `Esta función no está incluida en tu plan actual${user?.plan?.name ? ` (${user.plan.name})` : ''}. Contacta al administrador para habilitarla.`}
+                  </p>
+                </div>
+              </div>
+              <label className={styles.toggleSwitch} title="Esta opción es administrada desde el plan contratado">
+                <input
+                  type="checkbox"
+                  checked={user?.plan?.allow_whatsapp === true}
+                  disabled
+                  readOnly
+                />
+                <span className={styles.slider}></span>
+              </label>
+            </div>
+
             {/* 1. Notificaciones por Email */}
             <div className={styles.settingItem}>
               <div className={styles.settingInfo}>

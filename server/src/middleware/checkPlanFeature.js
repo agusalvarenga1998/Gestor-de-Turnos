@@ -16,7 +16,8 @@ export const checkPlanFeature = (featureField) => {
           p.allow_mercadopago,
           p.allow_telemedicine,
           p.allow_reminders,
-          p.allow_insurance
+          p.allow_insurance,
+          p.allow_whatsapp
          FROM doctors d
          LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
          WHERE d.id = $1`,
@@ -29,8 +30,10 @@ export const checkPlanFeature = (featureField) => {
 
       const row = result.rows[0];
 
-      // Si no tiene plan asignado o la columna es nula, por defecto permitimos (evita bloqueos inesperados)
-      const isAllowed = row[featureField] !== false;
+      // WhatsApp es una prestación opcional: solo se habilita con un true explícito.
+      const isAllowed = featureField === 'allow_whatsapp'
+        ? row[featureField] === true
+        : row[featureField] !== false;
 
       if (!isAllowed) {
         return res.status(403).json({
@@ -43,7 +46,14 @@ export const checkPlanFeature = (featureField) => {
       next();
     } catch (error) {
       console.error(`Error verificando característica de plan (${featureField}):`, error);
-      next(); // En caso de error de base de datos, permitimos pasar para no degradar el servicio
+      if (featureField === 'allow_whatsapp') {
+        return res.status(503).json({
+          success: false,
+          planRestricted: true,
+          message: 'No se pudo verificar el acceso a WhatsApp. Intenta nuevamente.'
+        });
+      }
+      next(); // Las prestaciones históricas conservan su comportamiento anterior.
     }
   };
 };

@@ -1,4 +1,5 @@
-const axios = require('axios');
+import axios from 'axios';
+import { query } from '../db/config.js';
 
 /**
  * Servicio Centralizado de Notificaciones por WhatsApp de TurnoHub
@@ -9,7 +10,8 @@ const axios = require('axios');
  * 2. Twilio for WhatsApp: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN & TWILIO_WHATSAPP_NUMBER
  * 3. Gateway HTTP / UltraMsg / Whapi / Evolution API: WHATSAPP_API_URL & WHATSAPP_API_TOKEN
  */
-const sendWhatsAppConfirmationServer = async ({
+export const sendWhatsAppConfirmationServer = async ({
+  doctorId,
   toPhone,
   patientName,
   doctorName,
@@ -19,9 +21,22 @@ const sendWhatsAppConfirmationServer = async ({
   meetLink,
   clinicAddress
 }) => {
-  if (!toPhone) return false;
+  if (!doctorId || !toPhone) return false;
 
   try {
+    const planResult = await query(
+      `SELECT p.allow_whatsapp
+       FROM doctors d
+       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+       WHERE d.id = $1`,
+      [doctorId]
+    );
+
+    if (planResult.rows[0]?.allow_whatsapp !== true) {
+      console.log(`ℹ️ [TurnoHub WhatsApp] Envío omitido: el plan del profesional ${doctorId} no incluye WhatsApp.`);
+      return false;
+    }
+
     let cleanPhone = String(toPhone).replace(/\D/g, '');
     if (!cleanPhone) return false;
 
@@ -126,8 +141,4 @@ const sendWhatsAppConfirmationServer = async ({
   }
 
   return false;
-};
-
-module.exports = {
-  sendWhatsAppConfirmationServer
 };

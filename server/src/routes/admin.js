@@ -536,7 +536,7 @@ router.get('/public/plans', async (req, res) => {
 router.get('/plans', verifyAdmin, async (req, res) => {
   try {
     const result = await query(
-      'SELECT id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, max_patients, max_appointments_monthly, created_at FROM pricing_plans ORDER BY created_at ASC'
+      'SELECT id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, allow_whatsapp, max_patients, max_appointments_monthly, created_at FROM pricing_plans ORDER BY created_at ASC'
     );
     res.json({ success: true, plans: result.rows });
   } catch (error) {
@@ -551,7 +551,7 @@ router.put('/plans/:id', verifyAdmin, async (req, res) => {
     const { id } = req.params;
     const { 
       name, description, price, price_period, features, is_popular, is_enabled,
-      allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking,
+      allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, allow_whatsapp,
       max_patients, max_appointments_monthly
     } = req.body;
 
@@ -574,14 +574,16 @@ router.put('/plans/:id', verifyAdmin, async (req, res) => {
            allow_reminders = $11,
            allow_insurance = $12,
            allow_patient_booking = $13,
-           max_patients = $14,
-           max_appointments_monthly = $15,
+           allow_whatsapp = $14,
+           max_patients = $15,
+           max_appointments_monthly = $16,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $16
-       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, max_patients, max_appointments_monthly`,
+       WHERE id = $17
+       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, allow_whatsapp, max_patients, max_appointments_monthly`,
       [
         name, description, price, price_period, features || [], is_popular, is_enabled,
         allow_google_calendar !== false, allow_mercadopago !== false, allow_telemedicine !== false, allow_reminders !== false, allow_insurance !== false, allow_patient_booking !== false,
+        allow_whatsapp === true,
         max_patients === '' || max_patients === null ? null : parseInt(max_patients),
         max_appointments_monthly === '' || max_appointments_monthly === null ? null : parseInt(max_appointments_monthly),
         id
@@ -608,7 +610,7 @@ router.post('/plans', verifyAdmin, async (req, res) => {
   try {
     const { 
       key, name, description, price, price_period, features, is_popular, is_enabled,
-      allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking,
+      allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, allow_whatsapp,
       max_patients, max_appointments_monthly
     } = req.body;
 
@@ -619,14 +621,15 @@ router.post('/plans', verifyAdmin, async (req, res) => {
     const result = await query(
       `INSERT INTO pricing_plans (
         key, name, description, price, price_period, features, is_popular, is_enabled,
-        allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking,
+        allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, allow_whatsapp,
         max_patients, max_appointments_monthly
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, max_patients, max_appointments_monthly`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       RETURNING id, key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, allow_whatsapp, max_patients, max_appointments_monthly`,
       [
         key.trim().toLowerCase(), name, description, price, price_period, features || [], is_popular, is_enabled,
         allow_google_calendar !== false, allow_mercadopago !== false, allow_telemedicine !== false, allow_reminders !== false, allow_insurance !== false, allow_patient_booking !== false,
+        allow_whatsapp === true,
         max_patients === '' || max_patients === null ? null : parseInt(max_patients),
         max_appointments_monthly === '' || max_appointments_monthly === null ? null : parseInt(max_appointments_monthly)
       ]
