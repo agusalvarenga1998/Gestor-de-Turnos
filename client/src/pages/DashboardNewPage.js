@@ -595,6 +595,16 @@ export default function DashboardNewPage() {
                   <Icon name="eye" size={16} />
                   Ver Portal
                 </a>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`¡Hola! Podés reservar tu turno directamente conmigo ingresando al siguiente enlace: ${window.location.origin}/patient?doctor=${user?.id}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.viewPortalBtn}
+                  style={{ background: '#25D366', color: 'white', borderColor: '#25D366' }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
+                  WhatsApp
+                </a>
               </div>
             </div>
           </div>

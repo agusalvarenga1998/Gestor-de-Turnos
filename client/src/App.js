@@ -139,6 +139,8 @@ function AppContent() {
     <Routes>
       {/* Portal del Cliente (públicas) - siempre disponible */}
       <Route path="/patient" element={<PatientPortalHomePage />} />
+      <Route path="/patient/doctor/:doctorId" element={<PatientPortalHomePage />} />
+      <Route path="/reservar/:doctorId" element={<PatientPortalHomePage />} />
       <Route path="/patient/appointment/:appointmentCode" element={<PatientAppointmentViewPage />} />
       <Route path="/appointment/:token" element={<ConfirmAppointmentPage />} />
 

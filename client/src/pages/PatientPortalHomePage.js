@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { appointmentAPI, insuranceAPI } from '../services/api';
 import DoctorMap from '../components/DoctorMap';
 import Icon from '../components/Icon';
@@ -67,6 +67,7 @@ export default function PatientPortalHomePage() {
   };
 
   // Booking states
+  const { doctorId: pathDoctorId } = useParams();
   const [rubros, setRubros] = useState([]);
   const [selectedRubro, setSelectedRubro] = useState('');
   const [specializations, setSpecializations] = useState([]);
@@ -75,7 +76,7 @@ export default function PatientPortalHomePage() {
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [initialDoctorId, setInitialDoctorId] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('doctor') || '';
+    return pathDoctorId || params.get('doctor') || params.get('doc') || '';
   });
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
@@ -147,6 +148,9 @@ export default function PatientPortalHomePage() {
       if (doc) {
         setActiveTab('book');
         setSelectedRubro(doc.rubro);
+        setSelectedSpecialization(doc.specialization);
+        setDoctors(allDoctors.filter(d => d.specialization === doc.specialization));
+        setSelectedDoctor(doc.id);
       } else {
         setInitialDoctorId('');
       }
