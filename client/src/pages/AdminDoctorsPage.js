@@ -197,9 +197,9 @@ export default function AdminDoctorsPage() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Rubro / Actividad</th>
+              <th>Profesional</th>
+              <th>Contacto Directo (Email / WA)</th>
+              <th>Rubro / Especialidad</th>
               <th>Estado</th>
               <th>Plan</th>
               <th>Vigencia</th>
@@ -210,9 +210,42 @@ export default function AdminDoctorsPage() {
           <tbody>
             {doctors.map(doctor => (
               <tr key={doctor.id}>
-                <td>{doctor.name}</td>
-                <td>{doctor.email}</td>
-                <td>{doctor.specialization || '-'}</td>
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>{doctor.name}</strong>
+                    {doctor.license_number && (
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Mat: {doctor.license_number}</span>
+                    )}
+                  </div>
+                </td>
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <a href={`mailto:${doctor.email}`} className={styles.emailBtn} title="Enviar correo">
+                      ✉️ {doctor.email}
+                    </a>
+                    {doctor.phone ? (
+                      <a 
+                        href={`https://wa.me/${doctor.phone.replace(/[^0-9]/g, '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className={styles.whatsappBtn}
+                        title="Abrir WhatsApp para soporte"
+                      >
+                        💬 {doctor.phone}
+                      </a>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Sin número</span>
+                    )}
+                  </div>
+                </td>
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <strong>{doctor.rubro || doctor.specialization || '-'}</strong>
+                    {doctor.clinic_name && (
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>🏥 {doctor.clinic_name}</span>
+                    )}
+                  </div>
+                </td>
                 <td>{getStatusBadge(doctor.status)}</td>
                 <td>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -269,6 +302,16 @@ export default function AdminDoctorsPage() {
                 </td>
                 <td>
                   <div className={styles.actionButtons}>
+                    <button
+                      className={styles.detailsBtn}
+                      onClick={() => {
+                        setSelectedDoctor(doctor);
+                        setActionModal('view-details');
+                      }}
+                      title="Ver ficha completa y datos de contacto"
+                    >
+                      📋 Ficha
+                    </button>
                     <button
                       className={styles.historyBtn}
                       onClick={() => navigate(`/admin/activity?doctorId=${doctor.id}`)}
@@ -345,15 +388,120 @@ export default function AdminDoctorsPage() {
       {/* Action Modal */}
       {actionModal && selectedDoctor && (
         <div className={styles.modal}>
-          <div className={styles.modalContent}>
-            <h2>
-              {actionModal === 'approve' && 'Aprobar Profesional'}
-              {actionModal === 'reject' && 'Rechazar Profesional'}
-              {actionModal === 'suspend' && 'Suspender Profesional'}
-              {actionModal === 'extend' && 'Extender Plan'}
-              {actionModal === 'reactivate' && 'Reactivar Profesional'}
-              {actionModal === 'reset-debt' && 'Registrar Cobro'}
-            </h2>
+          <div className={styles.modalContent} style={actionModal === 'view-details' ? { maxWidth: '650px' } : {}}>
+            {actionModal === 'view-details' ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <h2 style={{ margin: 0 }}>Ficha del Profesional</h2>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>ID: {selectedDoctor.id}</span>
+                  </div>
+                  {getStatusBadge(selectedDoctor.status)}
+                </div>
+
+                <div className={styles.detailGrid}>
+                  <div className={styles.detailItem}>
+                    <label>Nombre Completo</label>
+                    <span>{selectedDoctor.name}</span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Matrícula / Registro</label>
+                    <span>{selectedDoctor.license_number || 'No especificada'}</span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Correo Electrónico</label>
+                    <a href={`mailto:${selectedDoctor.email}`} className={styles.emailBtn}>✉️ {selectedDoctor.email}</a>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>WhatsApp / Teléfono</label>
+                    {selectedDoctor.phone ? (
+                      <a href={`https://wa.me/${selectedDoctor.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className={styles.whatsappBtn}>
+                        💬 {selectedDoctor.phone} (Abrir Chat)
+                      </a>
+                    ) : (
+                      <span style={{ color: '#94a3b8' }}>Sin número registrado</span>
+                    )}
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Rubro / Categoría</label>
+                    <span>{selectedDoctor.rubro || 'No especificado'}</span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Especialidad</label>
+                    <span>{selectedDoctor.specialization || 'No especificada'}</span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Establecimiento / Clínica</label>
+                    <span>{selectedDoctor.clinic_name || 'No especificado'}</span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Dirección de Atención</label>
+                    <span>{selectedDoctor.clinic_address || selectedDoctor.address || 'No especificada'}</span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Plan Actual & Tipo</label>
+                    <span>{plans.find(p => p.id === selectedDoctor.pricing_plan_id)?.name || (selectedDoctor.plan_type === 'commission' ? `Comisión (${selectedDoctor.commission_rate}%)` : 'Mensualidad')}</span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Deuda Acumulada</label>
+                    <span style={{ color: selectedDoctor.accumulated_debt > 0 ? '#ef4444' : '#10b981', fontWeight: 800 }}>
+                      ${parseFloat(selectedDoctor.accumulated_debt || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Fecha de Registro</label>
+                    <span>{new Date(selectedDoctor.created_at).toLocaleDateString('es-ES')}</span>
+                  </div>
+
+                  <div className={styles.detailItem}>
+                    <label>Vigencia Suscripción</label>
+                    <span>{selectedDoctor.subscription_expires_at ? new Date(selectedDoctor.subscription_expires_at).toLocaleDateString('es-ES') : 'Sin fecha'}</span>
+                  </div>
+                </div>
+
+                <div className={styles.modalButtons} style={{ marginTop: '1.5rem' }}>
+                  <button
+                    className={styles.cancelBtn}
+                    onClick={() => {
+                      setActionModal(null);
+                      setSelectedDoctor(null);
+                    }}
+                  >
+                    Cerrar
+                  </button>
+                  {selectedDoctor.phone && (
+                    <a
+                      href={`https://wa.me/${selectedDoctor.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola ${selectedDoctor.name}, te escribimos desde el equipo de soporte de TurnoHub...`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.whatsappBtn}
+                      style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}
+                    >
+                      💬 WhatsApp Soporte
+                    </a>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <h2>
+                  {actionModal === 'approve' && 'Aprobar Profesional'}
+                  {actionModal === 'reject' && 'Rechazar Profesional'}
+                  {actionModal === 'suspend' && 'Suspender Profesional'}
+                  {actionModal === 'extend' && 'Extender Plan'}
+                  {actionModal === 'reactivate' && 'Reactivar Profesional'}
+                  {actionModal === 'reset-debt' && 'Registrar Cobro'}
+                </h2>
 
             <p>
               {actionModal === 'approve' &&
@@ -467,9 +615,11 @@ export default function AdminDoctorsPage() {
                 {actionLoading ? 'Procesando...' : 'Confirmar'}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
+    </div>
+  )}
     </div>
     </AdminLayout>
   );
