@@ -255,6 +255,27 @@ async function migrate() {
     `);
     console.log('✓ Tabla doctors actualizada.\n');
 
+    // 20. Eventos recibidos desde WhatsApp Cloud API
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS whatsapp_webhook_events (
+        id BIGSERIAL PRIMARY KEY,
+        event_key VARCHAR(64) UNIQUE NOT NULL,
+        event_type VARCHAR(80) NOT NULL,
+        meta_message_id TEXT,
+        status VARCHAR(50),
+        phone_number_id VARCHAR(50),
+        contact_wa_id VARCHAR(50),
+        event_timestamp TIMESTAMPTZ,
+        payload JSONB NOT NULL,
+        received_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_whatsapp_events_message_id
+        ON whatsapp_webhook_events(meta_message_id);
+      CREATE INDEX IF NOT EXISTS idx_whatsapp_events_received_at
+        ON whatsapp_webhook_events(received_at DESC);
+    `);
+
     console.log('✅ Base de datos sincronizada exitosamente!');
     process.exit(0);
   } catch (error) {

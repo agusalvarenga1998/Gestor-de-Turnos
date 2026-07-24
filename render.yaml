@@ -39,6 +39,20 @@ services:
         sync: false
       - key: SMTP_PASSWORD
         sync: false
+      - key: WHATSAPP_WEBHOOK_VERIFY_TOKEN
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: WHATSAPP_CLOUD_TOKEN
+        sync: false
+      - key: WHATSAPP_CLOUD_PHONE_ID
+        sync: false
+      - key: WHATSAPP_BUSINESS_ACCOUNT_ID
+        sync: false
+      - key: WHATSAPP_TEMPLATE_CONFIRMATION
+        sync: false
+      - key: WHATSAPP_TEMPLATE_LANGUAGE
+        sync: false
 
   # 2. Static Site para el Frontend (React)
   - type: static

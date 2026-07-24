@@ -117,8 +117,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning']
 }));
 
-// Middleware de parseo
-app.use(express.json({ limit: '10mb' }));
+// Middleware de parseo. Conservamos el cuerpo crudo del webhook de WhatsApp
+// porque Meta firma exactamente esos bytes en X-Hub-Signature-256.
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buffer) => {
+    if (req.originalUrl?.startsWith('/api/webhooks/whatsapp')) {
+      req.rawBody = Buffer.from(buffer);
+    }
+  }
+}));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Logger
@@ -287,6 +295,29 @@ httpServer.listen(PORT, HOST, async () => {
         ADD COLUMN IF NOT EXISTS insurance_company_id UUID REFERENCES insurance_companies(id) ON DELETE SET NULL,
         ADD COLUMN IF NOT EXISTS insurance_plan_id UUID REFERENCES insurance_plans(id) ON DELETE SET NULL,
         ADD COLUMN IF NOT EXISTS insurance_policy_number VARCHAR(100)
+    `);
+
+    await query(`
+      CREATE TABLE IF NOT EXISTS whatsapp_webhook_events (
+        id BIGSERIAL PRIMARY KEY,
+        event_key VARCHAR(64) UNIQUE NOT NULL,
+        event_type VARCHAR(80) NOT NULL,
+        meta_message_id TEXT,
+        status VARCHAR(50),
+        phone_number_id VARCHAR(50),
+        contact_wa_id VARCHAR(50),
+        event_timestamp TIMESTAMPTZ,
+        payload JSONB NOT NULL,
+        received_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await query(`
+      CREATE INDEX IF NOT EXISTS idx_whatsapp_events_message_id
+        ON whatsapp_webhook_events(meta_message_id)
+    `);
+    await query(`
+      CREATE INDEX IF NOT EXISTS idx_whatsapp_events_received_at
+        ON whatsapp_webhook_events(received_at DESC)
     `);
 
     console.log('✓ Migraciones de is_online, meet_link, pricing_plans, insurance_plans, mp_refresh_token y patients aplicadas');

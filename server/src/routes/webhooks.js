@@ -4,8 +4,170 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { notifyDoctor } from '../websocket/server.js';
 import { sendNewAppointmentNotificationToDoctor, sendAppointmentConfirmation } from '../services/emailService.js';
 import { sendPushToDoctor } from '../cron/reminderCron.js';
+import crypto from 'crypto';
 
 const router = express.Router();
+
+const safeTokenMatch = (receivedToken, expectedToken) => {
+  if (!receivedToken || !expectedToken) return false;
+
+  const receivedBuffer = Buffer.from(String(receivedToken));
+  const expectedBuffer = Buffer.from(String(expectedToken));
+  return receivedBuffer.length === expectedBuffer.length
+    && crypto.timingSafeEqual(receivedBuffer, expectedBuffer);
+};
+
+const hasValidWhatsAppSignature = (req) => {
+  const appSecret = process.env.META_APP_SECRET;
+  if (!appSecret) {
+    console.error('WhatsApp webhook recibido sin META_APP_SECRET configurado.');
+    return process.env.NODE_ENV !== 'production';
+  }
+
+  const receivedSignature = req.get('x-hub-signature-256');
+  if (!receivedSignature || !req.rawBody) return false;
+
+  const expectedSignature = `sha256=${crypto
+    .createHmac('sha256', appSecret)
+    .update(req.rawBody)
+    .digest('hex')}`;
+
+  return safeTokenMatch(receivedSignature, expectedSignature);
+};
+
+const persistWhatsAppEvent = async ({
+  eventType,
+  metaMessageId,
+  status,
+  phoneNumberId,
+  contactWaId,
+  eventTimestamp,
+  payload
+}) => {
+  const eventKey = crypto
+    .createHash('sha256')
+    .update(JSON.stringify({
+      eventType,
+      metaMessageId,
+      status,
+      phoneNumberId,
+      contactWaId,
+      eventTimestamp,
+      payload
+    }))
+    .digest('hex');
+
+  await query(
+    `INSERT INTO whatsapp_webhook_events (
+      event_key,
+      event_type,
+      meta_message_id,
+      status,
+      phone_number_id,
+      contact_wa_id,
+      event_timestamp,
+      payload
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+    ON CONFLICT (event_key) DO NOTHING`,
+    [
+      eventKey,
+      eventType,
+      metaMessageId || null,
+      status || null,
+      phoneNumberId || null,
+      contactWaId || null,
+      eventTimestamp ? new Date(Number(eventTimestamp) * 1000) : null,
+      JSON.stringify(payload)
+    ]
+  );
+};
+
+// Meta usa este endpoint para validar la URL de devolución de llamada.
+router.get('/whatsapp', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const receivedToken = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+  const expectedToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN;
+
+  if (!expectedToken) {
+    console.error('No se configuró WHATSAPP_WEBHOOK_VERIFY_TOKEN.');
+    return res.status(503).send('Webhook no configurado');
+  }
+
+  if (mode === 'subscribe' && challenge && safeTokenMatch(receivedToken, expectedToken)) {
+    console.log('Webhook de WhatsApp verificado correctamente por Meta.');
+    return res.status(200).send(String(challenge));
+  }
+
+  console.warn('Intento fallido de verificación del webhook de WhatsApp.');
+  return res.sendStatus(403);
+});
+
+// Recibe mensajes entrantes y actualizaciones de estado.
+router.post('/whatsapp', async (req, res) => {
+  if (!hasValidWhatsAppSignature(req)) {
+    console.warn('Firma inválida en webhook de WhatsApp.');
+    return res.sendStatus(401);
+  }
+
+  if (req.body?.object !== 'whatsapp_business_account') {
+    return res.sendStatus(200);
+  }
+
+  try {
+    let processedEvents = 0;
+
+    for (const entry of req.body.entry || []) {
+      for (const change of entry.changes || []) {
+        if (change.field !== 'messages') continue;
+
+        const value = change.value || {};
+        const phoneNumberId = value.metadata?.phone_number_id || null;
+
+        for (const messageStatus of value.statuses || []) {
+          await persistWhatsAppEvent({
+            eventType: 'message_status',
+            metaMessageId: messageStatus.id,
+            status: messageStatus.status,
+            phoneNumberId,
+            contactWaId: messageStatus.recipient_id,
+            eventTimestamp: messageStatus.timestamp,
+            payload: messageStatus
+          });
+          processedEvents += 1;
+        }
+
+        for (const message of value.messages || []) {
+          await persistWhatsAppEvent({
+            eventType: `incoming_${message.type || 'unknown'}`,
+            metaMessageId: message.id,
+            status: 'received',
+            phoneNumberId,
+            contactWaId: message.from,
+            eventTimestamp: message.timestamp,
+            payload: {
+              id: message.id,
+              from: message.from,
+              timestamp: message.timestamp,
+              type: message.type,
+              context: message.context
+                ? { id: message.context.id, from: message.context.from }
+                : null
+            }
+          });
+          processedEvents += 1;
+        }
+      }
+    }
+
+    console.log(`Webhook de WhatsApp procesado: ${processedEvents} evento(s).`);
+    return res.sendStatus(200);
+  } catch (error) {
+    console.error('Error procesando webhook de WhatsApp:', error.message);
+    return res.sendStatus(500);
+  }
+});
 
 router.post('/mercadopago', async (req, res) => {
   try {
