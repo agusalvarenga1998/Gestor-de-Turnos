@@ -133,16 +133,10 @@ router.post('/mercadopago', async (req, res) => {
 
           const appointment = updateResult.rows[0];
 
-          // 3. SUMAR DEUDA AL DOCTOR (Solo si está en plan por comisión)
-          if (plan_type === 'commission' && system_fee > 0) {
-            await query(
-              'UPDATE doctors SET accumulated_debt = accumulated_debt + $1 WHERE id = $2',
-              [system_fee, doctor_id]
-            );
-            console.log(`✅ Turno ${appointmentId} confirmado y deuda de $${system_fee} cargada al doctor.`);
-          } else {
-            console.log(`✅ Turno ${appointmentId} confirmado. Sin deuda por plan: ${plan_type}`);
-          }
+          // 3. COMISIÓN POR MERCADO PAGO:
+          // Al pagar por MP, la comisión (marketplace_fee) es acreditada automáticamente en la cuenta MP del Admin.
+          // Por lo tanto, NO se suma deuda al doctor para evitar doble cobro.
+          console.log(`✅ Turno ${appointmentId} confirmado en MP. Comisión de $${system_fee} acreditada automáticamente al Admin por marketplace_fee.`);
 
           // Integración con Google Calendar (Solo si NO es consulta online)
           if (!is_online) {

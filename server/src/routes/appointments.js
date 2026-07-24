@@ -597,9 +597,10 @@ router.post('/public/create', async (req, res) => {
         booking_fee_paid,
         coverage_amount,
         service_id,
-        duration_minutes
+        duration_minutes,
+        fee_charged
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING id, appointment_date, appointment_time, total_amount, appointment_code`,
       [
         doctorId,
@@ -617,7 +618,8 @@ router.post('/public/create', async (req, res) => {
         (isCash || totalToPayNow > 0) ? 0 : bookingFee,
         insuranceDiscount,
         serviceId || null,
-        serviceDuration
+        serviceDuration,
+        isCash ? true : false
       ]
     );
 

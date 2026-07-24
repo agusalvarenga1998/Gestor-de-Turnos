@@ -26,7 +26,7 @@ export const createMPPreference = async (appointmentData, doctorMPAccessToken) =
           currency_id: 'ARS'
         }
       ],
-      // marketplace_fee: Number(system_fee), // La comisión que se queda la plataforma
+      ...(Number(system_fee) > 0 ? { marketplace_fee: Number(system_fee) } : {}), // Comisión automática transferida al admin por MP
       external_reference: appointmentId,
 
       back_urls: {
