@@ -137,62 +137,96 @@ export default function PatientPortalHomePage() {
     };
   }, [activeTab]);
 
-  useEffect(() => {
-    loadRubros();
-    loadAllDoctors();
-  }, []);
+  const initializeDirectDoctorLink = async (targetDoctorId) => {
+    try {
+      setLoading(true);
+      const [rubrosRes, docsRes] = await Promise.all([
+        appointmentAPI.getPublicRubros(),
+        appointmentAPI.getAllPublicDoctors()
+      ]);
+      const rubrosList = rubrosRes.success ? rubrosRes.rubros : [];
+      const allDocsList = docsRes.success ? docsRes.doctors : [];
+      setAllDoctors(allDocsList);
 
-  useEffect(() => {
-    if (allDoctors.length > 0 && initialDoctorId) {
-      const doc = allDoctors.find(d => d.id === initialDoctorId);
-      if (doc) {
-        setActiveTab('book');
-        setSelectedRubro(doc.rubro);
-        setSelectedSpecialization(doc.specialization);
-        setDoctors(allDoctors.filter(d => d.specialization === doc.specialization));
-        setSelectedDoctor(doc.id);
-      } else {
-        setInitialDoctorId('');
+      const targetDoc = allDocsList.find(d => d.id === targetDoctorId);
+      if (!targetDoc) {
+        setRubros(rubrosList);
+        setLoading(false);
+        return;
       }
+
+      const [specsRes, specDocsRes] = await Promise.all([
+        appointmentAPI.getPublicSpecializations(targetDoc.rubro),
+        appointmentAPI.getPublicDoctors(targetDoc.specialization)
+      ]);
+
+      const specsList = specsRes.success ? specsRes.specializations : [];
+      const specDocsList = specDocsRes.success ? specDocsRes.doctors : [];
+
+      if (targetDoc.rubro && !rubrosList.includes(targetDoc.rubro)) {
+        rubrosList.push(targetDoc.rubro);
+      }
+      setRubros(rubrosList);
+
+      if (targetDoc.specialization && !specsList.includes(targetDoc.specialization)) {
+        specsList.push(targetDoc.specialization);
+      }
+      setSpecializations(specsList);
+
+      if (!specDocsList.some(d => d.id === targetDoc.id)) {
+        specDocsList.push(targetDoc);
+      }
+      setDoctors(specDocsList);
+
+      setActiveTab('book');
+      setSelectedRubro(targetDoc.rubro);
+      setSelectedSpecialization(targetDoc.specialization);
+      setSelectedDoctor(targetDoc.id);
+
+      loadDoctorInsurances(targetDoc.id);
+      loadDoctorAvailability(targetDoc.id);
+      loadServices(targetDoc.id);
+    } catch (err) {
+      console.error('Error cargando link directo:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [allDoctors, initialDoctorId]);
+  };
 
   useEffect(() => {
-    if (selectedRubro) {
-      setSpecializations([]);
-      if (initialDoctorId) {
-        const doc = allDoctors.find(d => d.id === initialDoctorId);
-        if (doc) {
-          setSelectedSpecialization(doc.specialization);
-        } else {
-          setSelectedSpecialization('');
-        }
-      } else {
-        setSelectedSpecialization('');
-      }
-      setDoctors([]);
-      setSelectedDoctor('');
-      loadSpecializations(selectedRubro);
+    if (initialDoctorId) {
+      initializeDirectDoctorLink(initialDoctorId);
     } else {
-      setSpecializations([]);
-      setSelectedSpecialization('');
-      setDoctors([]);
-      setSelectedDoctor('');
+      loadRubros();
+      loadAllDoctors();
     }
-  }, [selectedRubro]);
+  }, [initialDoctorId]);
 
-  useEffect(() => {
-    if (selectedSpecialization) {
-      setDoctors([]); // Limpiar lista anterior
-      if (initialDoctorId) {
-        setSelectedDoctor(initialDoctorId);
-        setTimeout(() => setInitialDoctorId(''), 100);
-      } else {
-        setSelectedDoctor('');
-      }
-      loadDoctors(selectedSpecialization);
+  const handleRubroSelect = async (rubro) => {
+    setSelectedRubro(rubro);
+    setSelectedSpecialization('');
+    setDoctors([]);
+    setSelectedDoctor('');
+    setSelectedService(null);
+    if (rubro) {
+      loadSpecializations(rubro);
     }
-  }, [selectedSpecialization]);
+  };
+
+  const handleSpecializationSelect = async (spec) => {
+    setSelectedSpecialization(spec);
+    setDoctors([]);
+    setSelectedDoctor('');
+    setSelectedService(null);
+    if (spec) {
+      loadDoctors(spec);
+    }
+  };
+
+  const handleDoctorSelect = (doctorId) => {
+    setSelectedDoctor(doctorId);
+    setSelectedService(null);
+  };
 
   useEffect(() => {
     if (selectedDoctor) {
@@ -886,7 +920,7 @@ export default function PatientPortalHomePage() {
                           <div className={styles.formGridThree}>
                             <div className={styles.formGroup}>
                               <label>RUBRO (CATEGORÍA)</label>
-                              <select onChange={(e) => setSelectedRubro(e.target.value)} value={selectedRubro} required>
+                              <select onChange={(e) => handleRubroSelect(e.target.value)} value={selectedRubro} required>
                                 <option value="">Selecciona...</option>
                                 {rubros.map(r => <option key={r} value={r}>{r}</option>)}
                               </select>
@@ -894,7 +928,7 @@ export default function PatientPortalHomePage() {
                             <div className={styles.formGroup}>
                               <label>ESPECIALIDAD</label>
                               <select 
-                                onChange={(e) => setSelectedSpecialization(e.target.value)} 
+                                onChange={(e) => handleSpecializationSelect(e.target.value)} 
                                 value={selectedSpecialization} 
                                 disabled={!selectedRubro}
                                 required
@@ -906,7 +940,7 @@ export default function PatientPortalHomePage() {
                             <div className={styles.formGroup}>
                               <label>PROFESIONAL</label>
                               <select 
-                                onChange={(e) => { setSelectedDoctor(e.target.value); setSelectedService(null); }} 
+                                onChange={(e) => handleDoctorSelect(e.target.value)} 
                                 value={selectedDoctor} 
                                 disabled={!selectedSpecialization} 
                                 required
