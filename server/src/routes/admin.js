@@ -121,6 +121,40 @@ router.get('/doctors', verifyAdmin, async (req, res) => {
   }
 });
 
+// Update doctor contact/profile details (Admin)
+router.patch('/doctors/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, rubro, specialization, clinic_name, clinic_address, address, license_number } = req.body;
+
+    const result = await query(
+      `UPDATE doctors
+       SET name = COALESCE($1, name),
+           email = COALESCE($2, email),
+           phone = COALESCE($3, phone),
+           rubro = COALESCE($4, rubro),
+           specialization = COALESCE($5, specialization),
+           clinic_name = COALESCE($6, clinic_name),
+           clinic_address = COALESCE($7, clinic_address),
+           address = COALESCE($8, address),
+           license_number = COALESCE($9, license_number),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $10
+       RETURNING *`,
+      [name, email, phone, rubro, specialization, clinic_name, clinic_address, address || clinic_address, license_number, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Doctor no encontrado' });
+    }
+
+    res.json({ success: true, doctor: result.rows[0], message: 'Datos del profesional actualizados' });
+  } catch (error) {
+    console.error('Error updating doctor details (admin):', error);
+    res.status(500).json({ success: false, error: 'Error al actualizar datos del profesional' });
+  }
+});
+
 // Approve a doctor (start trial)
 router.patch('/doctors/:id/approve', verifyAdmin, async (req, res) => {
   try {

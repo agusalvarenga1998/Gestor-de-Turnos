@@ -22,6 +22,17 @@ export default function AdminDoctorsPage() {
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [plans, setPlans] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    license_number: '',
+    rubro: '',
+    specialization: '',
+    clinic_name: '',
+    clinic_address: ''
+  });
 
   useEffect(() => {
     fetchDoctors();
@@ -306,6 +317,17 @@ export default function AdminDoctorsPage() {
                       className={styles.detailsBtn}
                       onClick={() => {
                         setSelectedDoctor(doctor);
+                        setEditData({
+                          name: doctor.name || '',
+                          email: doctor.email || '',
+                          phone: doctor.phone || '',
+                          license_number: doctor.license_number || '',
+                          rubro: doctor.rubro || '',
+                          specialization: doctor.specialization || '',
+                          clinic_name: doctor.clinic_name || '',
+                          clinic_address: doctor.clinic_address || doctor.address || ''
+                        });
+                        setEditMode(false);
                         setActionModal('view-details');
                       }}
                       title="Ver ficha completa y datos de contacto"
@@ -399,96 +421,220 @@ export default function AdminDoctorsPage() {
                   {getStatusBadge(selectedDoctor.status)}
                 </div>
 
-                <div className={styles.detailGrid}>
-                  <div className={styles.detailItem}>
-                    <label>Nombre Completo</label>
-                    <span>{selectedDoctor.name}</span>
-                  </div>
+                {!editMode ? (
+                  <div className={styles.detailGrid}>
+                    <div className={styles.detailItem}>
+                      <label>Nombre Completo</label>
+                      <span>{selectedDoctor.name}</span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Matrícula / Registro</label>
-                    <span>{selectedDoctor.license_number || 'No especificada'}</span>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Matrícula / Registro</label>
+                      <span>{selectedDoctor.license_number || 'No especificada'}</span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Correo Electrónico</label>
-                    <a href={`mailto:${selectedDoctor.email}`} className={styles.emailBtn}>✉️ {selectedDoctor.email}</a>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Correo Electrónico</label>
+                      <a href={`mailto:${selectedDoctor.email}`} className={styles.emailBtn}>✉️ {selectedDoctor.email}</a>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>WhatsApp / Teléfono</label>
-                    {selectedDoctor.phone ? (
-                      <a href={`https://wa.me/${selectedDoctor.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className={styles.whatsappBtn}>
-                        💬 {selectedDoctor.phone} (Abrir Chat)
-                      </a>
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>Sin número registrado</span>
-                    )}
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>WhatsApp / Teléfono</label>
+                      {selectedDoctor.phone ? (
+                        <a href={`https://wa.me/${selectedDoctor.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className={styles.whatsappBtn}>
+                          💬 {selectedDoctor.phone} (Abrir Chat)
+                        </a>
+                      ) : (
+                        <span style={{ color: '#94a3b8' }}>Sin número registrado</span>
+                      )}
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Rubro / Categoría</label>
-                    <span>{selectedDoctor.rubro || 'No especificado'}</span>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Rubro / Categoría</label>
+                      <span>{selectedDoctor.rubro || 'No especificado'}</span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Especialidad</label>
-                    <span>{selectedDoctor.specialization || 'No especificada'}</span>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Especialidad</label>
+                      <span>{selectedDoctor.specialization || 'No especificada'}</span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Establecimiento / Clínica</label>
-                    <span>{selectedDoctor.clinic_name || 'No especificado'}</span>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Establecimiento / Clínica</label>
+                      <span>{selectedDoctor.clinic_name || 'No especificado'}</span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Dirección de Atención</label>
-                    <span>{selectedDoctor.clinic_address || selectedDoctor.address || 'No especificada'}</span>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Dirección de Atención</label>
+                      <span>{selectedDoctor.clinic_address || selectedDoctor.address || 'No especificada'}</span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Plan Actual & Tipo</label>
-                    <span>{plans.find(p => p.id === selectedDoctor.pricing_plan_id)?.name || (selectedDoctor.plan_type === 'commission' ? `Comisión (${selectedDoctor.commission_rate}%)` : 'Mensualidad')}</span>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Plan Actual & Tipo</label>
+                      <span>{plans.find(p => p.id === selectedDoctor.pricing_plan_id)?.name || (selectedDoctor.plan_type === 'commission' ? `Comisión (${selectedDoctor.commission_rate}%)` : 'Mensualidad')}</span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Deuda Acumulada</label>
-                    <span style={{ color: selectedDoctor.accumulated_debt > 0 ? '#ef4444' : '#10b981', fontWeight: 800 }}>
-                      ${parseFloat(selectedDoctor.accumulated_debt || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Deuda Acumulada</label>
+                      <span style={{ color: selectedDoctor.accumulated_debt > 0 ? '#ef4444' : '#10b981', fontWeight: 800 }}>
+                        ${parseFloat(selectedDoctor.accumulated_debt || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Fecha de Registro</label>
-                    <span>{new Date(selectedDoctor.created_at).toLocaleDateString('es-ES')}</span>
-                  </div>
+                    <div className={styles.detailItem}>
+                      <label>Fecha de Registro</label>
+                      <span>{new Date(selectedDoctor.created_at).toLocaleDateString('es-ES')}</span>
+                    </div>
 
-                  <div className={styles.detailItem}>
-                    <label>Vigencia Suscripción</label>
-                    <span>{selectedDoctor.subscription_expires_at ? new Date(selectedDoctor.subscription_expires_at).toLocaleDateString('es-ES') : 'Sin fecha'}</span>
+                    <div className={styles.detailItem}>
+                      <label>Vigencia Suscripción</label>
+                      <span>{selectedDoctor.subscription_expires_at ? new Date(selectedDoctor.subscription_expires_at).toLocaleDateString('es-ES') : 'Sin fecha'}</span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className={styles.detailGrid}>
+                    <div className={styles.detailItem}>
+                      <label>Nombre Completo (*)</label>
+                      <input
+                        type="text"
+                        value={editData.name}
+                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    <div className={styles.detailItem}>
+                      <label>WhatsApp / Teléfono (*)</label>
+                      <input
+                        type="text"
+                        value={editData.phone}
+                        placeholder="+5491123456789"
+                        onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    <div className={styles.detailItem}>
+                      <label>Correo Electrónico</label>
+                      <input
+                        type="email"
+                        value={editData.email}
+                        onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    <div className={styles.detailItem}>
+                      <label>Matrícula / Registro</label>
+                      <input
+                        type="text"
+                        value={editData.license_number}
+                        onChange={(e) => setEditData({ ...editData, license_number: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    <div className={styles.detailItem}>
+                      <label>Rubro / Categoría</label>
+                      <input
+                        type="text"
+                        value={editData.rubro}
+                        onChange={(e) => setEditData({ ...editData, rubro: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    <div className={styles.detailItem}>
+                      <label>Especialidad</label>
+                      <input
+                        type="text"
+                        value={editData.specialization}
+                        onChange={(e) => setEditData({ ...editData, specialization: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    <div className={styles.detailItem}>
+                      <label>Establecimiento / Clínica</label>
+                      <input
+                        type="text"
+                        value={editData.clinic_name}
+                        onChange={(e) => setEditData({ ...editData, clinic_name: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    <div className={styles.detailItem}>
+                      <label>Dirección de Atención</label>
+                      <input
+                        type="text"
+                        value={editData.clinic_address}
+                        onChange={(e) => setEditData({ ...editData, clinic_address: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className={styles.modalButtons} style={{ marginTop: '1.5rem' }}>
-                  <button
-                    className={styles.cancelBtn}
-                    onClick={() => {
-                      setActionModal(null);
-                      setSelectedDoctor(null);
-                    }}
-                  >
-                    Cerrar
-                  </button>
-                  {selectedDoctor.phone && (
-                    <a
-                      href={`https://wa.me/${selectedDoctor.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola ${selectedDoctor.name}, te escribimos desde el equipo de soporte de TurnoHub...`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.whatsappBtn}
-                      style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}
-                    >
-                      💬 WhatsApp Soporte
-                    </a>
+                  {!editMode ? (
+                    <>
+                      <button
+                        className={styles.cancelBtn}
+                        onClick={() => {
+                          setActionModal(null);
+                          setSelectedDoctor(null);
+                        }}
+                      >
+                        Cerrar
+                      </button>
+                      <button
+                        className={styles.detailsBtn}
+                        onClick={() => setEditMode(true)}
+                        style={{ background: '#2563eb', color: 'white', border: 'none' }}
+                      >
+                        ✏️ Editar Datos / Teléfono
+                      </button>
+                      {selectedDoctor.phone && (
+                        <a
+                          href={`https://wa.me/${selectedDoctor.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola ${selectedDoctor.name}, te escribimos desde el equipo de soporte de TurnoHub...`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.whatsappBtn}
+                          style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}
+                        >
+                          💬 WhatsApp Soporte
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className={styles.cancelBtn}
+                        onClick={() => setEditMode(false)}
+                        disabled={actionLoading}
+                      >
+                        Cancelar Edición
+                      </button>
+                      <button
+                        className={styles.confirmBtn}
+                        disabled={actionLoading}
+                        onClick={async () => {
+                          setActionLoading(true);
+                          try {
+                            const res = await axios.patch(
+                              `${API_BASE_URL}/api/admin/doctors/${selectedDoctor.id}`,
+                              editData,
+                              { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            if (res.data.success) {
+                              await fetchDoctors();
+                              setSelectedDoctor(res.data.doctor);
+                              setEditMode(false);
+                            }
+                          } catch (err) {
+                            alert(err.response?.data?.error || 'Error al guardar cambios');
+                          } finally {
+                            setActionLoading(false);
+                          }
+                        }}
+                      >
+                        {actionLoading ? 'Guardando...' : '💾 Guardar Cambios'}
+                      </button>
+                    </>
                   )}
                 </div>
               </>

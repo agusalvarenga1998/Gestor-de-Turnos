@@ -82,7 +82,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
 // Registro de doctor (auto-aprobado con 30 días de prueba gratis)
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, specialization, clinic_name, rubro } = req.body;
+    const { email, password, name, specialization, clinic_name, rubro, phone } = req.body;
 
     // Validación básica
     if (!email || !password || !name) {
@@ -120,10 +120,10 @@ router.post('/register', async (req, res) => {
 
     // Crear doctor auto-aprobado con 30 días de prueba gratis
     const result = await query(
-      `INSERT INTO doctors (email, password_hash, name, specialization, rubro, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at, pricing_plan_id, plan_type)
-       VALUES ($1, $2, $3, $4, $5, $6, 'approved', 'trial', $7, $7, CURRENT_TIMESTAMP, $8, 'monthly')
-       RETURNING id, email, name, specialization, rubro, clinic_name, status, subscription_status, trial_ends_at, subscription_expires_at`,
-      [normalizedEmail, hashedPassword, name, specialization, rubro, clinic_name, trialEndsAt, defaultPlanId]
+      `INSERT INTO doctors (email, password_hash, name, specialization, rubro, clinic_name, phone, status, subscription_status, trial_ends_at, subscription_expires_at, approved_at, pricing_plan_id, plan_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'approved', 'trial', $8, $8, CURRENT_TIMESTAMP, $9, 'monthly')
+       RETURNING id, email, name, specialization, rubro, clinic_name, phone, status, subscription_status, trial_ends_at, subscription_expires_at`,
+      [normalizedEmail, hashedPassword, name, specialization, rubro, clinic_name, phone || null, trialEndsAt, defaultPlanId]
     );
 
     const doctor = result.rows[0];
