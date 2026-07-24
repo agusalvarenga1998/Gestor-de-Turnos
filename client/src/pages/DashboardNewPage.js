@@ -333,7 +333,7 @@ export default function DashboardNewPage() {
                 <span className="material-symbols-outlined">rocket_launch</span>
               </div>
               <div className={styles.onboardingBannerText}>
-                <h3>Configuración pendiente de tu consultorio</h3>
+                <h3>Configuración pendiente de tu establecimiento</h3>
                 <p>
                   Aún quedan tareas pendientes:{' '}
                   {stats.incompleteConfig.map(c => 

@@ -138,3 +138,10 @@ select:focus {
 #root {
   min-height: 100vh;
 }
+
+/* Leaflet DivIcon Override */
+.th-custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+

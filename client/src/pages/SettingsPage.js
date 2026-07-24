@@ -20,10 +20,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const doctorIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/512/387/387561.png',
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
+const doctorIcon = L.divIcon({
+  className: 'th-custom-marker',
+  html: `
+    <div style="width: 38px; height: 50px; position: relative; cursor: pointer;">
+      <svg width="38" height="50" viewBox="0 0 38 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.35));">
+        <path d="M19 0C8.50659 0 0 8.50659 0 19C0 31.5 19 50 19 50C19 50 38 31.5 38 19C38 8.50659 29.4934 0 19 0Z" fill="#2563eb" stroke="#ffffff" stroke-width="2.5"/>
+        <circle cx="19" cy="19" r="12.5" fill="#1d4ed8" />
+        <text x="19" y="20.5" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-0.5px">TH</text>
+      </svg>
+    </div>
+  `,
+  iconSize: [38, 50],
+  iconAnchor: [19, 50],
+  popupAnchor: [0, -50]
 });
 
 export default function SettingsPage() {
@@ -69,13 +79,8 @@ export default function SettingsPage() {
 
   // Estados de Seguridad
   const [securityData, setSecurityData] = useState({
-    twoFactorEnabled: false,
     emailVerified: false
   });
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [twoFactorSecret, setTwoFactorSecret] = useState('');
-  const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [show2FAForm, setShow2FAForm] = useState(false);
   const [loadingSecurity, setLoadingSecurity] = useState(false);
   const [securityError, setSecurityError] = useState('');
   const [securitySuccess, setSecuritySuccess] = useState('');
@@ -161,46 +166,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSetup2FA = async () => {
-    setLoadingSecurity(true);
-    setSecurityError('');
-    setSecuritySuccess('');
-    try {
-      const response = await apiClient.post('/api/auth/profile/2fa/setup');
-      if (response.data.success) {
-        setQrCodeUrl(response.data.qrCodeUrl);
-        setTwoFactorSecret(response.data.secret);
-        setShow2FAForm(true);
-      }
-    } catch (err) {
-      setSecurityError('Error al iniciar configuración de 2FA.');
-    } finally {
-      setLoadingSecurity(false);
-    }
-  };
 
-  const handleVerify2FA = async (enable) => {
-    setLoadingSecurity(true);
-    setSecurityError('');
-    setSecuritySuccess('');
-    try {
-      const response = await apiClient.post('/api/auth/profile/2fa/verify', {
-        code: twoFactorCode,
-        enable
-      });
-      if (response.data.success) {
-        setSecuritySuccess(response.data.message);
-        setSecurityData(prev => ({ ...prev, twoFactorEnabled: enable }));
-        setShow2FAForm(false);
-        setTwoFactorCode('');
-        await refreshUser();
-      }
-    } catch (err) {
-      setSecurityError(err.response?.data?.message || 'Código incorrecto. Verifica el autenticador.');
-    } finally {
-      setLoadingSecurity(false);
-    }
-  };
 
   const handleLogoutAll = async () => {
     if (!window.confirm('¿Estás seguro? Esto cerrará tu sesión en TODOS tus dispositivos móviles y web actuales.')) return;
@@ -730,7 +696,7 @@ export default function SettingsPage() {
         {(!user?.rubro || !user?.specialization || !user?.address) && (
           <div className={styles.warningMessage}>
             <Icon name="warning" size={24} color="#b45309" />
-            <span>Por favor, completa tu rubro, especialidad y dirección de consultorio (ubicándola en el mapa) para activar tu perfil y comenzar a recibir turnos.</span>
+            <span>Por favor, completa tu rubro, especialidad y dirección del establecimiento (ubicándola en el mapa) para activar tu perfil y comenzar a recibir turnos.</span>
           </div>
         )}
 
@@ -1123,7 +1089,7 @@ export default function SettingsPage() {
                 </div>
 
                  <div className={styles.formGroup}>
-                  <label htmlFor="address">Dirección del Consultorio *</label>
+                  <label htmlFor="address">Dirección del Establecimiento *</label>
                   <div className={styles.addressInputGroup}>
                     <input
                       type="text"
@@ -1186,7 +1152,7 @@ export default function SettingsPage() {
             <div className={styles.sectionTitleGroup}>
               <div className={styles.sectionTitle}>
                 <Icon name="reports" size={24} color="#f59e0b" />
-                Guía de Inicio / Estado del Consultorio
+                Guía de Inicio / Estado del Establecimiento
               </div>
               <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
                 {openSections.onboarding ? 'expand_less' : 'expand_more'}
@@ -1217,7 +1183,7 @@ export default function SettingsPage() {
               </span>
             </div>
             <p className={styles.sectionDescription}>
-              Protege tu consultorio con Autenticación de Dos Factores (2FA) y administra la privacidad de tus datos.
+              Administra la seguridad de tu cuenta y la privacidad de tus datos.
             </p>
           </div>
 
@@ -1226,81 +1192,6 @@ export default function SettingsPage() {
               <div className={styles.securityContainer}>
                 {securitySuccess && <div className={styles.successMessage} style={{ marginBottom: '1rem' }}>{securitySuccess}</div>}
                 {securityError && <div className={styles.errorMessage} style={{ color: '#dc2626', background: '#fef2f2', padding: '0.75rem', borderRadius: '8px', border: '1px solid #fca5a5', marginBottom: '1rem', fontSize: '0.875rem' }}>{securityError}</div>}
-
-                {/* Doble Factor (2FA) */}
-                <div className={styles.securityItem}>
-                  <div className={styles.securityInfo}>
-                    <h4>Autenticación de Dos Factores (2FA)</h4>
-                    <p>Agrega un paso adicional al iniciar sesión ingresando un código temporal de tu celular (Google Authenticator, Authy, etc.).</p>
-                  </div>
-                  <div className={styles.securityActions}>
-                    {securityData.twoFactorEnabled ? (
-                      <div className={styles.enabledBadgeGroup}>
-                        <span className={styles.enabledBadge}>✓ HABILITADO</span>
-                        <button 
-                          onClick={() => {
-                            setTwoFactorCode('');
-                            setShow2FAForm(true);
-                          }} 
-                          className={styles.disable2faBtn}
-                          disabled={loadingSecurity}
-                        >
-                          Desactivar
-                        </button>
-                      </div>
-                    ) : (
-                      <button onClick={handleSetup2FA} className={styles.enable2faBtn} disabled={loadingSecurity}>
-                        Activar 2FA
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Formulario 2FA Setup/Desactivación */}
-                {show2FAForm && (
-                  <div className={styles.setup2faBox}>
-                    {!securityData.twoFactorEnabled && qrCodeUrl && (
-                      <div className={styles.qrSetup}>
-                        <p>1. Escanea el código QR desde tu app autenticadora:</p>
-                        <div style={{ textAlign: 'center', margin: '1rem 0' }}>
-                          <img src={qrCodeUrl} alt="2FA QR Code" style={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} />
-                        </div>
-                        <p>O introduce la clave manualmente: <code>{twoFactorSecret}</code></p>
-                      </div>
-                    )}
-                    <p style={{ marginTop: '0.5rem' }}>
-                      {securityData.twoFactorEnabled 
-                        ? 'Ingresa el código temporal de 6 dígitos de tu celular para desactivar 2FA:' 
-                        : '2. Ingresa el código temporal de 6 dígitos para validar la configuración:'}
-                    </p>
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      <input
-                        type="text"
-                        maxLength="6"
-                        placeholder="Ej: 123456"
-                        value={twoFactorCode}
-                        onChange={(e) => setTwoFactorCode(e.target.value)}
-                        style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', width: '120px', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }}
-                      />
-                      <button
-                        onClick={() => handleVerify2FA(!securityData.twoFactorEnabled)}
-                        className={styles.confirmBtn}
-                        style={{ padding: '0.5rem 1rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
-                        disabled={loadingSecurity || twoFactorCode.length !== 6}
-                      >
-                        {loadingSecurity ? 'Verificando...' : 'Confirmar'}
-                      </button>
-                      <button
-                        onClick={() => setShow2FAForm(false)}
-                        style={{ padding: '0.5rem 1rem', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <hr className={styles.securityDivider} />
 
                 {/* Sesiones Activas / Cierre Global */}
                 <div className={styles.securityItem}>

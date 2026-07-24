@@ -252,16 +252,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Verificar si tiene 2FA habilitado
-    if (doctor.two_factor_enabled) {
-      await logAction(doctor.id, 'login_step1_2fa', 'Inicio de sesión - Paso 1: Requiere 2FA', req.ip);
-      return res.json({
-        success: true,
-        requires2FA: true,
-        doctorId: doctor.id,
-        message: 'Por favor, ingresa el código de verificación de 2 factores.'
-      });
-    }
+
 
     // Obtener el perfil completo con plan para el token y la respuesta
     const doctorProfile = await getDoctorProfileWithPlan(doctor.id);

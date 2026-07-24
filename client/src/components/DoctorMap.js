@@ -15,13 +15,21 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow,
 });
 
-// Icono personalizado con fallback por si falla la red
-const doctorIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/512/2750/2750657.png', // Icono de mapa médico
-  iconSize: [45, 45],
-  iconAnchor: [22, 45],
-  popupAnchor: [0, -45],
-  className: 'doctor-marker'
+// Icono de pin azul con letras TH en blanco
+const doctorIcon = L.divIcon({
+  className: 'th-custom-marker',
+  html: `
+    <div style="width: 38px; height: 50px; position: relative; cursor: pointer;">
+      <svg width="38" height="50" viewBox="0 0 38 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.35));">
+        <path d="M19 0C8.50659 0 0 8.50659 0 19C0 31.5 19 50 19 50C19 50 38 31.5 38 19C38 8.50659 29.4934 0 19 0Z" fill="#2563eb" stroke="#ffffff" stroke-width="2.5"/>
+        <circle cx="19" cy="19" r="12.5" fill="#1d4ed8" />
+        <text x="19" y="20.5" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-0.5px">TH</text>
+      </svg>
+    </div>
+  `,
+  iconSize: [38, 50],
+  iconAnchor: [19, 50],
+  popupAnchor: [0, -50]
 });
 
 function MapController({ doctors, userLocation }) {

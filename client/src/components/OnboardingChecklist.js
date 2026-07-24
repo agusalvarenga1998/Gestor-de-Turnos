@@ -106,7 +106,7 @@ export default function OnboardingChecklist({ alwaysShow = false }) {
   const stepsList = [
     {
       key: 'profile',
-      title: 'Datos de tu consultorio',
+      title: 'Datos de tu establecimiento',
       description: 'Completa tu especialidad, rubro y dirección de atención.',
       path: '/settings',
       isCompleted: stepsStatus.profile,
@@ -131,7 +131,7 @@ export default function OnboardingChecklist({ alwaysShow = false }) {
     ...(isInsuranceAllowed ? [{
       key: 'insurance',
       title: 'Convenios y Obras Sociales',
-      description: 'Agrega las mutuales y coberturas que aceptas en tu consultorio.',
+      description: 'Agrega las mutuales y coberturas que aceptas en tu establecimiento.',
       path: '/insurance',
       isCompleted: stepsStatus.insurance,
       icon: 'shield',
@@ -217,7 +217,7 @@ export default function OnboardingChecklist({ alwaysShow = false }) {
           </div>
           <div>
             <h3 className={styles.title}>
-              {isAllCompleted ? '¡Todo listo! Consultorio configurado' : 'Asistente de Configuración Inicial'}
+              {isAllCompleted ? '¡Todo listo! Establecimiento configurado' : 'Asistente de Configuración Inicial'}
             </h3>
             <p className={styles.subtitle}>
               {isAllCompleted 
