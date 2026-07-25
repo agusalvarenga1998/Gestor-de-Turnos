@@ -1128,7 +1128,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label htmlFor="phone">Teléfono de Contacto</label>
+                    <label htmlFor="phone">Teléfono / WhatsApp de Contacto</label>
                     <input
                       type="tel"
                       id="phone"
@@ -1138,6 +1138,7 @@ export default function SettingsPage() {
                       placeholder="Ej: +54 9 11 1234-5678"
                       disabled={savingProfile}
                     />
+                    <small style={{ color: '#64748b', marginTop: '4px', display: 'block' }}>Tu WhatsApp de contacto directo para soporte y notificaciones.</small>
                   </div>
                 </div>
 

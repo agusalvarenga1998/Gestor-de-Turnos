@@ -234,7 +234,7 @@ export default function AdminDoctorsPage() {
                     <a href={`mailto:${doctor.email}`} className={styles.emailBtn} title="Enviar correo">
                       ✉️ {doctor.email}
                     </a>
-                    {doctor.phone ? (
+                    {doctor.phone && doctor.phone.trim() !== '' ? (
                       <a 
                         href={`https://wa.me/${doctor.phone.replace(/[^0-9]/g, '')}`} 
                         target="_blank" 
@@ -245,7 +245,27 @@ export default function AdminDoctorsPage() {
                         💬 {doctor.phone}
                       </a>
                     ) : (
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Sin número</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDoctor(doctor);
+                          setEditData({
+                            name: doctor.name || '',
+                            email: doctor.email || '',
+                            phone: doctor.phone || '',
+                            license_number: doctor.license_number || '',
+                            rubro: doctor.rubro || '',
+                            specialization: doctor.specialization || '',
+                            clinic_name: doctor.clinic_name || '',
+                            clinic_address: doctor.clinic_address || doctor.address || ''
+                          });
+                          setEditMode(true);
+                          setActionModal('view-details');
+                        }}
+                        style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', borderRadius: '4px', padding: '2px 6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
+                      >
+                        ✏️ + Cargar WhatsApp
+                      </button>
                     )}
                   </div>
                 </td>
