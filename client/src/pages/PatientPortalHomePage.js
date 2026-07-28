@@ -7,7 +7,7 @@ import SplashLoader from '../components/SplashLoader';
 import Loading from '../components/Loading';
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from 'date-fns/locale';
-import "react-datepicker/dist/react-datepicker.css";
+import { RUBROS_ESPECIALIDADES } from '../constants/categories';
 import styles from './PatientPortalHomePage.module.css';
 
 registerLocale('es', es);
@@ -161,31 +161,45 @@ export default function PatientPortalHomePage() {
         return;
       }
 
+      // Determinar rubro del doctor (o inferirlo de la especialidad si viniere vacío)
+      let docRubro = targetDoc.rubro;
+      if (!docRubro && targetDoc.specialization) {
+        for (const [catName, specs] of Object.entries(RUBROS_ESPECIALIDADES)) {
+          if (specs.some(s => s.toLowerCase() === targetDoc.specialization.toLowerCase())) {
+            docRubro = catName;
+            break;
+          }
+        }
+      }
+      if (!docRubro) {
+        docRubro = '🏥 Salud';
+      }
+
       const [specsRes, specDocsRes] = await Promise.all([
-        appointmentAPI.getPublicSpecializations(targetDoc.rubro),
+        appointmentAPI.getPublicSpecializations(docRubro),
         appointmentAPI.getPublicDoctors(targetDoc.specialization)
       ]);
 
       const specsList = specsRes.success ? specsRes.specializations : [];
       const specDocsList = specDocsRes.success ? specDocsRes.doctors : [];
 
-      if (targetDoc.rubro && !rubrosList.includes(targetDoc.rubro)) {
-        rubrosList.push(targetDoc.rubro);
+      if (docRubro && !rubrosList.includes(docRubro)) {
+        rubrosList.unshift(docRubro);
       }
       setRubros(rubrosList);
 
       if (targetDoc.specialization && !specsList.includes(targetDoc.specialization)) {
-        specsList.push(targetDoc.specialization);
+        specsList.unshift(targetDoc.specialization);
       }
       setSpecializations(specsList);
 
       if (!specDocsList.some(d => d.id === targetDoc.id)) {
-        specDocsList.push(targetDoc);
+        specDocsList.unshift(targetDoc);
       }
       setDoctors(specDocsList);
 
       setActiveTab('book');
-      setSelectedRubro(targetDoc.rubro);
+      setSelectedRubro(docRubro);
       setSelectedSpecialization(targetDoc.specialization);
       setSelectedDoctor(targetDoc.id);
       setIsDirectDoctorLink(true);
