@@ -214,6 +214,113 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.quickTools {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.copyBtn:hover {
+  background: #eff6ff;
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.dayTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.statusBadgeActive {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  background: #d1fae5;
+  color: #047857;
+  border-radius: 4px;
+}
+
+.statusBadgeInactive {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 4px;
+}
+
+.disabledCard {
+  opacity: 0.75;
+  background: #f9fafb;
+}
+
+.shiftsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.shiftBlock {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  transition: all var(--transition-base);
+}
+
+.shiftDisabled {
+  opacity: 0.6;
+  background: #f9fafb;
+}
+
+.shiftHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.shiftCheckLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.shiftCheckLabel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+.shiftTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .notAvailable {
   padding: 1rem;
   background: #fef3c7;

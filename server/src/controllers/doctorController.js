@@ -10,7 +10,7 @@ export const getWorkingHours = async (req, res) => {
     console.log('GET /working-hours - Doctor ID:', doctorId);
 
     const result = await db.query(
-      'SELECT * FROM doctor_availability WHERE doctor_id = $1 ORDER BY day_of_week',
+      'SELECT * FROM doctor_availability WHERE doctor_id = $1 ORDER BY day_of_week ASC, start_time ASC',
       [doctorId]
     );
 

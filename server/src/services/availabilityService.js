@@ -142,13 +142,20 @@ export const isAvailableAt = async (doctorId, date, time, durationMinutes = 30) 
   );
   if (availabilities.rows.length === 0) return { available: false, reason: 'No atiende este día' };
 
-  const availability = availabilities.rows[0];
-  const startMinutes = timeToMinutes(availability.start_time);
-  const endMinutes = timeToMinutes(availability.end_time);
   const requestedStart = timeToMinutes(time);
   const requestedEnd = requestedStart + durationMinutes;
 
-  if (requestedStart < startMinutes || requestedEnd > endMinutes) {
+  let fitsInShift = false;
+  for (const availability of availabilities.rows) {
+    const startMinutes = timeToMinutes(availability.start_time);
+    const endMinutes = timeToMinutes(availability.end_time);
+    if (requestedStart >= startMinutes && requestedEnd <= endMinutes) {
+      fitsInShift = true;
+      break;
+    }
+  }
+
+  if (!fitsInShift) {
     return { available: false, reason: 'Fuera de horario de atención' };
   }
 
@@ -203,14 +210,11 @@ export const getNextAvailableSlots = async (doctorId, date, slotDurationMinutes 
   // Obtener disponibilidades
   const availabilities = await query(
     `SELECT * FROM doctor_availability
-     WHERE doctor_id = $1 AND day_of_week = $2 AND is_available = true`,
+     WHERE doctor_id = $1 AND day_of_week = $2 AND is_available = true
+     ORDER BY start_time ASC`,
     [doctorId, dayOfWeek]
   );
   if (availabilities.rows.length === 0) return [];
-
-  const availability = availabilities.rows[0];
-  const startMinutes = timeToMinutes(availability.start_time);
-  const endMinutes = timeToMinutes(availability.end_time);
 
   // Obtener citas existentes para calcular solapamientos
   const appointments = await query(
@@ -237,26 +241,32 @@ export const getNextAvailableSlots = async (doctorId, date, slotDurationMinutes 
     ? (argDate.getHours() * 60 + argDate.getMinutes()) 
     : -1;
 
-  for (let minutes = startMinutes; minutes <= (endMinutes - slotDurationMinutes); minutes += step) {
-    const slotStart = minutes;
-    const slotEnd = minutes + slotDurationMinutes;
+  for (const availability of availabilities.rows) {
+    const startMinutes = timeToMinutes(availability.start_time);
+    const endMinutes = timeToMinutes(availability.end_time);
 
-    // Si es hoy, no permitir turnos en el pasado
-    if (slotStart <= currentMinutes) {
-      continue;
-    }
+    for (let minutes = startMinutes; minutes <= (endMinutes - slotDurationMinutes); minutes += step) {
+      const slotStart = minutes;
+      const slotEnd = minutes + slotDurationMinutes;
 
-    // Verificar si este bloque [slotStart, slotEnd] choca con algún turno reservado
-    const isOverlap = bookedRanges.some(range => 
-      slotStart < range.end && slotEnd > range.start
-    );
+      // Si es hoy, no permitir turnos en el pasado
+      if (slotStart <= currentMinutes) {
+        continue;
+      }
 
-    if (!isOverlap) {
-      slots.push(minutesToTime(minutes));
+      // Verificar si este bloque [slotStart, slotEnd] choca con algún turno reservado
+      const isOverlap = bookedRanges.some(range => 
+        slotStart < range.end && slotEnd > range.start
+      );
+
+      if (!isOverlap) {
+        slots.push(minutesToTime(minutes));
+      }
     }
   }
 
-  return slots;
+  slots.sort();
+  return [...new Set(slots)];
 };
 
 // Convertir tiempo a minutos
