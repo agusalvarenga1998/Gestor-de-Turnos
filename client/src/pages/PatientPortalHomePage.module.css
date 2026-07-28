@@ -472,10 +472,35 @@
   outline: none;
 }
 
+.sectionTitleWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.directLinkBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .formGroup input:disabled, .formGroup select:disabled {
-  background-color: var(--surface-container-low);
-  color: var(--on-surface-variant);
+  background-color: #f1f5f9;
+  color: #334155;
   cursor: not-allowed;
+  border-color: #cbd5e1;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .formRow {

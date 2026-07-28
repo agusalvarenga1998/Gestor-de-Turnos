@@ -74,6 +74,7 @@ export default function PatientPortalHomePage() {
   const [selectedSpecialization, setSelectedSpecialization] = useState('');
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState('');
+  const [isDirectDoctorLink, setIsDirectDoctorLink] = useState(false);
   const [initialDoctorId, setInitialDoctorId] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return pathDoctorId || params.get('doctor') || params.get('doc') || '';
@@ -148,10 +149,15 @@ export default function PatientPortalHomePage() {
       const allDocsList = docsRes.success ? docsRes.doctors : [];
       setAllDoctors(allDocsList);
 
-      const targetDoc = allDocsList.find(d => d.id === targetDoctorId);
+      const targetDoc = allDocsList.find(d => 
+        d.id === targetDoctorId || 
+        d.slug === targetDoctorId || 
+        (d.name && d.name.toLowerCase().replace(/\s+/g, '-') === targetDoctorId.toLowerCase())
+      );
       if (!targetDoc) {
         setRubros(rubrosList);
         setLoading(false);
+        setIsDirectDoctorLink(false);
         return;
       }
 
@@ -182,12 +188,14 @@ export default function PatientPortalHomePage() {
       setSelectedRubro(targetDoc.rubro);
       setSelectedSpecialization(targetDoc.specialization);
       setSelectedDoctor(targetDoc.id);
+      setIsDirectDoctorLink(true);
 
       loadDoctorInsurances(targetDoc.id);
       loadDoctorAvailability(targetDoc.id);
       loadServices(targetDoc.id);
     } catch (err) {
       console.error('Error cargando link directo:', err);
+      setIsDirectDoctorLink(false);
     } finally {
       setLoading(false);
     }
@@ -915,12 +923,24 @@ export default function PatientPortalHomePage() {
                         </div>
                       ) : (
                         <form onSubmit={handleBookAppointment}>
-                          <h2>Reserva de Turno</h2>
-                          <div className={styles.sectionTitle}>1. Rubro, Especialidad y Profesional</div>
+                          <div className={styles.sectionTitleWrapper}>
+                            <div className={styles.sectionTitle}>1. Rubro, Especialidad y Profesional</div>
+                            {isDirectDoctorLink && (
+                              <span className={styles.directLinkBadge}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>lock</span>
+                                Profesional pre-seleccionado
+                              </span>
+                            )}
+                          </div>
                           <div className={styles.formGridThree}>
                             <div className={styles.formGroup}>
                               <label>RUBRO (CATEGORÍA)</label>
-                              <select onChange={(e) => handleRubroSelect(e.target.value)} value={selectedRubro} required>
+                              <select 
+                                onChange={(e) => handleRubroSelect(e.target.value)} 
+                                value={selectedRubro} 
+                                required
+                                disabled={isDirectDoctorLink}
+                              >
                                 <option value="">Selecciona...</option>
                                 {rubros.map(r => <option key={r} value={r}>{r}</option>)}
                               </select>
@@ -930,7 +950,7 @@ export default function PatientPortalHomePage() {
                               <select 
                                 onChange={(e) => handleSpecializationSelect(e.target.value)} 
                                 value={selectedSpecialization} 
-                                disabled={!selectedRubro}
+                                disabled={!selectedRubro || isDirectDoctorLink}
                                 required
                               >
                                 <option value="">Selecciona...</option>
@@ -942,7 +962,7 @@ export default function PatientPortalHomePage() {
                               <select 
                                 onChange={(e) => handleDoctorSelect(e.target.value)} 
                                 value={selectedDoctor} 
-                                disabled={!selectedSpecialization} 
+                                disabled={!selectedSpecialization || isDirectDoctorLink} 
                                 required
                               >
                                 <option value="">Selecciona...</option>
@@ -964,7 +984,7 @@ export default function PatientPortalHomePage() {
                               <div className={styles.mapFrame}>
                                 <DoctorMap
                                   doctors={doctors}
-                                  onSelectDoctor={setSelectedDoctor}
+                                  onSelectDoctor={isDirectDoctorLink ? undefined : setSelectedDoctor}
                                   userLocation={userLocation}
                                 />
                               </div>
@@ -1193,7 +1213,7 @@ export default function PatientPortalHomePage() {
                         <div className={styles.mapFrame}>
                           <DoctorMap
                             doctors={doctors}
-                            onSelectDoctor={setSelectedDoctor}
+                            onSelectDoctor={isDirectDoctorLink ? undefined : setSelectedDoctor}
                             userLocation={userLocation}
                           />
                         </div>
