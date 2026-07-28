@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 /**
  * Servicio Centralizado de Notificaciones por WhatsApp de TurnoHub
@@ -9,7 +9,7 @@ const axios = require('axios');
  * 2. Twilio for WhatsApp: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN & TWILIO_WHATSAPP_NUMBER
  * 3. Gateway HTTP / UltraMsg / Whapi / Evolution API: WHATSAPP_API_URL & WHATSAPP_API_TOKEN
  */
-const sendWhatsAppConfirmationServer = async ({
+export const sendWhatsAppConfirmationServer = async ({
   toPhone,
   patientName,
   doctorName,
@@ -128,6 +128,3 @@ const sendWhatsAppConfirmationServer = async ({
   return false;
 };
 
-module.exports = {
-  sendWhatsAppConfirmationServer
-};
