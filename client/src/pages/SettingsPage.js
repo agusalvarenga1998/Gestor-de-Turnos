@@ -77,6 +77,29 @@ export default function SettingsPage() {
     subscription: false
   });
 
+  // Estados de Navegación por Categorías (Tabs)
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && ['profile', 'mercadopago', 'google', 'push', 'subscription', 'security', 'onboarding'].includes(tabFromUrl)) {
+      return tabFromUrl;
+    }
+    return 'profile';
+  });
+
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && ['profile', 'mercadopago', 'google', 'push', 'subscription', 'security', 'onboarding'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  const handleSelectTab = (tabId) => {
+    setActiveTab(tabId);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('tab', tabId);
+    setSearchParams(newParams, { replace: true });
+  };
+
   // Estados de Seguridad
   const [securityData, setSecurityData] = useState({
     emailVerified: false
@@ -297,6 +320,7 @@ export default function SettingsPage() {
     // Detectar si viene del callback de Google
     if (searchParams.get('connected') === 'true') {
       setSuccessMessage('✓ Google Calendar conectado exitosamente');
+      handleSelectTab('google');
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('connected');
       setSearchParams(newParams, { replace: true });
@@ -305,6 +329,7 @@ export default function SettingsPage() {
 
     if (searchParams.get('error') === 'true') {
       setSuccessMessage('✗ Error al conectar Google Calendar');
+      handleSelectTab('google');
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('error');
       setSearchParams(newParams, { replace: true });
@@ -315,6 +340,7 @@ export default function SettingsPage() {
     if (searchParams.get('mp_connected') === 'true') {
       setSuccessMessage('✓ Mercado Pago conectado exitosamente');
       refreshUser();
+      handleSelectTab('mercadopago');
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('mp_connected');
       setSearchParams(newParams, { replace: true });
@@ -323,6 +349,7 @@ export default function SettingsPage() {
 
     if (searchParams.get('mp_connected') === 'error') {
       setSuccessMessage('✗ Error al conectar Mercado Pago');
+      handleSelectTab('mercadopago');
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('mp_connected');
       setSearchParams(newParams, { replace: true });
@@ -684,8 +711,8 @@ export default function SettingsPage() {
     <DoctorLayout>
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Configuración</h1>
-          <p className={styles.subtitle}>Gestiona tu cuenta y preferencias</p>
+          <h1 className={styles.title}>Configuración del Perfil</h1>
+          <p className={styles.subtitle}>Gestiona tu cuenta, integraciones de cobro, sincronización y preferencias.</p>
         </div>
 
         {successMessage && (
@@ -702,7 +729,7 @@ export default function SettingsPage() {
         )}
 
         {/* Link Personalizado de Reservas */}
-        <div className={styles.section}>
+        <div className={styles.section} style={{ marginBottom: '1.5rem' }}>
           <div className={styles.card} style={{ background: 'linear-gradient(135deg, #eff6ff, #f8fafc)', border: '2px solid #bfdbfe' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#2563eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -753,703 +780,780 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Google Calendar Section */}
-        <div className={`${styles.section} ${openSections.google ? styles.sectionOpen : ''}`}>
-          <div className={styles.sectionHeader} onClick={() => toggleSection('google')} style={{ cursor: 'pointer' }}>
-            <div className={styles.sectionTitleGroup}>
-              <div className={styles.sectionTitle}>
-                <Icon name="calendar" size={24} color="#2563eb" />
-                Google Calendar
-              </div>
-              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
-                {openSections.google ? 'expand_less' : 'expand_more'}
-              </span>
-            </div>
-            <p className={styles.sectionDescription}>
-              Sincroniza automáticamente tus citas con Google Calendar.
-            </p>
-          </div>
-
-          {openSections.google && (
-            <div className={styles.card}>
-              {loading ? (
-                <div className={styles.loading}>
-                  <div className={styles.spinner}></div>
-                  <p>Cargando estado...</p>
-                </div>
-              ) : (
-                <div className={styles.statusSection}>
-                  <div className={styles.statusIndicator}>
-                    <div className={`${styles.statusDot} ${googleConnected ? styles.connected : styles.disconnected}`}></div>
-                    <div>
-                      <h3 className={styles.statusLabel}>
-                        {googleConnected ? 'Conectado' : 'Desconectado'}
-                      </h3>
-                      <p className={styles.statusDescription}>
-                        {googleConnected
-                          ? 'Tu Google Calendar está sincronizado con TurnoHub'
-                          : 'Conecta tu Google Calendar para sincronizar automáticamente tus citas'}
-                      </p>
-                    </div>
+        {/* Layout en 2 Columnas: Sidebar Menú + Contenido Activo */}
+        <div className={styles.settingsLayout}>
+          {/* Menú Lateral de Categorías de Configuración */}
+          <aside className={styles.settingsSidebar}>
+            <div className={styles.sidebarGroup}>
+              <span className={styles.sidebarGroupTitle}>Configuración de Cuenta</span>
+              <nav className={styles.sidebarNav}>
+                <button
+                  type="button"
+                  className={`${styles.navItem} ${activeTab === 'profile' ? styles.navItemActive : ''}`}
+                  onClick={() => handleSelectTab('profile')}
+                >
+                  <Icon name="users" size={20} color={activeTab === 'profile' ? '#2563eb' : '#64748b'} />
+                  <div className={styles.navItemText}>
+                    <span className={styles.navItemTitle}>Datos Generales</span>
+                    <span className={styles.navItemSub}>Perfil, dirección y GPS</span>
                   </div>
-
-                  {googleConnected ? (
-                    <button
-                      className={styles.disconnectBtn}
-                      onClick={handleDisconnect}
-                      disabled={disconnecting}
-                    >
-                      {disconnecting ? 'Desconectando...' : 'Desconectar'}
-                    </button>
-                  ) : user?.plan?.allow_google_calendar === false ? (
-                    <div className={styles.planRestricted}>
-                      <button className={styles.disabledBtn} disabled>
-                        <Icon name="lock" size={18} color="currentColor" />
-                        Google Calendar Bloqueado
-                      </button>
-                      <p className={styles.upgradeNotice}>
-                        Tu plan actual (<strong>{user.plan.name}</strong>) no incluye sincronización con Google Calendar. Contacta al administrador para solicitar esta funcionalidad.
-                      </p>
-                    </div>
-                  ) : (
-                    <button
-                      className={styles.connectBtn}
-                      onClick={handleConnect}
-                    >
-                      <Icon name="check" size={18} color="currentColor" />
-                      Conectar Google Calendar
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* PWA Push Notifications Section */}
-        <div className={`${styles.section} ${openSections.push ? styles.sectionOpen : ''}`}>
-          <div className={styles.sectionHeader} onClick={() => toggleSection('push')} style={{ cursor: 'pointer' }}>
-            <div className={styles.sectionTitleGroup}>
-              <div className={styles.sectionTitle}>
-                <Icon name="download" size={24} color="#10b981" />
-                Notificaciones en el Celular
-              </div>
-              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
-                {openSections.push ? 'expand_less' : 'expand_more'}
-              </span>
-            </div>
-            <p className={styles.sectionDescription}>
-              Recibe avisos push nativos 15 minutos antes de cada turno y resúmenes diarios de tu agenda.
-            </p>
-          </div>
-
-          {openSections.push && (
-            <div className={styles.card}>
-              <div className={styles.statusSection}>
-                <div className={styles.statusIndicator}>
-                  <div className={`${styles.statusDot} ${pushSubscribed ? styles.connected : styles.disconnected}`}></div>
-                  <div>
-                    <h3 className={styles.statusLabel}>
-                      {pushSubscribed ? 'Notificaciones Activas' : 'Notificaciones Desactivadas'}
-                    </h3>
-                    <p className={styles.statusDescription}>
-                      {pushSubscribed
-                        ? 'Este dispositivo recibirá alertas automáticas sobre tus turnos'
-                        : 'Activa las notificaciones en este navegador/celular para no perderte ningún turno'}
-                    </p>
-                  </div>
-                </div>
-
-                {pushSubscribed ? (
-                  <div className={styles.buttonGroup}>
-                    <button
-                      className={styles.testBtn}
-                      onClick={handleSendTestPush}
-                      disabled={loadingTestPush}
-                    >
-                      <Icon name="refresh" size={18} color="currentColor" />
-                      {loadingTestPush ? 'Enviando...' : 'Probar Notificación'}
-                    </button>
-                    <button
-                      className={styles.disconnectBtn}
-                      onClick={handleUnsubscribePush}
-                      disabled={loadingPush}
-                    >
-                      {loadingPush ? 'Desactivando...' : 'Desactivar Notificaciones'}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    className={styles.connectBtn}
-                    onClick={handleSubscribePush}
-                    disabled={loadingPush}
-                    style={{ background: '#10b981' }}
-                  >
-                    <Icon name="check" size={18} color="currentColor" />
-                    {loadingPush ? 'Activando...' : 'Activar Notificaciones'}
-                  </button>
-                )}
-              </div>
-
-              {pushSubscribed && (
-                <div style={{ marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
-                  <button
-                    onClick={handleFetchPushLogs}
-                    className={styles.connectBtn}
-                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', background: '#f1f5f9', borderColor: '#cbd5e1' }}
-                  >
-                    <Icon name="search" size={16} color="currentColor" />
-                    {showLogs ? 'Ocultar Logs de Notificaciones' : 'Ver Logs de Notificaciones'}
-                  </button>
-                  {showLogs && (
-                    <pre style={{
-                      marginTop: '1rem',
-                      padding: '1rem',
-                      background: '#0f172a',
-                      color: '#e2e8f0',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
-                      maxHeight: '250px',
-                      overflowY: 'auto',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-all',
-                      textAlign: 'left',
-                      fontFamily: 'monospace'
-                    }}>
-                      {pushLogs}
-                    </pre>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Mercado Pago Section */}
-        <div className={`${styles.section} ${openSections.mercadopago ? styles.sectionOpen : ''}`}>
-          <div className={styles.sectionHeader} onClick={() => toggleSection('mercadopago')} style={{ cursor: 'pointer' }}>
-            <div className={styles.sectionTitleGroup}>
-              <div className={styles.sectionTitle}>
-                <Icon name="check-circle" size={24} color="#009ee3" />
-                Mercado Pago
-              </div>
-              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
-                {openSections.mercadopago ? 'expand_less' : 'expand_more'}
-              </span>
-            </div>
-            <p className={styles.sectionDescription}>
-              Conecta tu cuenta de Mercado Pago para recibir el pago de las señas de tus pacientes automáticamente en tu cuenta.
-            </p>
-          </div>
-
-          {openSections.mercadopago && (
-            <div className={styles.card}>
-              <div className={styles.statusSection}>
-                <div className={styles.statusIndicator}>
-                  <div className={`${styles.statusDot} ${profileData.mp_connected ? styles.connected : styles.disconnected}`}></div>
-                  <div>
-                    <h3 className={styles.statusLabel}>
-                      {profileData.mp_connected ? 'Conectado' : 'No vinculado'}
-                    </h3>
-                    <p className={styles.statusDescription}>
-                      {profileData.mp_connected
-                        ? 'Tu cuenta de Mercado Pago está lista para recibir cobros'
-                        : 'Vincula tu cuenta para que los pacientes puedan pagar la reserva online'}
-                    </p>
-                    {profileData.mp_connected && loadingMp && (
-                      <p className={styles.mpAccountInfo}>Cargando datos de la cuenta...</p>
-                    )}
-                    {profileData.mp_connected && mpAccount && (
-                      <p className={styles.mpAccountInfo}>
-                        Cuenta vinculada: <strong>{mpAccount.email || mpAccount.nickname}</strong> {mpAccount.name && `(${mpAccount.name})`}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {profileData.mp_connected ? (
-                  <button
-                    className={styles.disconnectBtn}
-                    onClick={async () => {
-                      if (window.confirm('¿Desvincular tu cuenta de Mercado Pago? No podrás recibir cobros de reservas.')) {
-                        try {
-                          const res = await apiClient.put('/api/auth/profile', { mp_connected: false, mp_access_token: null });
-                          if (res.data.success) {
-                            setSuccessMessage('✓ Mercado Pago desvinculado');
-                            refreshUser();
-                          }
-                        } catch (err) {
-                          alert('Error al desvincular');
-                        }
-                      }
-                    }}
-                  >
-                    Desvincular Cuenta
-                  </button>
-                ) : user?.plan?.allow_mercadopago === false ? (
-                  <div className={styles.planRestricted}>
-                    <button
-                      className={styles.disabledBtn}
-                      disabled
-                    >
-                      <Icon name="lock" size={18} color="currentColor" />
-                      Mercado Pago Bloqueado
-                    </button>
-                    <p className={styles.upgradeNotice}>
-                      Tu plan actual (<strong>{user.plan.name}</strong>) no incluye integración con Mercado Pago. Contacta al administrador para solicitar esta funcionalidad.
-                    </p>
-                  </div>
-                ) : (
-                  <button
-                    className={styles.connectBtn}
-                    style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}
-                    onClick={() => {
-                      const token = localStorage.getItem('token');
-                      if (!token) {
-                        setSuccessMessage('✗ No hay sesión activa');
-                        return;
-                      }
-                      window.location.href = `${process.env.REACT_APP_API_BASE_URL || ''}/api/mercadopago/oauth/auth?token=${token}`;
-                    }}
-                  >
-                     <Icon name="check-circle" size={18} color="white" />
-                     Vincular con Mercado Pago
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Profile Settings */}
-        <div className={`${styles.section} ${openSections.profile ? styles.sectionOpen : ''}`}>
-          <div className={styles.sectionHeader} onClick={() => toggleSection('profile')} style={{ cursor: 'pointer' }}>
-            <div className={styles.sectionTitleGroup}>
-              <div className={styles.sectionTitle}>
-                <Icon name="users" size={24} color="#2563eb" />
-                Datos Profesionales
-              </div>
-              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
-                {openSections.profile ? 'expand_less' : 'expand_more'}
-              </span>
-            </div>
-            <p className={styles.sectionDescription}>
-              Actualiza tu información profesional y de contacto
-            </p>
-          </div>
-
-          {openSections.profile && (
-            <div className={styles.card}>
-              <form onSubmit={handleSaveProfile} className={styles.form}>
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="rubro">Rubro (Categoría Principal) *</label>
-                    <select
-                      id="rubro"
-                      name="rubro"
-                      value={profileData.rubro}
-                      onChange={handleRubroChange}
-                      disabled={savingProfile}
-                      required
-                      style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
-                    >
-                      <option value="">Selecciona un rubro...</option>
-                      {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
-                        <option key={rub} value={rub}>{rub}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="specialization">Especialidad *</label>
-                    <select
-                      id="specialization"
-                      name="specialization"
-                      value={profileData.specialization}
-                      onChange={handleSpecializationChange}
-                      disabled={savingProfile || !profileData.rubro}
-                      required
-                      style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
-                    >
-                      <option value="">Selecciona una especialidad...</option>
-                      {profileData.rubro && RUBROS_ESPECIALIDADES[profileData.rubro]?.map(spec => (
-                        <option key={spec} value={spec}>{spec}</option>
-                      ))}
-                      {profileData.rubro && (
-                        <option value="__custom__">+ Otra / Agregar nueva especialidad...</option>
-                      )}
-                    </select>
-                  </div>
-                </div>
-
-                {isCustomSpecialty && (
-                  <div className={styles.formGroup} style={{ marginBottom: '1.5rem' }}>
-                    <label htmlFor="customSpecialty">Escribe tu Especialidad Personalizada *</label>
-                    <input
-                      type="text"
-                      id="customSpecialty"
-                      value={customSpecialty}
-                      onChange={(e) => setCustomSpecialty(e.target.value)}
-                      placeholder="Ej: Neuropediatría, Microblading Avanzado, etc."
-                      disabled={savingProfile}
-                      required
-                    />
-                  </div>
-                )}
-
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="license_number">Número de Matrícula</label>
-                    <input
-                      type="text"
-                      id="license_number"
-                      name="license_number"
-                      value={profileData.license_number}
-                      onChange={handleProfileChange}
-                      placeholder="Ej: MED-123456"
-                      disabled={savingProfile}
-                    />
-                  </div>
-                  <div className={styles.formGroup}></div>
-                </div>
-
-
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="clinic_name">Nombre de la Clínica</label>
-                    <input
-                      type="text"
-                      id="clinic_name"
-                      name="clinic_name"
-                      value={profileData.clinic_name}
-                      onChange={handleProfileChange}
-                      placeholder="Ej: Clínica Central"
-                      disabled={savingProfile}
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="phone">Teléfono / WhatsApp de Contacto</label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={profileData.phone}
-                      onChange={handleProfileChange}
-                      placeholder="Ej: +54 9 11 1234-5678"
-                      disabled={savingProfile}
-                    />
-                    <small style={{ color: '#64748b', marginTop: '4px', display: 'block' }}>Tu WhatsApp de contacto directo para soporte y notificaciones.</small>
-                  </div>
-                </div>
-
-                 <div className={styles.formGroup}>
-                  <label htmlFor="address">Dirección del Establecimiento *</label>
-                  <div className={styles.addressInputGroup}>
-                    <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={profileData.address}
-                      onChange={handleProfileChange}
-                      placeholder="Ej: Calle Principal 123, Ciudad"
-                      className={styles.addressInput}
-                      disabled={savingProfile}
-                      required
-                    />
-                    <div className={styles.addressActionButtons}>
-                      <button 
-                        type="button" 
-                        onClick={handleVerifyAddress}
-                        className={styles.verifyBtn}
-                      >
-                        Ubicar en Mapa 🗺️
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={handleGetLocation}
-                        className={styles.gpsBtn}
-                        title="Usar mi ubicación actual por GPS"
-                      >
-                        📍 Usar GPS
-                      </button>
-                    </div>
-                  </div>
-                  <small>Escribe tu dirección y presiona "Ubicar" para verla en el mapa, o usa tu ubicación actual por GPS.</small>
-                </div>
-
-                <div className={styles.mapPreviewContainer}>
-                  <p className={styles.mapLabel}>Confirma tu ubicación exacta (puedes arrastrar el pin):</p>
-                  <div className={styles.mapWrapper}>
-                    <MapContainer center={mapCenter} zoom={15} scrollWheelZoom={false} style={{ height: '300px', width: '100%', borderRadius: '12px' }}>
-                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                      <LocationMarker />
-                      <RecenterMap position={mapCenter} />
-                    </MapContainer>
-                  </div>
-                </div>
+                </button>
 
                 <button
-                  type="submit"
-                  className={styles.submitBtn}
-                  disabled={savingProfile}
+                  type="button"
+                  className={`${styles.navItem} ${activeTab === 'mercadopago' ? styles.navItemActive : ''}`}
+                  onClick={() => handleSelectTab('mercadopago')}
                 >
-                  {savingProfile ? 'Guardando...' : 'Guardar Cambios'}
+                  <Icon name="check-circle" size={20} color={activeTab === 'mercadopago' ? '#009ee3' : '#64748b'} />
+                  <div className={styles.navItemText}>
+                    <span className={styles.navItemTitle}>Mercado Pago</span>
+                    <span className={styles.navItemSub}>Cobros de señas online</span>
+                  </div>
+                  {profileData.mp_connected && <span className={styles.tabBadgeSuccess}>✓</span>}
                 </button>
-              </form>
-            </div>
-          )}
-        </div>
 
-        {/* Onboarding Checklist Section */}
-        <div className={`${styles.section} ${openSections.onboarding ? styles.sectionOpen : ''}`}>
-          <div className={styles.sectionHeader} onClick={() => toggleSection('onboarding')} style={{ cursor: 'pointer' }}>
-            <div className={styles.sectionTitleGroup}>
-              <div className={styles.sectionTitle}>
-                <Icon name="reports" size={24} color="#f59e0b" />
-                Guía de Inicio / Estado del Establecimiento
-              </div>
-              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
-                {openSections.onboarding ? 'expand_less' : 'expand_more'}
-              </span>
-            </div>
-            <p className={styles.sectionDescription}>
-              Completa los pasos obligatorios para habilitar el portal de reservas online de tus pacientes.
-            </p>
-          </div>
-
-          {openSections.onboarding && (
-            <div className={styles.card}>
-              <OnboardingChecklist alwaysShow={true} />
-            </div>
-          )}
-        </div>
-
-        {/* Seguridad Section */}
-        <div className={`${styles.section} ${openSections.security ? styles.sectionOpen : ''}`}>
-          <div className={styles.sectionHeader} onClick={() => toggleSection('security')} style={{ cursor: 'pointer' }}>
-            <div className={styles.sectionTitleGroup}>
-              <div className={styles.sectionTitle}>
-                <Icon name="lock" size={24} color="#dc2626" />
-                Seguridad y Datos
-              </div>
-              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
-                {openSections.security ? 'expand_less' : 'expand_more'}
-              </span>
-            </div>
-            <p className={styles.sectionDescription}>
-              Administra la seguridad de tu cuenta y la privacidad de tus datos.
-            </p>
-          </div>
-
-          {openSections.security && (
-            <div className={styles.card}>
-              <div className={styles.securityContainer}>
-                {securitySuccess && <div className={styles.successMessage} style={{ marginBottom: '1rem' }}>{securitySuccess}</div>}
-                {securityError && <div className={styles.errorMessage} style={{ color: '#dc2626', background: '#fef2f2', padding: '0.75rem', borderRadius: '8px', border: '1px solid #fca5a5', marginBottom: '1rem', fontSize: '0.875rem' }}>{securityError}</div>}
-
-                {/* Sesiones Activas / Cierre Global */}
-                <div className={styles.securityItem}>
-                  <div className={styles.securityInfo}>
-                    <h4>Cerrar Sesión en Todos los Dispositivos</h4>
-                    <p>Invalida todas las sesiones activas actuales en celulares, tablets o navegadores. Deberás iniciar sesión nuevamente.</p>
+                <button
+                  type="button"
+                  className={`${styles.navItem} ${activeTab === 'google' ? styles.navItemActive : ''}`}
+                  onClick={() => handleSelectTab('google')}
+                >
+                  <Icon name="calendar" size={20} color={activeTab === 'google' ? '#2563eb' : '#64748b'} />
+                  <div className={styles.navItemText}>
+                    <span className={styles.navItemTitle}>Google Calendar</span>
+                    <span className={styles.navItemSub}>Sincronización de agenda</span>
                   </div>
-                  <div className={styles.securityActions}>
-                    <button onClick={handleLogoutAll} className={styles.logoutAllBtn} disabled={loadingSecurity}>
-                      Cerrar Sesiones Globales
-                    </button>
+                  {googleConnected && <span className={styles.tabBadgeSuccess}>✓</span>}
+                </button>
+
+                <button
+                  type="button"
+                  className={`${styles.navItem} ${activeTab === 'push' ? styles.navItemActive : ''}`}
+                  onClick={() => handleSelectTab('push')}
+                >
+                  <Icon name="download" size={20} color={activeTab === 'push' ? '#10b981' : '#64748b'} />
+                  <div className={styles.navItemText}>
+                    <span className={styles.navItemTitle}>Notificaciones Celular</span>
+                    <span className={styles.navItemSub}>Alertas PWA Push</span>
                   </div>
+                  {pushSubscribed && <span className={styles.tabBadgeSuccess}>✓</span>}
+                </button>
+
+                <button
+                  type="button"
+                  className={`${styles.navItem} ${activeTab === 'subscription' ? styles.navItemActive : ''}`}
+                  onClick={() => handleSelectTab('subscription')}
+                >
+                  <Icon name="wallet" size={20} color={activeTab === 'subscription' ? '#3b82f6' : '#64748b'} />
+                  <div className={styles.navItemText}>
+                    <span className={styles.navItemTitle}>Plan y Suscripción</span>
+                    <span className={styles.navItemSub}>Planes y facturación</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`${styles.navItem} ${activeTab === 'security' ? styles.navItemActive : ''}`}
+                  onClick={() => handleSelectTab('security')}
+                >
+                  <Icon name="lock" size={20} color={activeTab === 'security' ? '#dc2626' : '#64748b'} />
+                  <div className={styles.navItemText}>
+                    <span className={styles.navItemTitle}>Seguridad y Datos</span>
+                    <span className={styles.navItemSub}>Sesiones y privacidad</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`${styles.navItem} ${activeTab === 'onboarding' ? styles.navItemActive : ''}`}
+                  onClick={() => handleSelectTab('onboarding')}
+                >
+                  <Icon name="reports" size={20} color={activeTab === 'onboarding' ? '#f59e0b' : '#64748b'} />
+                  <div className={styles.navItemText}>
+                    <span className={styles.navItemTitle}>Guía de Inicio</span>
+                    <span className={styles.navItemSub}>Checklist inicial</span>
+                  </div>
+                </button>
+              </nav>
+            </div>
+
+            <div className={styles.sidebarGroup} style={{ marginTop: '1.5rem' }}>
+              <span className={styles.sidebarGroupTitle}>Configuraciones de Atención</span>
+              <nav className={styles.sidebarNav}>
+                <a href="/working-hours" className={styles.navItemLink}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#0284c7' }}>schedule</span>
+                  <span>Horarios de Atención</span>
+                  <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '16px', color: '#94a3b8' }}>open_in_new</span>
+                </a>
+                <a href="/services" className={styles.navItemLink}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#16a34a' }}>medical_services</span>
+                  <span>Servicios y Precios</span>
+                  <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '16px', color: '#94a3b8' }}>open_in_new</span>
+                </a>
+                <a href="/insurance" className={styles.navItemLink}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#8b5cf6' }}>health_and_safety</span>
+                  <span>Obras Sociales y Convenios</span>
+                  <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '16px', color: '#94a3b8' }}>open_in_new</span>
+                </a>
+              </nav>
+            </div>
+          </aside>
+
+          {/* Panel Principal del Tab Seleccionado */}
+          <main className={styles.settingsContent}>
+            {/* TAB: DATOS GENERALES Y PERFIL */}
+            {activeTab === 'profile' && (
+              <div className={styles.tabPanel}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitle}>
+                    <Icon name="users" size={24} color="#2563eb" />
+                    Datos Profesionales
+                  </div>
+                  <p className={styles.sectionDescription}>
+                    Actualiza tu información profesional, rubro, especialidad y ubicación en el mapa para tus pacientes.
+                  </p>
                 </div>
 
-                <hr className={styles.securityDivider} />
-
-                {/* Descargar Datos */}
-                <div className={styles.securityItem}>
-                  <div className={styles.securityInfo}>
-                    <h4>Descargar mis Datos</h4>
-                    <p>Obtén una copia completa en formato JSON de tu perfil, historial de turnos, convenios y caja.</p>
-                  </div>
-                  <div className={styles.securityActions}>
-                    <button onClick={handleExportData} className={styles.exportBtn}>
-                      <Icon name="download" size={16} /> Exportar JSON
-                    </button>
-                  </div>
-                </div>
-
-                <hr className={styles.securityDivider} />
-
-                {/* Borrar Cuenta */}
-                <div className={styles.securityItem} style={{ background: '#fef2f2', padding: '1rem', borderRadius: '8px', border: '1px solid #fca5a5' }}>
-                  <div className={styles.securityInfo}>
-                    <h4 style={{ color: '#b91c1c' }}>Eliminar Cuenta Permanentemente</h4>
-                    <p style={{ color: '#7f1d1d' }}>Esta acción es irreversible y eliminará de inmediato toda tu agenda, deudas, servicios y datos de pacientes.</p>
-                  </div>
-                  <div className={styles.securityActions}>
-                    <button onClick={handleDeleteAccount} className={styles.deleteAccBtn}>
-                      Eliminar Cuenta
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Plan y Suscripción Section */}
-        <div className={`${styles.section} ${openSections.subscription ? styles.sectionOpen : ''}`}>
-          <div className={styles.sectionHeader} onClick={() => toggleSection('subscription')} style={{ cursor: 'pointer' }}>
-            <div className={styles.sectionTitleGroup}>
-              <div className={styles.sectionTitle}>
-                <Icon name="wallet" size={24} color="#3b82f6" />
-                Plan y Suscripción
-              </div>
-              <span className={`material-symbols-outlined ${styles.accordionChevron}`}>
-                {openSections.subscription ? 'expand_less' : 'expand_more'}
-              </span>
-            </div>
-            <p className={styles.sectionDescription}>
-              Gestiona tu plan comercial, ve el estado de tu cuenta o realiza la renovación de tu suscripción.
-            </p>
-          </div>
-
-          {openSections.subscription && (
-            <div className={styles.card}>
-              {/* Información del Plan Actual */}
-              <div className={styles.planOverview}>
-                <div className={styles.planOverviewInfo}>
-                  <h3>Tu Estado Actual</h3>
-                  <div className={styles.planInfoGrid}>
-                    <div className={styles.planInfoItem}>
-                      <span className={styles.planInfoLabel}>Plan comercial:</span>
-                      <span className={styles.planInfoValue}>
-                        {user?.plan?.name || (user?.plan_type === 'commission' ? 'Comisión' : 'Mensualidad')}
-                      </span>
+                <div className={styles.card}>
+                  <form onSubmit={handleSaveProfile} className={styles.form}>
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}>
+                        <label htmlFor="rubro">Rubro (Categoría Principal) *</label>
+                        <select
+                          id="rubro"
+                          name="rubro"
+                          value={profileData.rubro}
+                          onChange={handleRubroChange}
+                          disabled={savingProfile}
+                          required
+                          style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
+                        >
+                          <option value="">Selecciona un rubro...</option>
+                          {Object.keys(RUBROS_ESPECIALIDADES).map(rub => (
+                            <option key={rub} value={rub}>{rub}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label htmlFor="specialization">Especialidad *</label>
+                        <select
+                          id="specialization"
+                          name="specialization"
+                          value={profileData.specialization}
+                          onChange={handleSpecializationChange}
+                          disabled={savingProfile || !profileData.rubro}
+                          required
+                          style={{ width: '100%', padding: '0.85rem 1rem', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', color: '#1e293b' }}
+                        >
+                          <option value="">Selecciona una especialidad...</option>
+                          {profileData.rubro && RUBROS_ESPECIALIDADES[profileData.rubro]?.map(spec => (
+                            <option key={spec} value={spec}>{spec}</option>
+                          ))}
+                          {profileData.rubro && (
+                            <option value="__custom__">+ Otra / Agregar nueva especialidad...</option>
+                          )}
+                        </select>
+                      </div>
                     </div>
-                    <div className={styles.planInfoItem}>
-                      <span className={styles.planInfoLabel}>Estado de suscripción:</span>
-                      <span className={`${styles.planStatusBadge} ${styles[user?.subscription_status]}`}>
-                        {user?.subscription_status === 'trial' ? 'Prueba Gratis' : 
-                         user?.subscription_status === 'active' ? 'Activo' : 
-                         user?.subscription_status === 'expired' ? 'Expirado' : user?.subscription_status}
-                      </span>
+
+                    {isCustomSpecialty && (
+                      <div className={styles.formGroup} style={{ marginBottom: '1.5rem' }}>
+                        <label htmlFor="customSpecialty">Escribe tu Especialidad Personalizada *</label>
+                        <input
+                          type="text"
+                          id="customSpecialty"
+                          value={customSpecialty}
+                          onChange={(e) => setCustomSpecialty(e.target.value)}
+                          placeholder="Ej: Neuropediatría, Microblading Avanzado, etc."
+                          disabled={savingProfile}
+                          required
+                        />
+                      </div>
+                    )}
+
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}>
+                        <label htmlFor="license_number">Número de Matrícula</label>
+                        <input
+                          type="text"
+                          id="license_number"
+                          name="license_number"
+                          value={profileData.license_number}
+                          onChange={handleProfileChange}
+                          placeholder="Ej: MED-123456"
+                          disabled={savingProfile}
+                        />
+                      </div>
+                      <div className={styles.formGroup}></div>
                     </div>
-                    {(user?.subscription_status === 'active' || user?.subscription_status === 'trial') && (
-                      <div className={styles.planInfoItem}>
-                        <span className={styles.planInfoLabel}>Vence el:</span>
-                        <span className={styles.planInfoValue}>
-                          {user?.subscription_expires_at || user?.trial_ends_at ? new Date(user?.subscription_expires_at || user?.trial_ends_at).toLocaleDateString('es-ES') : '-'}
-                        </span>
+
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}>
+                        <label htmlFor="clinic_name">Nombre de la Clínica / Consultorio</label>
+                        <input
+                          type="text"
+                          id="clinic_name"
+                          name="clinic_name"
+                          value={profileData.clinic_name}
+                          onChange={handleProfileChange}
+                          placeholder="Ej: Clínica Central"
+                          disabled={savingProfile}
+                        />
+                      </div>
+
+                      <div className={styles.formGroup}>
+                        <label htmlFor="phone">Teléfono / WhatsApp de Contacto</label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={profileData.phone}
+                          onChange={handleProfileChange}
+                          placeholder="Ej: +54 9 11 1234-5678"
+                          disabled={savingProfile}
+                        />
+                        <small style={{ color: '#64748b', marginTop: '4px', display: 'block' }}>Tu WhatsApp de contacto directo para soporte y notificaciones.</small>
+                      </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="address">Dirección del Establecimiento *</label>
+                      <div className={styles.addressInputGroup}>
+                        <input
+                          type="text"
+                          id="address"
+                          name="address"
+                          value={profileData.address}
+                          onChange={handleProfileChange}
+                          placeholder="Ej: Calle Principal 123, Ciudad"
+                          className={styles.addressInput}
+                          disabled={savingProfile}
+                          required
+                        />
+                        <div className={styles.addressActionButtons}>
+                          <button 
+                            type="button" 
+                            onClick={handleVerifyAddress}
+                            className={styles.verifyBtn}
+                          >
+                            Ubicar en Mapa 🗺️
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={handleGetLocation}
+                            className={styles.gpsBtn}
+                            title="Usar mi ubicación actual por GPS"
+                          >
+                            📍 Usar GPS
+                          </button>
+                        </div>
+                      </div>
+                      <small>Escribe tu dirección y presiona "Ubicar" para verla en el mapa, o usa tu ubicación actual por GPS.</small>
+                    </div>
+
+                    <div className={styles.mapPreviewContainer}>
+                      <p className={styles.mapLabel}>Confirma tu ubicación exacta (puedes arrastrar el pin):</p>
+                      <div className={styles.mapWrapper}>
+                        <MapContainer center={mapCenter} zoom={15} scrollWheelZoom={false} style={{ height: '300px', width: '100%', borderRadius: '12px' }}>
+                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                          <LocationMarker />
+                          <RecenterMap position={mapCenter} />
+                        </MapContainer>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className={styles.submitBtn}
+                      disabled={savingProfile}
+                    >
+                      {savingProfile ? 'Guardando...' : 'Guardar Cambios'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: MERCADO PAGO */}
+            {activeTab === 'mercadopago' && (
+              <div className={styles.tabPanel}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitle}>
+                    <Icon name="check-circle" size={24} color="#009ee3" />
+                    Mercado Pago
+                  </div>
+                  <p className={styles.sectionDescription}>
+                    Conecta tu cuenta de Mercado Pago para recibir el pago de las señas de tus pacientes automáticamente en tu cuenta.
+                  </p>
+                </div>
+
+                <div className={styles.card}>
+                  <div className={styles.statusSection}>
+                    <div className={styles.statusIndicator}>
+                      <div className={`${styles.statusDot} ${profileData.mp_connected ? styles.connected : styles.disconnected}`}></div>
+                      <div>
+                        <h3 className={styles.statusLabel}>
+                          {profileData.mp_connected ? 'Conectado' : 'No vinculado'}
+                        </h3>
+                        <p className={styles.statusDescription}>
+                          {profileData.mp_connected
+                            ? 'Tu cuenta de Mercado Pago está lista para recibir cobros'
+                            : 'Vincula tu cuenta para que los pacientes puedan pagar la reserva online'}
+                        </p>
+                        {profileData.mp_connected && loadingMp && (
+                          <p className={styles.mpAccountInfo}>Cargando datos de la cuenta...</p>
+                        )}
+                        {profileData.mp_connected && mpAccount && (
+                          <p className={styles.mpAccountInfo}>
+                            Cuenta vinculada: <strong>{mpAccount.email || mpAccount.nickname}</strong> {mpAccount.name && `(${mpAccount.name})`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {profileData.mp_connected ? (
+                      <button
+                        className={styles.disconnectBtn}
+                        onClick={async () => {
+                          if (window.confirm('¿Desvincular tu cuenta de Mercado Pago? No podrás recibir cobros de reservas.')) {
+                            try {
+                              const res = await apiClient.put('/api/auth/profile', { mp_connected: false, mp_access_token: null });
+                              if (res.data.success) {
+                                setSuccessMessage('✓ Mercado Pago desvinculado');
+                                refreshUser();
+                              }
+                            } catch (err) {
+                              alert('Error al desvincular');
+                            }
+                          }
+                        }}
+                      >
+                        Desvincular Cuenta
+                      </button>
+                    ) : user?.plan?.allow_mercadopago === false ? (
+                      <div className={styles.planRestricted}>
+                        <button
+                          className={styles.disabledBtn}
+                          disabled
+                        >
+                          <Icon name="lock" size={18} color="currentColor" />
+                          Mercado Pago Bloqueado
+                        </button>
+                        <p className={styles.upgradeNotice}>
+                          Tu plan actual (<strong>{user.plan.name}</strong>) no incluye integración con Mercado Pago. Contacta al administrador para solicitar esta funcionalidad.
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        className={styles.connectBtn}
+                        style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        onClick={() => {
+                          const token = localStorage.getItem('token');
+                          if (!token) {
+                            setSuccessMessage('✗ No hay sesión activa');
+                            return;
+                          }
+                          window.location.href = `${process.env.REACT_APP_API_BASE_URL || ''}/api/mercadopago/oauth/auth?token=${token}`;
+                        }}
+                      >
+                         <Icon name="check-circle" size={18} color="white" />
+                         Vincular con Mercado Pago
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: GOOGLE CALENDAR */}
+            {activeTab === 'google' && (
+              <div className={styles.tabPanel}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitle}>
+                    <Icon name="calendar" size={24} color="#2563eb" />
+                    Google Calendar
+                  </div>
+                  <p className={styles.sectionDescription}>
+                    Sincroniza automáticamente tus citas con Google Calendar en tiempo real.
+                  </p>
+                </div>
+
+                <div className={styles.card}>
+                  {loading ? (
+                    <div className={styles.loading}>
+                      <div className={styles.spinner}></div>
+                      <p>Cargando estado...</p>
+                    </div>
+                  ) : (
+                    <div className={styles.statusSection}>
+                      <div className={styles.statusIndicator}>
+                        <div className={`${styles.statusDot} ${googleConnected ? styles.connected : styles.disconnected}`}></div>
+                        <div>
+                          <h3 className={styles.statusLabel}>
+                            {googleConnected ? 'Conectado' : 'Desconectado'}
+                          </h3>
+                          <p className={styles.statusDescription}>
+                            {googleConnected
+                              ? 'Tu Google Calendar está sincronizado con TurnoHub'
+                              : 'Conecta tu Google Calendar para sincronizar automáticamente tus citas'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {googleConnected ? (
+                        <button
+                          className={styles.disconnectBtn}
+                          onClick={handleDisconnect}
+                          disabled={disconnecting}
+                        >
+                          {disconnecting ? 'Desconectando...' : 'Desconectar'}
+                        </button>
+                      ) : user?.plan?.allow_google_calendar === false ? (
+                        <div className={styles.planRestricted}>
+                          <button className={styles.disabledBtn} disabled>
+                            <Icon name="lock" size={18} color="currentColor" />
+                            Google Calendar Bloqueado
+                          </button>
+                          <p className={styles.upgradeNotice}>
+                            Tu plan actual (<strong>{user.plan.name}</strong>) no incluye sincronización con Google Calendar. Contacta al administrador para solicitar esta funcionalidad.
+                          </p>
+                        </div>
+                      ) : (
+                        <button
+                          className={styles.connectBtn}
+                          onClick={handleConnect}
+                        >
+                          <Icon name="check" size={18} color="currentColor" />
+                          Conectar Google Calendar
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: NOTIFICACIONES PUSH */}
+            {activeTab === 'push' && (
+              <div className={styles.tabPanel}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitle}>
+                    <Icon name="download" size={24} color="#10b981" />
+                    Notificaciones en el Celular
+                  </div>
+                  <p className={styles.sectionDescription}>
+                    Recibe avisos push nativos 15 minutos antes de cada turno y resúmenes diarios de tu agenda.
+                  </p>
+                </div>
+
+                <div className={styles.card}>
+                  <div className={styles.statusSection}>
+                    <div className={styles.statusIndicator}>
+                      <div className={`${styles.statusDot} ${pushSubscribed ? styles.connected : styles.disconnected}`}></div>
+                      <div>
+                        <h3 className={styles.statusLabel}>
+                          {pushSubscribed ? 'Notificaciones Activas' : 'Notificaciones Desactivadas'}
+                        </h3>
+                        <p className={styles.statusDescription}>
+                          {pushSubscribed
+                            ? 'Este dispositivo recibirá alertas automáticas sobre tus turnos'
+                            : 'Activa las notificaciones en este navegador/celular para no perderte ningún turno'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {pushSubscribed ? (
+                      <div className={styles.buttonGroup}>
+                        <button
+                          className={styles.testBtn}
+                          onClick={handleSendTestPush}
+                          disabled={loadingTestPush}
+                        >
+                          <Icon name="refresh" size={18} color="currentColor" />
+                          {loadingTestPush ? 'Enviando...' : 'Probar Notificación'}
+                        </button>
+                        <button
+                          className={styles.disconnectBtn}
+                          onClick={handleUnsubscribePush}
+                          disabled={loadingPush}
+                        >
+                          {loadingPush ? 'Desactivando...' : 'Desactivar Notificaciones'}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className={styles.connectBtn}
+                        onClick={handleSubscribePush}
+                        disabled={loadingPush}
+                        style={{ background: '#10b981' }}
+                      >
+                        <Icon name="check" size={18} color="currentColor" />
+                        {loadingPush ? 'Activando...' : 'Activar Notificaciones'}
+                      </button>
+                    )}
+                  </div>
+
+                  {pushSubscribed && (
+                    <div style={{ marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+                      <button
+                        onClick={handleFetchPushLogs}
+                        className={styles.connectBtn}
+                        style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', background: '#f1f5f9', borderColor: '#cbd5e1' }}
+                      >
+                        <Icon name="search" size={16} color="currentColor" />
+                        {showLogs ? 'Ocultar Logs de Notificaciones' : 'Ver Logs de Notificaciones'}
+                      </button>
+                      {showLogs && (
+                        <pre style={{
+                          marginTop: '1rem',
+                          padding: '1rem',
+                          background: '#0f172a',
+                          color: '#e2e8f0',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          maxHeight: '250px',
+                          overflowY: 'auto',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-all',
+                          textAlign: 'left',
+                          fontFamily: 'monospace'
+                        }}>
+                          {pushLogs}
+                        </pre>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: PLAN Y SUSCRIPCIÓN */}
+            {activeTab === 'subscription' && (
+              <div className={styles.tabPanel}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitle}>
+                    <Icon name="wallet" size={24} color="#3b82f6" />
+                    Plan y Suscripción
+                  </div>
+                  <p className={styles.sectionDescription}>
+                    Gestiona tu plan comercial, ve el estado de tu cuenta o realiza la renovación de tu suscripción.
+                  </p>
+                </div>
+
+                <div className={styles.card}>
+                  <div className={styles.planOverview}>
+                    <div className={styles.planOverviewInfo}>
+                      <h3>Tu Estado Actual</h3>
+                      <div className={styles.planInfoGrid}>
+                        <div className={styles.planInfoItem}>
+                          <span className={styles.planInfoLabel}>Plan comercial:</span>
+                          <span className={styles.planInfoValue}>
+                            {user?.plan?.name || (user?.plan_type === 'commission' ? 'Comisión' : 'Mensualidad')}
+                          </span>
+                        </div>
+                        <div className={styles.planInfoItem}>
+                          <span className={styles.planInfoLabel}>Estado de suscripción:</span>
+                          <span className={`${styles.planStatusBadge} ${styles[user?.subscription_status]}`}>
+                            {user?.subscription_status === 'trial' ? 'Prueba Gratis' : 
+                             user?.subscription_status === 'active' ? 'Activo' : 
+                             user?.subscription_status === 'expired' ? 'Expirado' : user?.subscription_status}
+                          </span>
+                        </div>
+                        {(user?.subscription_status === 'active' || user?.subscription_status === 'trial') && (
+                          <div className={styles.planInfoItem}>
+                            <span className={styles.planInfoLabel}>Vence el:</span>
+                            <span className={styles.planInfoValue}>
+                              {user?.subscription_expires_at || user?.trial_ends_at ? new Date(user?.subscription_expires_at || user?.trial_ends_at).toLocaleDateString('es-ES') : '-'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className={styles.sectionDivider} />
+
+                  <div className={styles.plansSelection}>
+                    <h3>Planes Comerciales Disponibles</h3>
+                    <p className={styles.subtitle}>Elige el plan que mejor se adapte a tus necesidades. Puedes solicitar la activación al administrador o pagar en línea con Mercado Pago.</p>
+                    
+                    {loadingSub ? (
+                      <div style={{ textAlign: 'center', padding: '2rem' }}>Cargando planes comerciales...</div>
+                    ) : (
+                      <div className={styles.plansGrid}>
+                        {plans.map(p => (
+                          <div key={p.id} className={`${styles.pricingCard} ${p.is_popular ? styles.pricingCardPopular : ''}`}>
+                            {p.is_popular && <span className={styles.popularLabel}>Recomendado</span>}
+                            <h4>{p.name}</h4>
+                            <p className={styles.planDesc}>{p.description}</p>
+                            <div className={styles.priceContainer}>
+                              <span className={styles.priceNum}>
+                                {(() => {
+                                  if (p.price === null || p.price === undefined || p.price === '') return 'Consultar';
+                                  const str = String(p.price).trim();
+                                  if (str.includes('%')) return str;
+                                  const num = parseFloat(str);
+                                  if (!isNaN(num)) return `$${num.toLocaleString('es-AR')}`;
+                                  return str.startsWith('$') ? str : `$${str}`;
+                                })()}
+                              </span>
+                              <span className={styles.period}>/ {p.price_period === 'monthly' ? 'mes' : p.price_period}</span>
+                            </div>
+
+                            {p.features && p.features.length > 0 && (
+                              <ul className={styles.featuresList}>
+                                {p.features.map((f, i) => <li key={i}>✓ {f}</li>)}
+                              </ul>
+                            )}
+
+                            <div className={styles.planActions}>
+                              <button 
+                                onClick={() => handlePayPlan(p.id)} 
+                                className={styles.payOnlineBtn}
+                                disabled={submittingSub}
+                              >
+                                Pagar Online
+                              </button>
+                              <button 
+                                onClick={() => handleRequestPlan(p.id)} 
+                                className={styles.requestManualBtn}
+                                disabled={submittingSub}
+                              >
+                                Solicitar Activación
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <hr className={styles.sectionDivider} />
+
+                  <div className={styles.historySection}>
+                    <h3>Historial de Solicitudes y Pagos</h3>
+                    {subscriptions.length === 0 ? (
+                      <p className={styles.emptyHistory}>No tienes solicitudes o pagos registrados aún.</p>
+                    ) : (
+                      <div className={styles.tableWrapper}>
+                        <table className={styles.subTable}>
+                          <thead>
+                            <tr>
+                              <th>Plan</th>
+                              <th>Monto</th>
+                              <th>Estado</th>
+                              <th>Período</th>
+                              <th>Fecha Solicitud</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {subscriptions.map(sub => (
+                              <tr key={sub.id}>
+                                <td>{sub.plan_name || 'Plan Comercial'}</td>
+                                <td>${parseFloat(sub.amount).toFixed(2)}</td>
+                                <td>
+                                  <span className={`${styles.statusBadge} ${styles[sub.status]}`}>
+                                    {sub.status === 'pending' ? 'Pendiente' : 
+                                     sub.status === 'approved' ? 'Aprobado' : 
+                                     sub.status === 'rejected' ? 'Rechazado' : sub.status}
+                                  </span>
+                                </td>
+                                <td>
+                                  {sub.period_start ? `${new Date(sub.period_start).toLocaleDateString('es-ES')} al ${new Date(sub.period_end).toLocaleDateString('es-ES')}` : '-'}
+                                </td>
+                                <td>{new Date(sub.created_at).toLocaleDateString('es-ES')}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+            )}
 
-              <hr className={styles.sectionDivider} />
+            {/* TAB: SEGURIDAD Y DATOS */}
+            {activeTab === 'security' && (
+              <div className={styles.tabPanel}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitle}>
+                    <Icon name="lock" size={24} color="#dc2626" />
+                    Seguridad y Datos
+                  </div>
+                  <p className={styles.sectionDescription}>
+                    Administra la seguridad de tu cuenta y la privacidad de tus datos.
+                  </p>
+                </div>
 
-              {/* Grid de Planes Disponibles */}
-              <div className={styles.plansSelection}>
-                <h3>Planes Comerciales Disponibles</h3>
-                <p className={styles.subtitle}>Elige el plan que mejor se adapte a tus necesidades. Puedes solicitar la activación al administrador o pagar en línea con Mercado Pago.</p>
-                
-                {loadingSub ? (
-                  <div style={{ textAlign: 'center', padding: '2rem' }}>Cargando planes comerciales...</div>
-                ) : (
-                  <div className={styles.plansGrid}>
-                    {plans.map(p => (
-                      <div key={p.id} className={`${styles.pricingCard} ${p.is_popular ? styles.pricingCardPopular : ''}`}>
-                        {p.is_popular && <span className={styles.popularLabel}>Recomendado</span>}
-                        <h4>{p.name}</h4>
-                        <p className={styles.planDesc}>{p.description}</p>
-                        <div className={styles.priceContainer}>
-                          <span className={styles.priceNum}>
-                            {(() => {
-                              if (p.price === null || p.price === undefined || p.price === '') return 'Consultar';
-                              const str = String(p.price).trim();
-                              if (str.includes('%')) return str;
-                              const num = parseFloat(str);
-                              if (!isNaN(num)) return `$${num.toLocaleString('es-AR')}`;
-                              return str.startsWith('$') ? str : `$${str}`;
-                            })()}
-                          </span>
-                          <span className={styles.period}>/ {p.price_period === 'monthly' ? 'mes' : p.price_period}</span>
-                        </div>
+                <div className={styles.card}>
+                  <div className={styles.securityContainer}>
+                    {securitySuccess && <div className={styles.successMessage} style={{ marginBottom: '1rem' }}>{securitySuccess}</div>}
+                    {securityError && <div className={styles.errorMessage} style={{ color: '#dc2626', background: '#fef2f2', padding: '0.75rem', borderRadius: '8px', border: '1px solid #fca5a5', marginBottom: '1rem', fontSize: '0.875rem' }}>{securityError}</div>}
 
-                        {p.features && p.features.length > 0 && (
-                          <ul className={styles.featuresList}>
-                            {p.features.map((f, i) => <li key={i}>✓ {f}</li>)}
-                          </ul>
-                        )}
-
-                        <div className={styles.planActions}>
-                          <button 
-                            onClick={() => handlePayPlan(p.id)} 
-                            className={styles.payOnlineBtn}
-                            disabled={submittingSub}
-                          >
-                            Pagar Online
-                          </button>
-                          <button 
-                            onClick={() => handleRequestPlan(p.id)} 
-                            className={styles.requestManualBtn}
-                            disabled={submittingSub}
-                          >
-                            Solicitar Activación
-                          </button>
-                        </div>
+                    <div className={styles.securityItem}>
+                      <div className={styles.securityInfo}>
+                        <h4>Cerrar Sesión en Todos los Dispositivos</h4>
+                        <p>Invalida todas las sesiones activas actuales en celulares, tablets o navegadores. Deberás iniciar sesión nuevamente.</p>
                       </div>
-                    ))}
+                      <div className={styles.securityActions}>
+                        <button onClick={handleLogoutAll} className={styles.logoutAllBtn} disabled={loadingSecurity}>
+                          Cerrar Sesiones Globales
+                        </button>
+                      </div>
+                    </div>
+
+                    <hr className={styles.securityDivider} />
+
+                    <div className={styles.securityItem}>
+                      <div className={styles.securityInfo}>
+                        <h4>Descargar mis Datos</h4>
+                        <p>Obtén una copia completa en formato JSON de tu perfil, historial de turnos, convenios y caja.</p>
+                      </div>
+                      <div className={styles.securityActions}>
+                        <button onClick={handleExportData} className={styles.exportBtn}>
+                          <Icon name="download" size={16} /> Exportar JSON
+                        </button>
+                      </div>
+                    </div>
+
+                    <hr className={styles.securityDivider} />
+
+                    <div className={styles.securityItem} style={{ background: '#fef2f2', padding: '1rem', borderRadius: '8px', border: '1px solid #fca5a5' }}>
+                      <div className={styles.securityInfo}>
+                        <h4 style={{ color: '#b91c1c' }}>Eliminar Cuenta Permanentemente</h4>
+                        <p style={{ color: '#7f1d1d' }}>Esta acción es irreversible y eliminará de inmediato toda tu agenda, deudas, servicios y datos de pacientes.</p>
+                      </div>
+                      <div className={styles.securityActions}>
+                        <button onClick={handleDeleteAccount} className={styles.deleteAccBtn}>
+                          Eliminar Cuenta
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
+            )}
 
-              <hr className={styles.sectionDivider} />
-
-              {/* Historial de Suscripciones */}
-              <div className={styles.historySection}>
-                <h3>Historial de Solicitudes y Pagos</h3>
-                {subscriptions.length === 0 ? (
-                  <p className={styles.emptyHistory}>No tienes solicitudes o pagos registrados aún.</p>
-                ) : (
-                  <div className={styles.tableWrapper}>
-                    <table className={styles.subTable}>
-                      <thead>
-                        <tr>
-                          <th>Plan</th>
-                          <th>Monto</th>
-                          <th>Estado</th>
-                          <th>Período</th>
-                          <th>Fecha Solicitud</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {subscriptions.map(sub => (
-                          <tr key={sub.id}>
-                            <td>{sub.plan_name || 'Plan Comercial'}</td>
-                            <td>${parseFloat(sub.amount).toFixed(2)}</td>
-                            <td>
-                              <span className={`${styles.statusBadge} ${styles[sub.status]}`}>
-                                {sub.status === 'pending' ? 'Pendiente' : 
-                                 sub.status === 'approved' ? 'Aprobado' : 
-                                 sub.status === 'rejected' ? 'Rechazado' : sub.status}
-                              </span>
-                            </td>
-                            <td>
-                              {sub.period_start ? `${new Date(sub.period_start).toLocaleDateString('es-ES')} al ${new Date(sub.period_end).toLocaleDateString('es-ES')}` : '-'}
-                            </td>
-                            <td>{new Date(sub.created_at).toLocaleDateString('es-ES')}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+            {/* TAB: GUÍA DE INICIO */}
+            {activeTab === 'onboarding' && (
+              <div className={styles.tabPanel}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitle}>
+                    <Icon name="reports" size={24} color="#f59e0b" />
+                    Guía de Inicio / Estado del Establecimiento
                   </div>
-                )}
-              </div>
+                  <p className={styles.sectionDescription}>
+                    Completa los pasos obligatorios para habilitar el portal de reservas online de tus pacientes.
+                  </p>
+                </div>
 
-            </div>
-          )}
+                <div className={styles.card}>
+                  <OnboardingChecklist alwaysShow={true} />
+                </div>
+              </div>
+            )}
+          </main>
         </div>
-
       </div>
     </DoctorLayout>
   );
