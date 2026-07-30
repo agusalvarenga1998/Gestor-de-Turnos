@@ -41,6 +41,18 @@ export default function AppointmentsPage() {
 
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'day');
 
+  // Estados para Alta Rápida de Paciente dentro del modal de Turno
+  const [showQuickPatientForm, setShowQuickPatientForm] = useState(false);
+  const [quickPatientData, setQuickPatientData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    document_number: ''
+  });
+  const [savingQuickPatient, setSavingQuickPatient] = useState(false);
+  const [quickPatientError, setQuickPatientError] = useState('');
+  const [quickPatientSuccess, setQuickPatientSuccess] = useState('');
+
   // New calendar states
   const [viewMode, setViewMode] = useState(() => (searchParams.get('tab') || 'day') === 'day' ? 'agenda' : 'list'); // 'list' or 'agenda'
   const [expandedApptId, setExpandedApptId] = useState(null);
@@ -420,6 +432,37 @@ export default function AppointmentsPage() {
     }
   };
 
+  const handleSaveQuickPatient = async (e) => {
+    if (e) e.preventDefault();
+    if (!quickPatientData.name || !quickPatientData.name.trim()) {
+      setQuickPatientError('El nombre del paciente es obligatorio.');
+      return;
+    }
+    setSavingQuickPatient(true);
+    setQuickPatientError('');
+    setQuickPatientSuccess('');
+    try {
+      const response = await patientAPI.createPatient(quickPatientData);
+      if (response.success && response.patient) {
+        const newPatient = response.patient;
+        setPatients(prev => [newPatient, ...prev]);
+        setFormData(prev => ({
+          ...prev,
+          patientId: newPatient.id
+        }));
+        setQuickPatientSuccess(`✓ Paciente "${newPatient.name}" registrado y seleccionado automáticamente`);
+        setQuickPatientData({ name: '', phone: '', email: '', document_number: '' });
+        setShowQuickPatientForm(false);
+        setTimeout(() => setQuickPatientSuccess(''), 4000);
+      }
+    } catch (err) {
+      console.error('Error al crear paciente rápido:', err);
+      setQuickPatientError(err.response?.data?.message || 'Error al registrar el paciente.');
+    } finally {
+      setSavingQuickPatient(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       patientId: '',
@@ -431,6 +474,10 @@ export default function AppointmentsPage() {
     });
     setSelectedService(null);
     setPatientInsurances([]);
+    setShowQuickPatientForm(false);
+    setQuickPatientData({ name: '', phone: '', email: '', document_number: '' });
+    setQuickPatientError('');
+    setQuickPatientSuccess('');
   };
 
   const getStatusBadge = (status) => {
@@ -915,8 +962,96 @@ export default function AppointmentsPage() {
               </div>
 
               <form onSubmit={handleCreateAppointment} className={styles.form}>
+                {quickPatientSuccess && (
+                  <div className={styles.quickPatientSuccessMsg}>
+                    {quickPatientSuccess}
+                  </div>
+                )}
+
                 <div className={styles.formGroup}>
-                  <label>Paciente / Cliente*</label>
+                  <div className={styles.patientLabelRow}>
+                    <label style={{ margin: 0 }}>Paciente / Cliente*</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowQuickPatientForm(!showQuickPatientForm);
+                        setQuickPatientError('');
+                      }}
+                      className={styles.quickPatientToggleBtn}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person_add</span>
+                      {showQuickPatientForm ? 'Cerrar Alta Rápida' : '+ Crear Paciente Nuevo'}
+                    </button>
+                  </div>
+
+                  {showQuickPatientForm && (
+                    <div className={styles.quickPatientBox}>
+                      <div className={styles.quickPatientBoxHeader}>
+                        <h4>➕ Alta Rápida de Nuevo Paciente</h4>
+                        <span className={styles.quickPatientSub}>Ingresa los datos y se asignará automáticamente a este turno sin salir de la pantalla.</span>
+                      </div>
+                      <div className={styles.quickPatientGrid}>
+                        <div className={styles.formGroup}>
+                          <label>Nombre y Apellido*</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: Juan Pérez"
+                            value={quickPatientData.name}
+                            onChange={(e) => setQuickPatientData(prev => ({ ...prev, name: e.target.value }))}
+                            required
+                          />
+                        </div>
+                        <div className={styles.formGroup}>
+                          <label>DNI / Documento</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: 38123456"
+                            value={quickPatientData.document_number}
+                            onChange={(e) => setQuickPatientData(prev => ({ ...prev, document_number: e.target.value }))}
+                          />
+                        </div>
+                        <div className={styles.formGroup}>
+                          <label>Teléfono / WhatsApp</label>
+                          <input
+                            type="tel"
+                            placeholder="Ej: +54 9 11 1234-5678"
+                            value={quickPatientData.phone}
+                            onChange={(e) => setQuickPatientData(prev => ({ ...prev, phone: e.target.value }))}
+                          />
+                        </div>
+                        <div className={styles.formGroup}>
+                          <label>Email (Opcional)</label>
+                          <input
+                            type="email"
+                            placeholder="paciente@email.com"
+                            value={quickPatientData.email}
+                            onChange={(e) => setQuickPatientData(prev => ({ ...prev, email: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      {quickPatientError && <p className={styles.quickErrorMsg}>{quickPatientError}</p>}
+
+                      <div className={styles.quickPatientActions}>
+                        <button
+                          type="button"
+                          onClick={handleSaveQuickPatient}
+                          disabled={savingQuickPatient}
+                          className={styles.saveQuickBtn}
+                        >
+                          {savingQuickPatient ? 'Guardando...' : '✓ Guardar Paciente y Asignar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowQuickPatientForm(false)}
+                          className={styles.cancelQuickBtn}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <select
                     name="patientId"
                     value={formData.patientId}

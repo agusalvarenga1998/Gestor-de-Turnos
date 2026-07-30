@@ -1765,5 +1765,129 @@
 .status_pending { border-left: 3px solid #f59e0b; }
 .status_cancelled { border-left: 3px solid #ef4444; opacity: 0.6; }
 
+/* Alta Rápida de Paciente dentro del modal de turno */
+.patientLabelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.quickPatientToggleBtn {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.quickPatientToggleBtn:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.quickPatientBox {
+  background: #f8fafc;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.quickPatientBoxHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.quickPatientBoxHeader h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+.quickPatientSub {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.quickPatientGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .quickPatientGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quickPatientActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.saveQuickBtn {
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.saveQuickBtn:hover {
+  background: #1d4ed8;
+}
+
+.cancelQuickBtn {
+  padding: 0.5rem 1rem;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.quickErrorMsg {
+  color: #dc2626;
+  font-size: 0.8rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.quickPatientSuccessMsg {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
 
 
