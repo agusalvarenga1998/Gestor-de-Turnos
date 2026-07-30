@@ -729,58 +729,6 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Link Personalizado de Reservas */}
-        <div className={styles.section} style={{ marginBottom: '1.5rem' }}>
-          <div className={styles.card} style={{ background: 'linear-gradient(135deg, #eff6ff, #f8fafc)', border: '2px solid #bfdbfe' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#2563eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span className="material-symbols-outlined">link</span>
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#1e3a8a' }}>Tu Link Directo de Reservas</h3>
-                <p style={{ margin: 0, fontSize: '0.875rem', color: '#3b82f6' }}>Comparte este enlace directo para que los pacientes reserven directamente contigo.</p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <input
-                type="text"
-                readOnly
-                value={`${window.location.origin}/patient?doctor=${user?.id}`}
-                onClick={(e) => e.target.select()}
-                style={{ flex: 1, minWidth: '240px', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #93c5fd', background: 'white', fontWeight: 600, color: '#1e293b' }}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/patient?doctor=${user?.id}`);
-                  setCopiedLink(true);
-                  setTimeout(() => setCopiedLink(false), 3000);
-                }}
-                style={{ padding: '0.75rem 1.25rem', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Icon name={copiedLink ? 'check' : 'copy'} size={16} color="white" />
-                {copiedLink ? '¡Copiado!' : 'Copiar Link'}
-              </button>
-              <a
-                href={`${window.location.origin}/patient?doctor=${user?.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ padding: '0.75rem 1.25rem', background: 'white', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '8px', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Icon name="eye" size={16} /> Ver Portal
-              </a>
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(`¡Hola! Podés reservar tu turno directamente conmigo ingresando al siguiente enlace: ${window.location.origin}/patient?doctor=${user?.id}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ padding: '0.75rem 1.25rem', background: '#25D366', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span> WhatsApp
-              </a>
-            </div>
-          </div>
-        </div>
-
         {/* Selector / Menú Desplegable para Celulares */}
         <div className={styles.mobileCategoryMenu}>
           <button
@@ -1667,6 +1615,58 @@ export default function SettingsPage() {
               </div>
             )}
           </main>
+        </div>
+
+        {/* Link Personalizado de Reservas (Ubicado al final de las configuraciones) */}
+        <div className={styles.section} style={{ marginTop: '2rem', marginBottom: '1rem' }}>
+          <div className={styles.card} style={{ background: 'linear-gradient(135deg, #eff6ff, #f8fafc)', border: '2px solid #bfdbfe' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#2563eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span className="material-symbols-outlined">link</span>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#1e3a8a' }}>Tu Link Directo de Reservas</h3>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#3b82f6' }}>Comparte este enlace directo para que los pacientes reserven directamente contigo.</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                type="text"
+                readOnly
+                value={`${window.location.origin}/patient?doctor=${user?.id}`}
+                onClick={(e) => e.target.select()}
+                style={{ flex: 1, minWidth: '240px', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #93c5fd', background: 'white', fontWeight: 600, color: '#1e293b' }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/patient?doctor=${user?.id}`);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 3000);
+                }}
+                style={{ padding: '0.75rem 1.25rem', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Icon name={copiedLink ? 'check' : 'copy'} size={16} color="white" />
+                {copiedLink ? '¡Copiado!' : 'Copiar Link'}
+              </button>
+              <a
+                href={`${window.location.origin}/patient?doctor=${user?.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ padding: '0.75rem 1.25rem', background: 'white', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '8px', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Icon name="eye" size={16} /> Ver Portal
+              </a>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`¡Hola! Podés reservar tu turno directamente conmigo ingresando al siguiente enlace: ${window.location.origin}/patient?doctor=${user?.id}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ padding: '0.75rem 1.25rem', background: '#25D366', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span> WhatsApp
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </DoctorLayout>
