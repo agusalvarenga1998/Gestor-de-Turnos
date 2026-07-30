@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken, requireDoctor } from '../middleware/auth.js';
+import { verifyToken, verifyDoctorRole } from '../middleware/auth.js';
 import * as queueService from '../services/queueService.js';
 import { query } from '../db/config.js';
 
@@ -10,7 +10,7 @@ const router = express.Router();
 // -------------------------------------------------------------
 
 // Obtener estado actual de la fila del día
-router.get('/status', authenticateToken, requireDoctor, async (req, res) => {
+router.get('/status', verifyToken, verifyDoctorRole, async (req, res) => {
   try {
     const queueStatus = await queueService.getDoctorQueueStatus(req.user.id);
     res.json({
@@ -24,7 +24,7 @@ router.get('/status', authenticateToken, requireDoctor, async (req, res) => {
 });
 
 // Anunciar/Registrar llegada de paciente a la fila
-router.post('/register', authenticateToken, requireDoctor, async (req, res) => {
+router.post('/register', verifyToken, verifyDoctorRole, async (req, res) => {
   try {
     const newEntry = await queueService.addToQueue(req.user.id, req.body);
     res.status(201).json({
@@ -39,7 +39,7 @@ router.post('/register', authenticateToken, requireDoctor, async (req, res) => {
 });
 
 // Llamar al siguiente paciente
-router.post('/call-next', authenticateToken, requireDoctor, async (req, res) => {
+router.post('/call-next', verifyToken, verifyDoctorRole, async (req, res) => {
   try {
     const calledPatient = await queueService.callNextPatient(req.user.id);
     res.json({
@@ -54,7 +54,7 @@ router.post('/call-next', authenticateToken, requireDoctor, async (req, res) => 
 });
 
 // Finalizar atención del paciente
-router.post('/complete', authenticateToken, requireDoctor, async (req, res) => {
+router.post('/complete', verifyToken, verifyDoctorRole, async (req, res) => {
   try {
     const { queueId } = req.body;
     if (!queueId) return res.status(400).json({ success: false, message: 'queueId requerido' });
@@ -72,7 +72,7 @@ router.post('/complete', authenticateToken, requireDoctor, async (req, res) => {
 });
 
 // Saltear o cancelar turno de la fila
-router.post('/skip', authenticateToken, requireDoctor, async (req, res) => {
+router.post('/skip', verifyToken, verifyDoctorRole, async (req, res) => {
   try {
     const { queueId, action } = req.body;
     if (!queueId) return res.status(400).json({ success: false, message: 'queueId requerido' });
@@ -90,7 +90,7 @@ router.post('/skip', authenticateToken, requireDoctor, async (req, res) => {
 });
 
 // Cambiar configuración de auto-registro por QR
-router.patch('/toggle-self-registration', authenticateToken, requireDoctor, async (req, res) => {
+router.patch('/toggle-self-registration', verifyToken, verifyDoctorRole, async (req, res) => {
   try {
     const { allow_self_queue } = req.body;
     const result = await query(
