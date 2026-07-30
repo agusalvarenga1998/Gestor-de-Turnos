@@ -316,6 +316,61 @@ export const serviceAPI = {
 };
 
 // Google Calendar Integration
+export const queueAPI = {
+  getDoctorQueueStatus: async () => {
+    const response = await apiClient.get('/api/queue/status');
+    return response.data;
+  },
+
+  registerPatientInQueue: async (data) => {
+    const response = await apiClient.post('/api/queue/register', data);
+    return response.data;
+  },
+
+  callNextPatient: async () => {
+    const response = await apiClient.post('/api/queue/call-next');
+    return response.data;
+  },
+
+  completePatient: async (queueId) => {
+    const response = await apiClient.post('/api/queue/complete', { queueId });
+    return response.data;
+  },
+
+  skipPatient: async (queueId, action = 'skipped') => {
+    const response = await apiClient.post('/api/queue/skip', { queueId, action });
+    return response.data;
+  },
+
+  toggleSelfRegistration: async (allow_self_queue) => {
+    const response = await apiClient.patch('/api/queue/toggle-self-registration', { allow_self_queue });
+    return response.data;
+  },
+
+  // Métodos públicos para paciente
+  getPatientTrackingStatus: async (token) => {
+    const response = await axios.get(`${API_BASE_URL}/api/queue/public/track/${token}`, {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    return response.data;
+  },
+
+  selfRegisterInQueue: async (doctorId, data) => {
+    const response = await axios.post(`${API_BASE_URL}/api/queue/public/self-register/${doctorId}`, data, {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    return response.data;
+  },
+
+  getPublicBoard: async (doctorId) => {
+    const response = await axios.get(`${API_BASE_URL}/api/queue/public/board/${doctorId}`, {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    return response.data;
+  }
+};
+
+// Google Calendar Integration
 export const googleAPI = {
   getStatus: async () => {
     const response = await apiClient.get('/api/google/status');

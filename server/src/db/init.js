@@ -415,6 +415,34 @@ async function initDatabase(retries = 3) {
     console.log('✓ Trigger trg_record_appointment_movements creado/verificado');
 
     await client.query(`
+      ALTER TABLE doctors
+      ADD COLUMN IF NOT EXISTS allow_self_queue BOOLEAN DEFAULT true;
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS waiting_queue (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+        patient_id UUID REFERENCES patients(id) ON DELETE SET NULL,
+        ticket_number INTEGER NOT NULL,
+        ticket_code VARCHAR(50),
+        tracking_token UUID UNIQUE DEFAULT gen_random_uuid(),
+        patient_name VARCHAR(255) NOT NULL,
+        patient_phone VARCHAR(50),
+        patient_email VARCHAR(255),
+        service_id UUID REFERENCES doctor_services(id) ON DELETE SET NULL,
+        service_name VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'waiting',
+        notes TEXT,
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        called_at TIMESTAMP,
+        completed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla waiting_queue creada');
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS support_tickets (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         doctor_id UUID REFERENCES doctors(id) ON DELETE CASCADE,

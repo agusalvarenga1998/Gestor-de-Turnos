@@ -40,6 +40,7 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
     { icon: 'home', label: 'Dashboard', path: '/dashboard' },
     ...(isOnboardingPending ? [{ icon: 'reports', label: 'Guía de Inicio', path: '/onboarding' }] : []),
     { icon: 'calendar', label: 'Gestión de Turnos', path: '/appointments' },
+    { icon: 'clock', label: 'Fila en Vivo (Orden)', path: '/queue' },
     { icon: 'users', label: 'Clientes', path: '/patients' },
     { icon: 'briefcase', label: 'Mis Servicios', path: '/services' },
     { icon: 'reports', label: 'Estadísticas', path: '/reports' },

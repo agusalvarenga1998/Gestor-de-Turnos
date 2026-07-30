@@ -32,6 +32,9 @@ import SuspendedPage from './pages/SuspendedPage';
 import InstallAppPage from './pages/InstallAppPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import LiveQueuePage from './pages/LiveQueuePage';
+import PatientQueueTrackerPage from './pages/PatientQueueTrackerPage';
+import PatientSelfQueuePage from './pages/PatientSelfQueuePage';
 
 // Páginas - Admin
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -143,6 +146,8 @@ function AppContent() {
       <Route path="/reservar/:doctorId" element={<PatientPortalHomePage />} />
       <Route path="/patient/appointment/:appointmentCode" element={<PatientAppointmentViewPage />} />
       <Route path="/appointment/:token" element={<ConfirmAppointmentPage />} />
+      <Route path="/turnero/:token" element={<PatientQueueTrackerPage />} />
+      <Route path="/fila/:doctorId" element={<PatientSelfQueuePage />} />
 
       {/* Rutas de autenticación (siempre disponibles) */}
       <Route path="/login" element={<LoginPage />} />
@@ -244,6 +249,7 @@ function AppContent() {
           <Route path="/dashboard" element={<DashboardNewPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
+          <Route path="/queue" element={<LiveQueuePage />} />
           <Route path="/patients" element={<PatientsPage />} />
           <Route path="/patient-history/:patientId" element={<PatientHistoryPage />} />
           <Route path="/insurance" element={<InsurancePage />} />
