@@ -430,7 +430,7 @@ async function initDatabase(retries = 3) {
         patient_name VARCHAR(255) NOT NULL,
         patient_phone VARCHAR(50),
         patient_email VARCHAR(255),
-        service_id UUID REFERENCES doctor_services(id) ON DELETE SET NULL,
+        service_id UUID REFERENCES services(id) ON DELETE SET NULL,
         service_name VARCHAR(255),
         status VARCHAR(50) DEFAULT 'waiting',
         notes TEXT,

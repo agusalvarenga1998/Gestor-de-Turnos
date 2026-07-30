@@ -16,7 +16,7 @@ export const getDoctorQueueStatus = async (doctorId) => {
   const result = await query(
     `SELECT q.*, s.name as service_title, s.duration_minutes
      FROM waiting_queue q
-     LEFT JOIN doctor_services s ON q.service_id = s.id
+     LEFT JOIN services s ON q.service_id = s.id
      WHERE q.doctor_id = $1 
      AND DATE(q.joined_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'America/Argentina/Buenos_Aires')
      AND q.status IN ('waiting', 'in_progress', 'completed', 'skipped')
@@ -73,7 +73,7 @@ export const addToQueue = async (doctorId, data) => {
     // Obtener nombre del servicio si vino serviceId
     let finalServiceName = serviceName || '';
     if (serviceId && !finalServiceName) {
-      const sRes = await client.query(`SELECT name FROM doctor_services WHERE id = $1`, [serviceId]);
+      const sRes = await client.query(`SELECT name FROM services WHERE id = $1`, [serviceId]);
       if (sRes.rows[0]) finalServiceName = sRes.rows[0].name;
     }
 
