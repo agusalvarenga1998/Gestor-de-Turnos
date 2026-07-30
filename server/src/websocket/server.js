@@ -361,3 +361,29 @@ export const notifyDoctor = (doctorId, data) => {
   
   console.log(`📤 Notificación de nueva cita enviada al doctor ${doctorId}`);
 };
+
+export const broadcastToDoctor = (doctorId, data) => {
+  if (!wssInstance) return;
+  const message = JSON.stringify({
+    ...data,
+    timestamp: new Date().toISOString()
+  });
+  connectedClients.forEach((client) => {
+    if (client.userId === doctorId && client.ws.readyState === 1) {
+      client.ws.send(message);
+    }
+  });
+};
+
+export const broadcastToAppointment = (appointmentIdOrToken, data) => {
+  if (!wssInstance) return;
+  const message = JSON.stringify({
+    ...data,
+    timestamp: new Date().toISOString()
+  });
+  connectedClients.forEach((client) => {
+    if (client.ws.readyState === 1) {
+      client.ws.send(message);
+    }
+  });
+};
