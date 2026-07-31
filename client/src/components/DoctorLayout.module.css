@@ -1,7 +1,8 @@
 .layout {
   display: flex;
   height: 100vh;
-  background-color: var(--light-gray);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .mainContent {
@@ -58,7 +59,7 @@
 }
 
 .topbar {
-  background: white;
+  background: var(--bg-surface);
   border-bottom: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   height: 70px;
@@ -82,7 +83,7 @@
 .breadcrumb {
   flex: 1;
   font-size: var(--font-size-sm);
-  color: var(--gray);
+  color: var(--text-secondary);
 }
 
 .topbarRight {

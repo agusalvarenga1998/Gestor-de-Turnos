@@ -1,7 +1,7 @@
 .sidebar {
   width: 260px;
   height: 100vh;
-  background-color: white;
+  background-color: var(--bg-surface, #ffffff);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -44,7 +44,7 @@
 }
 
 .collapseBtn {
-  background: var(--light-gray);
+  background: var(--bg-primary);
   border: none;
   width: 24px;
   height: 24px;
@@ -53,14 +53,14 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--gray);
+  color: var(--text-secondary);
   font-size: 1.2rem;
   transition: all var(--transition-base);
 }
 
 .collapseBtn:hover {
   background: var(--border-color);
-  color: var(--dark-gray);
+  color: var(--text-primary);
 }
 
 .closeBtn {
@@ -69,7 +69,7 @@
   border: none;
   cursor: pointer;
   padding: 4px;
-  color: var(--gray);
+  color: var(--text-secondary);
 }
 
 .nav {
@@ -86,7 +86,7 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: 0.75rem var(--spacing-lg);
-  color: var(--gray);
+  color: var(--text-secondary);
   text-decoration: none;
   font-weight: 500;
   border-radius: 0 50px 50px 0;
@@ -95,12 +95,12 @@
 }
 
 .navItem:hover {
-  background-color: var(--light-gray);
+  background-color: var(--bg-primary);
   color: var(--primary-color);
 }
 
 .navItem.active {
-  background-color: #eef2ff;
+  background-color: rgba(37, 99, 235, 0.12);
   color: var(--primary-color);
   font-weight: 600;
 }
@@ -124,7 +124,7 @@
 
 .userName {
   font-weight: 600;
-  color: var(--dark-gray);
+  color: var(--text-primary);
   font-size: 0.9rem;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -133,7 +133,7 @@
 
 .userEmail {
   font-size: 0.75rem;
-  color: var(--gray);
+  color: var(--text-secondary);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
