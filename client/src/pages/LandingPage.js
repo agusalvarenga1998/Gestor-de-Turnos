@@ -105,6 +105,13 @@ const faqs = [
   }
 ];
 
+const heroBackgrounds = [
+  '/hero_doctor.png',
+  '/hero_barber.png',
+  '/hero_manicurist.png',
+  '/hero_dashboard.png'
+];
+
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -112,10 +119,14 @@ export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeRubro, setActiveRubro] = useState(rubrosData[0]);
   const [openFaq, setOpenFaq] = useState(null);
+  const [currentBg, setCurrentBg] = useState(0);
 
   useEffect(() => {
-    // Redirigir si ya está autenticado si es necesario
-  }, [isAuthenticated, navigate]);
+    const interval = setInterval(() => {
+      setCurrentBg(prev => (prev + 1) % heroBackgrounds.length);
+    }, 5500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fallbackPlans = [
@@ -207,6 +218,11 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <header className={styles.hero}>
+        <div 
+          className={styles.heroBgImage} 
+          style={{ backgroundImage: `url('${heroBackgrounds[currentBg]}')` }}
+        />
+        <div className={styles.heroOverlay}></div>
         <div className={styles.heroGlowLeft}></div>
         <div className={styles.heroGlowRight}></div>
         
