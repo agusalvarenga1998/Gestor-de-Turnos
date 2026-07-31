@@ -7,19 +7,24 @@ import styles from './LoginPage.module.css';
 
 const carouselData = [
   {
-    image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop',
-    title: 'Bienvenido a TurnoHub',
-    description: 'La plataforma moderna para gestionar tus turnos con eficiencia y seguridad.'
+    image: '/hero_doctor.png',
+    title: 'Agenda Médica e Historial Clínico',
+    description: 'La plataforma moderna para gestionar tus turnos, ficha digital y pacientes con eficiencia.'
   },
   {
-    image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=2070&auto=format&fit=crop',
-    title: 'Estética y Dermatología',
-    description: 'Centraliza historiales clínicos, tratamientos y consentimientos en un solo lugar.'
+    image: '/hero_barber.png',
+    title: 'Salones, Barberías y Servicios',
+    description: 'Permite que tus clientes agenden 24/7 sin llamadas ni mensajes fuera de horario.'
   },
   {
-    image: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=2070&auto=format&fit=crop',
-    title: 'Gestión Integral',
-    description: 'Accedé a los estudios y archivos de tus pacientes desde cualquier dispositivo, 24/7.'
+    image: '/hero_manicurist.png',
+    title: 'Estética, Spa y Señas Online',
+    description: 'Asegura el cobro de tu seña por Mercado Pago y reduce el ausentismo a 0%.'
+  },
+  {
+    image: '/hero_dashboard.png',
+    title: 'Sincronización 2-Way Google Calendar',
+    description: 'Gestión bidireccional inmediata para mantener tu agenda personal y laboral al día.'
   }
 ];
 
@@ -38,7 +43,6 @@ export default function LoginPage() {
   const [currentBg, setCurrentBg] = useState(0);
 
   useEffect(() => {
-    // Preload images to avoid empty background during transitions
     carouselData.forEach((item) => {
       const img = new Image();
       img.src = item.image;
@@ -46,7 +50,7 @@ export default function LoginPage() {
 
     const interval = setInterval(() => {
       setCurrentBg(prev => (prev + 1) % carouselData.length);
-    }, 5000);
+    }, 5500);
     return () => clearInterval(interval);
   }, []);
 
@@ -110,11 +114,18 @@ export default function LoginPage() {
         >
           <div className={styles.overlay}></div>
           <div className={styles.leftContent}>
-            <Link to="/" className={styles.logoContainer} style={{ textDecoration: 'none' }}>
-              <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
-              <span className={styles.logoText}>TurnoHub</span>
+            <Link to="/" className={styles.logoContainer}>
+              <div className={styles.logoIconBg}>
+                <span className="material-symbols-outlined">hub</span>
+              </div>
+              <span className={styles.logoText}>Turno<span className={styles.logoAccent}>Hub</span></span>
             </Link>
             
+            <div className={styles.pillBadge}>
+              <span className={styles.pillDot}></span>
+              <span>ACCESO PROFESIONAL</span>
+            </div>
+
             <h1 className={styles.mainTitle}>
               {carouselData[currentBg].title}
             </h1>
@@ -123,9 +134,10 @@ export default function LoginPage() {
               {carouselData[currentBg].description}
             </p>
             
-            <button className={styles.knowMoreBtn}>
-              Conoce más <Icon name="chevron-right" size={14} />
-            </button>
+            <Link to="/" className={styles.knowMoreBtn}>
+              <span>Volver a la Pantalla Inicial</span>
+              <Icon name="arrowRight" size={16} />
+            </Link>
             
             <div className={styles.carouselIndicators}>
               {carouselData.map((_, index) => (
@@ -161,7 +173,7 @@ export default function LoginPage() {
 
             <div className={styles.formHeader}>
               <h2>¡Hola de vuelta!</h2>
-              <p>Ingresá tu correo electrónico y contraseña para iniciar sesión.</p>
+              <p>Ingresá tu correo electrónico y contraseña para ingresar a tu panel.</p>
             </div>
 
             {(localError || error) && (
@@ -199,15 +211,16 @@ export default function LoginPage() {
                     type="button" 
                     className={styles.eyeBtn}
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label="Ver contraseña"
                   >
-                    <Icon name={showPassword ? 'eye-off' : 'eye'} size={18} />
+                    <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} />
                   </button>
                 </div>
               </div>
 
               <div className={styles.rememberRow}>
                 <label className={styles.checkboxLabel}>
-                  <input type="checkbox" /> Recordar contraseña
+                  <input type="checkbox" /> Recordar sesión
                 </label>
               </div>
 
@@ -217,7 +230,7 @@ export default function LoginPage() {
               </div>
 
               <button type="submit" className={styles.submitBtn} disabled={loading}>
-                {loading ? 'INGRESANDO...' : 'INGRESAR'}
+                {loading ? 'INGRESANDO...' : 'INGRESAR AL PANEL'}
               </button>
               
               <div className={styles.loginDivider}>
@@ -231,13 +244,13 @@ export default function LoginPage() {
                 disabled={loading}
               >
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" />
-                Continuar con Google
+                <span>Continuar con Google</span>
               </button>
             </form>
 
             <div className={styles.adminAccess}>
-              <Icon name="lock" size={14} /> 
-              ¿Eres administrador? <Link to="/admin/login">Ingresa aquí</Link>
+              <Icon name="lock" size={14} color="#64748b" /> 
+              <span>¿Eres administrador?</span> <Link to="/admin/login">Ingresa aquí</Link>
             </div>
 
             <div className={styles.legalLinks}>

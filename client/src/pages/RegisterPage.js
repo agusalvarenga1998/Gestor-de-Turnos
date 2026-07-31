@@ -112,8 +112,10 @@ export default function RegisterPage() {
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
           <Link to="/" className={styles.navLogo}>
-            <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
-            <span>TurnoHub</span>
+            <div className={styles.logoIconBg}>
+              <span className="material-symbols-outlined">hub</span>
+            </div>
+            <span>Turno<span className={styles.logoAccent}>Hub</span></span>
           </Link>
           <div className={styles.navLinks}>
             <Link to="/why-turnohub">¿Cómo funciona?</Link>
