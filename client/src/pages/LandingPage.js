@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
-import { useAuth } from '../hooks/useAuth';
+import ThemeToggle from '../components/ThemeToggle';
 import styles from './LandingPage.module.css';
 
 const rubrosData = [
@@ -113,8 +113,6 @@ const heroBackgrounds = [
 ];
 
 export default function LandingPage() {
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeRubro, setActiveRubro] = useState(rubrosData[0]);
@@ -204,6 +202,7 @@ export default function LandingPage() {
               Soy Paciente
             </Link>
             <Link to="/login" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Acceso Profesional</Link>
+            <ThemeToggle showLabel />
             <Link to="/register" className={styles.primaryBtn} onClick={() => setIsMenuOpen(false)}>
               <Icon name="sparkles" size={18} />
               Prueba Gratis

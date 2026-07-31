@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import Icon from './Icon';
 import WebSocketStatus from './WebSocketStatus';
 import TrialCounter from './TrialCounter';
+import ThemeToggle from './ThemeToggle';
 import axios from 'axios';
 import styles from './Sidebar.module.css';
 
@@ -136,6 +137,7 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
 
         {/* Mobile Status Section */}
         <div className={styles.sidebarStatus}>
+          <ThemeToggle showLabel={!isCollapsed || isOpen} />
           <WebSocketStatus />
           <TrialCounter />
         </div>

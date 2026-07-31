@@ -4,6 +4,7 @@ import axios from 'axios';
 import { AuthProvider } from './context/AuthContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { useAuth } from './hooks/useAuth';
 
 // Páginas - Doctor
@@ -61,6 +62,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import Loading from './components/Loading';
 import WhatsAppBubble from './components/WhatsAppBubble';
+import ThemeToggle from './components/ThemeToggle';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function PageTracker() {
@@ -272,6 +274,7 @@ function AppContent() {
       <SubscriptionExpiredPage />
     )}
     <WhatsAppBubble />
+    <ThemeToggle floating />
     </>
   );
 }
@@ -279,15 +282,17 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <AdminAuthProvider>
-          <AuthProvider>
-            <WebSocketProvider>
-              <AppContent />
-            </WebSocketProvider>
-          </AuthProvider>
-        </AdminAuthProvider>
-      </Router>
+      <ThemeProvider>
+        <Router>
+          <AdminAuthProvider>
+            <AuthProvider>
+              <WebSocketProvider>
+                <AppContent />
+              </WebSocketProvider>
+            </AuthProvider>
+          </AdminAuthProvider>
+        </Router>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
