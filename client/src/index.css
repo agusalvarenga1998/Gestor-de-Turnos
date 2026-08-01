@@ -176,3 +176,26 @@ select:focus {
   background: transparent !important;
   border: none !important;
 }
+
+/* Soporte Global para Modo Oscuro en Paneles y Tarjetas */
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] main[class*="mainContent"],
+[data-theme="dark"] main[class*="content"] {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] div[class*="Card"],
+[data-theme="dark"] div[class*="panel"],
+[data-theme="dark"] div[class*="Panel"],
+[data-theme="dark"] div[class*="modal"],
+[data-theme="dark"] div[class*="Modal"],
+[data-theme="dark"] div[class*="toolbar"],
+[data-theme="dark"] div[class*="searchBox"] {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}

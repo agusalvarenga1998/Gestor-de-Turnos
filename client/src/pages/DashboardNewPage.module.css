@@ -1,9 +1,12 @@
+/* DashboardNewPage.module.css - Adaptado 100% a Modo Claro y Oscuro con Variables CSS */
 .container {
   padding: 2.5rem;
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--bg-primary, #f8fafc);
+  color: var(--text-primary, #0f172a);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Main Header */
@@ -13,20 +16,20 @@
   align-items: flex-end;
   margin-bottom: 3rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 
 .greeting {
   font-size: 2.25rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
   margin: 0;
   letter-spacing: -1px;
 }
 
 .dateDisplay {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   margin: 0.5rem 0 0 0;
   text-transform: capitalize;
   font-weight: 500;
@@ -43,12 +46,12 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 1rem;
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color, #e2e8f0);
   font-size: 0.8rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -89,26 +92,27 @@
 .cardTitle {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
   margin: 0;
 }
 
 .countBadge {
   padding: 0.25rem 0.75rem;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-surface, #f1f5f9);
+  color: var(--text-secondary, #475569);
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
+  border: 1px solid var(--border-color, transparent);
 }
 
 .pendingBadge {
-  background: #eff6ff;
+  background: rgba(37, 99, 235, 0.12);
   color: #2563eb;
 }
 
 .completedBadge {
-  background: #f0fdf4;
+  background: rgba(22, 163, 74, 0.12);
   color: #16a34a;
 }
 
@@ -120,27 +124,27 @@
 
 .emptyAgenda {
   padding: 4rem 2rem;
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 16px;
-  border: 2px dashed #e2e8f0;
+  border: 2px dashed var(--border-color, #e2e8f0);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   text-align: center;
 }
 
 .emptyAgendaSmall {
   padding: 2rem 1.5rem;
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 12px;
-  border: 1.5px dashed #e2e8f0;
+  border: 1.5px dashed var(--border-color, #e2e8f0);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   text-align: center;
 }
 
@@ -152,7 +156,7 @@
 
 /* Appointment Card (Horizontal) */
 .apptCard {
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
   display: flex;
@@ -160,18 +164,17 @@
   gap: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-color, #f1f5f9);
 }
 
 .apptCard:hover {
   transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border-color: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--primary-color, #e2e8f0);
 }
 
 .completedCard {
   border-left: 4px solid #10b981;
-  background: #fcfdfc;
   opacity: 0.85;
 }
 
@@ -180,9 +183,8 @@
 }
 
 .completedPatient {
-  color: #64748b !important;
+  color: var(--text-secondary, #64748b) !important;
   text-decoration: line-through;
-  text-decoration-color: #cbd5e1;
 }
 
 .apptTime {
@@ -199,7 +201,7 @@
 
 .duration {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   font-weight: 600;
 }
 
@@ -210,13 +212,13 @@
 .patientName {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
   margin: 0 0 0.25rem 0;
 }
 
 .apptReason {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   margin: 0;
 }
 
@@ -235,14 +237,14 @@
   letter-spacing: 0.5px;
 }
 
-.statusScheduled { background: #eff6ff; color: #2563eb; }
-.statusCompleted { background: #f0fdf4; color: #16a34a; }
-.statusCancelled { background: #fef2f2; color: #dc2626; }
-.statusAbsent { background: #fff7ed; color: #ea580c; }
+.statusScheduled { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
+.statusCompleted { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
+.statusCancelled { background: rgba(220, 38, 38, 0.12); color: #dc2626; }
+.statusAbsent { background: rgba(234, 88, 12, 0.12); color: #ea580c; }
 
 .apptAction {
   padding-left: 1rem;
-  border-left: 1px solid #f1f5f9;
+  border-left: 1px solid var(--border-color, #f1f5f9);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -250,30 +252,30 @@
 
 .viewBtn {
   padding: 0.5rem 1rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-primary, #475569);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .viewBtn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #1e293b;
+  background: var(--bg-primary, #f8fafc);
+  border-color: var(--primary-color, #cbd5e1);
+  color: var(--text-primary, #1e293b);
 }
 
 .delayBtn {
   padding: 0.5rem 1rem;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #b45309;
+  color: #d97706;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -282,8 +284,7 @@
 }
 
 .delayBtn:hover {
-  background: #fef3c7;
-  border-color: #fcd34d;
+  background: rgba(245, 158, 11, 0.2);
 }
 
 .delayBadge {
@@ -291,7 +292,7 @@
   font-size: 11px;
   font-weight: 700;
   color: #d97706;
-  background: #fffbeb;
+  background: rgba(245, 158, 11, 0.12);
   padding: 2px 6px;
   border-radius: 4px;
   display: inline-block;
@@ -305,17 +306,17 @@
 }
 
 .summaryCard {
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 16px;
   padding: 1.75rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-color, #f1f5f9);
 }
 
 .summaryTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin: 0 0 1.5rem 0;
@@ -332,8 +333,9 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f8fafc;
+  background: var(--bg-primary, #f8fafc);
   border-radius: 12px;
+  border: 1px solid var(--border-color, transparent);
   transition: transform 0.2s;
 }
 
@@ -350,10 +352,10 @@
   justify-content: center;
 }
 
-.blue .statIcon { background: #dbeafe; color: #2563eb; }
-.orange .statIcon { background: #ffedd5; color: #ea580c; }
-.green .statIcon { background: #dcfce7; color: #16a34a; }
-.purple .statIcon { background: #f3e8ff; color: #9333ea; }
+.blue .statIcon { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
+.orange .statIcon { background: rgba(234, 88, 12, 0.12); color: #ea580c; }
+.green .statIcon { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
+.purple .statIcon { background: rgba(147, 51, 234, 0.12); color: #9333ea; }
 
 .statData {
   display: flex;
@@ -363,27 +365,28 @@
 .statLabel {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
 }
 
 .statValue {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
 }
 
 .quickInfo {
-  background: #0f172a;
+  background: var(--bg-surface, #0f172a);
   border-radius: 16px;
   padding: 1.5rem;
-  color: white;
+  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-color, transparent);
 }
 
 .infoRow {
   display: flex;
   justify-content: space-between;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
 }
 
 .infoRow:last-child {
@@ -392,92 +395,13 @@
 
 .infoRow .label {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
 }
 
 .infoRow .value {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #f1f5f9;
-}
-
-/* Responsive */
-@media (max-width: 1100px) {
-  .dashboardGrid {
-    grid-template-columns: 1fr;
-  }
-  
-  .statsColumn {
-    order: -1;
-  }
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 12px 16px !important;
-    max-width: 100% !important;
-    width: 100% !important;
-  }
-  
-  .mainHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-  }
-
-  .connectionBadge {
-    display: none !important;
-  }
-  
-  .apptCard {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1.25rem;
-  }
-  
-  .apptTime {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 0.5rem;
-  }
-  
-  .apptStatus {
-    justify-content: flex-start;
-    min-width: auto;
-  }
-  
-  .apptAction {
-    width: 100%;
-    padding: 1rem 0 0 0;
-    border-left: none;
-    border-top: 1px solid #f1f5f9;
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 8px !important;
-  }
-  
-  .viewBtn, .delayBtn {
-    flex: 1 !important;
-    min-height: 44px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .statsList {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px !important;
-  }
-}
-
-@media (max-width: 350px) {
-  .statsList {
-    grid-template-columns: 1fr !important;
-  }
+  color: var(--text-primary, #f1f5f9);
 }
 
 /* Modal Styles */
@@ -497,7 +421,9 @@
 }
 
 .modalContent {
-  background: white;
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-primary, #0f172a);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   max-width: 450px;
@@ -511,15 +437,15 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--bg-primary, #f8fafc);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 
 .modalHeader h2 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
 }
 
 .closeBtn {
@@ -527,12 +453,12 @@
   border: none;
   cursor: pointer;
   font-size: 1.5rem;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   transition: color 0.2s;
 }
 
 .closeBtn:hover {
-  color: #64748b;
+  color: var(--text-primary, #64748b);
 }
 
 .delayOptions {
@@ -544,21 +470,21 @@
 
 .optionBtn {
   padding: 1rem;
-  background: #f1f5f9;
+  background: var(--bg-primary, #f1f5f9);
   border: 2px solid transparent;
   border-radius: 12px;
   font-weight: 700;
-  color: #475569;
+  color: var(--text-secondary, #475569);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .optionBtn:hover {
-  background: #e2e8f0;
+  background: var(--border-color, #e2e8f0);
 }
 
 .optionBtn.active {
-  background: #eff6ff;
+  background: rgba(37, 99, 235, 0.12);
   border-color: #3b82f6;
   color: #2563eb;
 }
@@ -571,14 +497,16 @@
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   margin-bottom: 0.5rem;
 }
 
 .input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-primary, #0f172a);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   font-size: 1rem;
 }
@@ -599,19 +527,19 @@
 }
 
 .cancelBtn {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-primary, #f1f5f9);
+  color: var(--text-secondary, #475569);
   border: none;
 }
 
 .confirmBtn {
-  background: #0f172a;
+  background: #2563eb;
   color: white;
   border: none;
 }
 
 .confirmBtn:hover {
-  background: #1e293b;
+  background: #1d4ed8;
 }
 
 @keyframes fadeIn {
@@ -624,10 +552,11 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-
 /* Appointment Detail Modal Styles */
 .modalContentLarge {
-  background: white;
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-primary, #0f172a);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   max-width: 680px;
@@ -652,16 +581,16 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  background: #fdfdfd;
+  background: var(--bg-primary, #fdfdfd);
   padding: 1.25rem;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color, #e2e8f0);
 }
 
 .sectionLabel {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
   margin: 0;
 }
 
@@ -669,11 +598,12 @@
   width: 100%;
   min-height: 100px;
   padding: 0.75rem;
-  border: 1px solid #cbd5e1;
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-primary, #334155);
+  border: 1px solid var(--border-color, #cbd5e1);
   border-radius: 8px;
   font-family: inherit;
   font-size: 0.95rem;
-  color: #334155;
   resize: vertical;
   line-height: 1.5;
   outline: none;
@@ -722,7 +652,7 @@
 }
 
 .loadingHistory {
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   font-size: 0.9rem;
   font-style: italic;
   padding: 1rem;
@@ -737,13 +667,13 @@
 }
 
 .emptyHistory {
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   font-size: 0.9rem;
   font-style: italic;
   padding: 1.5rem;
-  background: #f8fafc;
+  background: var(--bg-primary, #f8fafc);
   border-radius: 12px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--border-color, #cbd5e1);
   text-align: center;
   margin: 0;
 }
@@ -758,16 +688,15 @@
 }
 
 .pastApptCard {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 12px;
   padding: 1rem;
   transition: all 0.2s;
 }
 
 .pastApptCard:hover {
-  border-color: #cbd5e1;
-  background: #f1f5f9;
+  border-color: var(--primary-color, #cbd5e1);
 }
 
 .pastApptHeader {
@@ -780,7 +709,7 @@
 .pastApptDate {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
 }
 
 .pastApptStatus {
@@ -791,34 +720,34 @@
 }
 
 .pastCompleted {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
 }
 
 .pastOther {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-surface, #f1f5f9);
+  color: var(--text-secondary, #475569);
 }
 
 .pastApptReason {
   margin: 0 0 0.5rem 0;
   font-size: 0.85rem;
-  color: #475569;
+  color: var(--text-secondary, #475569);
 }
 
 .pastApptNotes {
   font-size: 0.85rem;
-  color: #334155;
-  background: white;
+  color: var(--text-primary, #334155);
+  background: var(--bg-surface, #ffffff);
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-color, #f1f5f9);
 }
 
 .pastApptNotes strong {
   display: block;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   margin-bottom: 0.25rem;
 }
 
@@ -830,7 +759,7 @@
 
 .detailSection {
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-color, #f1f5f9);
 }
 
 .avatarLarge {
@@ -855,13 +784,13 @@
 .patientInfo h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.25rem;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 .patientMeta {
   margin: 0;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -874,17 +803,17 @@
 }
 
 .detailCard {
-  background: #f8fafc;
+  background: var(--bg-primary, #f8fafc);
   padding: 1rem;
   border-radius: 12px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-color, #f1f5f9);
 }
 
 .detailCard label {
   display: block;
   font-size: 0.7rem;
   font-weight: 800;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   text-transform: uppercase;
   margin-bottom: 0.4rem;
   letter-spacing: 0.5px;
@@ -894,21 +823,21 @@
   margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
 }
 
 .meetSection {
-  background: #eff6ff;
+  background: rgba(37, 99, 235, 0.1);
   padding: 1.25rem;
   border-radius: 12px;
-  border: 1px solid #dbeafe;
+  border: 1px solid rgba(37, 99, 235, 0.25);
 }
 
 .meetSection label {
   display: block;
   font-size: 0.75rem;
   font-weight: 800;
-  color: #1e40af;
+  color: #2563eb;
   margin-bottom: 0.75rem;
   text-transform: uppercase;
 }
@@ -946,9 +875,9 @@
   gap: 0.75rem;
   width: 100%;
   padding: 1rem;
-  background: #0f172a;
-  color: white;
-  border: none;
+  background: var(--bg-surface, #0f172a);
+  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-color, transparent);
   border-radius: 12px;
   font-weight: 700;
   font-size: 1rem;
@@ -957,22 +886,22 @@
 }
 
 .historyBtn:hover {
-  background: #1e293b;
+  background: var(--bg-primary, #1e293b);
 }
 
 .closeBtnSecondary {
   padding: 0.85rem;
-  background: white;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-secondary, #64748b);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .closeBtnSecondary:hover {
-  background: #f8fafc;
-  color: #1e293b;
+  background: var(--bg-primary, #f8fafc);
+  color: var(--text-primary, #1e293b);
 }
 
 .completeBtn {
@@ -1018,11 +947,11 @@
 }
 
 .birthdaysCard {
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-color, #f1f5f9);
   margin-top: 1.5rem;
 }
 
@@ -1037,7 +966,7 @@
   margin: 0;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
 }
 
 .birthdayList {
@@ -1051,22 +980,22 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: #fff1f2;
+  background: rgba(225, 29, 72, 0.08);
   border-radius: 10px;
-  border: 1px solid #ffe4e6;
+  border: 1px solid rgba(225, 29, 72, 0.2);
 }
 
 .birthdayName {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #9f1239;
+  color: #e11d48;
 }
 
 .birthdayDate {
   font-size: 0.75rem;
   font-weight: 600;
   color: #e11d48;
-  background: white;
+  background: var(--bg-surface, #ffffff);
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
   text-transform: capitalize;
@@ -1074,12 +1003,12 @@
 
 /* Share Portal Card */
 .shareCard {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -1097,7 +1026,7 @@
   justify-content: center;
   width: 42px;
   height: 42px;
-  background-color: #eff6ff;
+  background-color: rgba(37, 99, 235, 0.12);
   border-radius: 12px;
   color: #2563eb;
 }
@@ -1105,13 +1034,13 @@
 .shareCardText h3 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
   margin: 0 0 0.15rem 0;
 }
 
 .shareCardText p {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   margin: 0;
 }
 
@@ -1131,19 +1060,19 @@
 .linkInputIcon {
   position: absolute;
   left: 1rem;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   font-size: 1.25rem;
 }
 
 .shareInput {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.75rem;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-primary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 10px;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-primary, #334155);
   outline: none;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -1151,7 +1080,7 @@
 
 .shareInput:focus {
   border-color: #3b82f6;
-  background-color: white;
+  background-color: var(--bg-surface, #ffffff);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -1189,34 +1118,20 @@
 .copyLinkBtn.copied {
   background-color: #10b981;
   color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 .viewPortalBtn {
-  background-color: white;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-surface, #ffffff);
+  color: var(--text-primary, #475569);
+  border: 1px solid var(--border-color, #e2e8f0);
   text-decoration: none;
 }
 
 .viewPortalBtn:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #1e293b;
+  background-color: var(--bg-primary, #f8fafc);
+  border-color: var(--primary-color, #cbd5e1);
+  color: var(--text-primary, #1e293b);
   transform: translateY(-1px);
-}
-
-@media (max-width: 768px) {
-  .shareInputGroup {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .shareActions {
-    justify-content: stretch;
-  }
-  .copyLinkBtn, .viewPortalBtn {
-    flex: 1;
-  }
 }
 
 .installAppBtn {
@@ -1238,20 +1153,6 @@
 .installAppBtn:hover {
   background: #1d4ed8;
   transform: translateY(-1px);
-  box-shadow: 0 6px 12px -1px rgba(37, 99, 235, 0.2);
-}
-
-.installAppBtn:active {
-  transform: translateY(0);
-}
-
-@media (max-width: 480px) {
-  .installAppBtn span {
-    display: none;
-  }
-  .installAppBtn {
-    padding: 0.5rem;
-  }
 }
 
 /* Onboarding Pending Banner */
@@ -1261,11 +1162,10 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border: 1px solid #bfdbfe;
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.25);
   border-radius: 12px;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .onboardingBannerLeft {
@@ -1280,27 +1180,22 @@
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 50%;
   color: #3b82f6;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
-}
-
-.onboardingBannerIcon span {
-  font-size: 24px;
 }
 
 .onboardingBannerText h3 {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: var(--text-primary, #1e3a8a);
 }
 
 .onboardingBannerText p {
   margin: 0.25rem 0 0 0;
   font-size: 0.9rem;
-  color: #1e40af;
+  color: var(--text-secondary, #1e40af);
 }
 
 .onboardingBannerBtn {
@@ -1321,31 +1216,15 @@
 
 .onboardingBannerBtn:hover {
   background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
-}
-
-@media (max-width: 768px) {
-  .onboardingBanner {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 1.25rem;
-    gap: 1rem;
-  }
-  .onboardingBannerBtn {
-    justify-content: center;
-  }
 }
 
 /* PWA App Marketing Card Styling */
-/* PWA App Download Banner Styling */
 .downloadAppBanner {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border: 1px solid #bbf7d0;
+  background: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.25);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
   margin-bottom: 20px;
-  box-shadow: var(--shadow-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1364,28 +1243,23 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 12px;
   color: #16a34a;
-  box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.1);
   flex-shrink: 0;
-}
-
-.downloadAppBannerIcon span {
-  font-size: 24px;
 }
 
 .downloadAppBannerText h3 {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #14532d;
+  color: var(--text-primary, #14532d);
 }
 
 .downloadAppBannerText p {
   margin: 0.15rem 0 0 0;
   font-size: 0.875rem;
-  color: #15803d;
+  color: var(--text-secondary, #15803d);
   line-height: 1.4;
 }
 
@@ -1405,32 +1279,10 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15);
 }
 
 .downloadAppBannerBtn:hover {
   background-color: #15803d;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(22, 163, 74, 0.25);
-}
-
-@media (max-width: 768px) {
-  .downloadAppBanner {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 1.25rem;
-    gap: 1rem;
-  }
-
-  .downloadAppBannerLeft {
-    align-items: flex-start;
-  }
-
-  .downloadAppBannerBtn {
-    width: 100%;
-    min-height: 46px;
-    font-size: 0.95rem;
-  }
 }
 
 /* Acciones Urgentes / Indicadores */
@@ -1442,10 +1294,10 @@
 }
 
 .actionCard {
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 12px;
   padding: 1.25rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color, #e2e8f0);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1456,7 +1308,7 @@
 
 .actionCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
 }
 
 .actionCardHeader {
@@ -1469,14 +1321,14 @@
 .actionNumber {
   font-size: 1.75rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 .actionText {
   margin: 0;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1484,23 +1336,18 @@
 /* Card Modifiers */
 .danger { border-top: 4px solid #ef4444; }
 .danger .actionNumber { color: #ef4444; }
-.danger svg { stroke: #ef4444; }
 
 .warning { border-top: 4px solid #f59e0b; }
 .warning .actionNumber { color: #f59e0b; }
-.warning svg { stroke: #f59e0b; }
 
 .orange { border-top: 4px solid #ed6c02; }
 .orange .actionNumber { color: #ed6c02; }
-.orange svg { stroke: #ed6c02; }
 
 .info { border-top: 4px solid #3b82f6; }
 .info .actionNumber { color: #3b82f6; }
-.info svg { stroke: #3b82f6; }
 
 .success { border-top: 4px solid #10b981; }
 .success .actionNumber { color: #10b981; }
-.success svg { stroke: #10b981; }
 
 /* Próximo Turno */
 .nextAppointmentCard {
@@ -1510,6 +1357,7 @@
   color: white;
   margin-bottom: 2rem;
   box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
 }
 
 .nextApptHeader {
@@ -1577,30 +1425,79 @@
 
 .viewNextBtn:hover {
   background: #f1f5f9;
-  transform: translateX(2px);
 }
 
 /* Quick Guide Card */
 .quickGuideCard {
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color, #e2e8f0);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 }
 
 .quickGuideCard h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
   font-weight: 700;
 }
 
 .quickGuideCard p {
   margin: 0;
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   line-height: 1.5;
 }
 
+/* --- Dark Mode Explicit Overrides for Scoped Classes --- */
+:global([data-theme="dark"]) .actionCard {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
 
+:global([data-theme="dark"]) .summaryCard {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .birthdaysCard {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .shareCard {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .quickGuideCard {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .emptyAgenda,
+:global([data-theme="dark"]) .emptyAgendaSmall {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:global([data-theme="dark"]) .apptCard {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .modalContent,
+:global([data-theme="dark"]) .modalContentLarge {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:global([data-theme="dark"]) .modalHeader {
+  background-color: #1e293b;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .statItem {
+  background-color: rgba(255, 255, 255, 0.05);
+}
