@@ -56,7 +56,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 0 1rem;
@@ -67,6 +67,8 @@
   border: none;
   padding: 0.75rem;
   outline: none;
+  background: transparent;
+  color: var(--text-primary);
 }
 
 .filters {
@@ -79,9 +81,9 @@
   padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background: white;
+  background: var(--bg-surface, #ffffff);
   outline: none;
-  color: var(--dark-gray);
+  color: var(--text-primary);
 }
 
 .refreshBtn {
@@ -89,20 +91,21 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  color: var(--gray);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-base);
 }
 
 .tableContainer {
-  background: white;
+  background: var(--bg-surface, #ffffff);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-color);
 }
 
 .appointmentsTable {
@@ -124,13 +127,13 @@
 .appointmentsTable th:nth-child(10), .appointmentsTable td:nth-child(10) { width: 270px; } /* Acciones */
 
 .appointmentsTable th {
-  background-color: #f8fafc;
+  background-color: var(--bg-primary, #f8fafc);
   padding: 0.75rem 0.5rem;
   text-align: left;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--gray);
+  color: var(--text-secondary);
   border-bottom: 1px solid var(--border-color);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -231,7 +234,8 @@
   border: 1px solid var(--border-color);
   font-size: 0.85rem;
   font-weight: 600;
-  background-color: white;
+  background-color: var(--bg-surface, #ffffff);
+  color: var(--text-primary);
   cursor: pointer;
 }
 
@@ -249,18 +253,18 @@
 }
 
 .acceptBtn {
-  background: #dcfce7;
-  color: #166534;
+  background: rgba(22, 163, 74, 0.15);
+  color: #16a34a;
 }
 
 .rejectBtn {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
 }
 
 .delayBtn {
-  background: #f1f5f9;
-  color: var(--gray);
+  background: var(--bg-primary, #f1f5f9);
+  color: var(--text-secondary);
   border-color: var(--border-color);
 }
 
@@ -294,12 +298,12 @@
   display: inline-block;
 }
 
-.statusPending { background: #fef3c7; color: #d97706; }
-.statusScheduled { background: #eff6ff; color: #2563eb; }
-.statusCompleted { background: #f0fdf4; color: #16a34a; }
-.statusCancelled { background: #fef2f2; color: #dc2626; }
-.statusRejected { background: #fee2e2; color: #991b1b; }
-.statusAbsent { background: #fff7ed; color: #ea580c; }
+.statusPending { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.statusScheduled { background: rgba(37, 99, 235, 0.15); color: #2563eb; }
+.statusCompleted { background: rgba(22, 163, 74, 0.15); color: #16a34a; }
+.statusCancelled { background: rgba(220, 38, 38, 0.15); color: #dc2626; }
+.statusRejected { background: rgba(220, 38, 38, 0.15); color: #dc2626; }
+.statusAbsent { background: rgba(234, 88, 12, 0.15); color: #ea580c; }
 
 /* Modales y Formularios */
 .modal {
@@ -318,7 +322,9 @@
 }
 
 .modalContent {
-  background: white;
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 600px;
@@ -347,7 +353,7 @@
 .formGroup label {
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--dark-gray);
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
@@ -357,7 +363,8 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
-  background: #f8fafc;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .formRow {
@@ -384,9 +391,9 @@
 
 .cancelBtn {
   padding: 1rem;
-  background: white;
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  color: var(--gray);
+  color: var(--text-secondary);
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
