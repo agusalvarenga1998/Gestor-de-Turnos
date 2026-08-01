@@ -16,12 +16,12 @@
 .title {
   font-size: 1.8rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .subtitle {
-  color: #64748b;
+  color: var(--text-secondary);
   margin-top: 0.25rem;
   font-size: 0.9rem;
 }
@@ -36,7 +36,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: #2563eb;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 10px;
@@ -46,7 +46,7 @@
 }
 
 .addBtn:hover {
-  background: #1d4ed8;
+  background: var(--primary-dark);
 }
 
 .qrBtn {
@@ -54,9 +54,9 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.75rem 1.25rem;
-  background: #f8fafc;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
@@ -64,8 +64,8 @@
 }
 
 .qrBtn:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
+  background: var(--gray-100);
+  border-color: var(--border-color);
 }
 
 .successBanner {
@@ -97,14 +97,14 @@
 }
 
 .metricCard {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
   padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
 }
 
 .metricIcon {
@@ -120,7 +120,7 @@
   display: block;
   font-size: 1.3rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -130,14 +130,14 @@
 .metricLabel {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
 /* Formulario desplegable */
 .addCard {
-  background: white;
-  border: 2px solid #bfdbfe;
+  background: var(--bg-surface);
+  border: 2px solid var(--primary-light);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -148,13 +148,13 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 800;
-  color: #1e3a8a;
+  color: var(--primary-color);
 }
 
 .addCardHeader p {
   margin: 0.25rem 0 1rem 0;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .formGrid {
@@ -168,7 +168,7 @@
   display: block;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #334155;
+  color: var(--text-primary);
   margin-bottom: 0.4rem;
 }
 
@@ -176,7 +176,9 @@
 .formGroup input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
   border-radius: 8px;
   font-size: 0.9rem;
   box-sizing: border-box;
@@ -189,7 +191,7 @@
 
 .submitBtn {
   padding: 0.75rem 1.5rem;
-  background: #2563eb;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 8px;
@@ -199,9 +201,9 @@
 
 .cancelBtn {
   padding: 0.75rem 1.25rem;
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #cbd5e1;
+  background: var(--gray-100);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
@@ -209,8 +211,8 @@
 
 /* Tarjeta Control de Llamada */
 .mainControlCard {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
@@ -219,8 +221,8 @@
 
 .inProgressSection {
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f8fafc, #eff6ff);
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--gray-100);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sectionBadge {
@@ -255,13 +257,13 @@
   margin: 0;
   font-size: 1.4rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .inProgressSub {
   margin: 0.25rem 0 0 0;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .inProgressActions {
@@ -290,13 +292,13 @@
 .emptyInProgress p {
   margin: 0;
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-style: italic;
 }
 
 .callNextBanner {
   padding: 1.25rem;
-  background: white;
+  background: var(--bg-surface);
 }
 
 .callNextBtn {
@@ -324,18 +326,19 @@
 }
 
 .callNextBtn:disabled {
-  background: #cbd5e1;
+  background: var(--gray-200);
+  color: var(--text-secondary);
   box-shadow: none;
   cursor: not-allowed;
 }
 
 /* Sección de Lista de Espera */
 .waitingSection {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
 }
 
 .sectionTitleRow {
@@ -351,7 +354,7 @@
   margin: 0;
   font-size: 1.2rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 /* Toggle Switch */
@@ -363,7 +366,7 @@
 .switchLabel {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -377,7 +380,7 @@
 .slider {
   width: 38px;
   height: 22px;
-  background: #cbd5e1;
+  background: var(--gray-300);
   border-radius: 20px;
   position: relative;
   transition: background 0.2s;
@@ -396,7 +399,7 @@
 }
 
 .switchLabel input:checked + .slider {
-  background: #2563eb;
+  background: var(--primary-color);
 }
 
 .switchLabel input:checked + .slider::before {
@@ -415,32 +418,33 @@
 }
 
 .queueTable th {
-  background: #f8fafc;
+  background: var(--gray-100);
   padding: 0.85rem 1rem;
   font-size: 0.75rem;
   font-weight: 800;
-  color: #64748b;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .queueTable td {
   padding: 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-color);
   font-size: 0.9rem;
   vertical-align: middle;
+  color: var(--text-primary);
 }
 
 .nextInLineRow {
-  background: #f0f9ff;
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .posBadge {
   display: inline-block;
   font-size: 0.85rem;
   font-weight: 800;
-  color: #2563eb;
-  background: #eff6ff;
+  color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.12);
   padding: 0.25rem 0.6rem;
   border-radius: 8px;
 }
@@ -448,18 +452,18 @@
 .ticketCodeBadge {
   font-size: 0.95rem;
   font-weight: 900;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .patientNameStr {
   display: block;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .phoneSub {
   display: block;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -470,9 +474,9 @@
 
 .linkCopyBtn {
   padding: 0.4rem 0.75rem;
-  background: #f1f5f9;
-  color: #2563eb;
-  border: 1px solid #cbd5e1;
+  background: var(--gray-100);
+  color: var(--primary-color);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -496,21 +500,21 @@
 .emptyQueueBox {
   text-align: center;
   padding: 3rem 1.5rem;
-  background: #f8fafc;
+  background: var(--gray-50);
   border-radius: 12px;
-  border: 2px dashed #e2e8f0;
+  border: 2px dashed var(--border-color);
 }
 
 .emptyQueueBox h4 {
   margin: 0.5rem 0 0.25rem 0;
   font-size: 1.1rem;
-  color: #334155;
+  color: var(--text-primary);
 }
 
 .emptyQueueBox p {
   margin: 0;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 /* Modal QR */
@@ -529,13 +533,14 @@
 }
 
 .qrModalCard {
-  background: white;
+  background: var(--bg-surface);
   border-radius: 20px;
   padding: 1.75rem;
   max-width: 440px;
   width: 100%;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-xl);
   text-align: center;
+  border: 1px solid var(--border-color);
 }
 
 .qrModalHeader {
@@ -549,7 +554,7 @@
   margin: 0;
   font-size: 1.2rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .closeQrBtn {
@@ -557,20 +562,20 @@
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .qrDesc {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 1.25rem;
 }
 
 .qrDisplayBox {
-  background: #f8fafc;
+  background: var(--gray-50);
   padding: 1.25rem;
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   margin-bottom: 1.25rem;
 }
 
@@ -585,7 +590,7 @@
   margin: 0;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--primary-color);
   word-break: break-all;
 }
 
@@ -597,9 +602,9 @@
 .copyQrLinkBtn {
   flex: 1;
   padding: 0.75rem;
-  background: #f1f5f9;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  background: var(--gray-100);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
@@ -608,10 +613,81 @@
 .printQrBtn {
   flex: 1;
   padding: 0.75rem;
-  background: #2563eb;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
 }
+
+/* --- Dark Mode Overrides for LiveQueuePage --- */
+:global([data-theme="dark"]) .title,
+:global([data-theme="dark"]) .inProgressName,
+:global([data-theme="dark"]) .sectionTitleRow h3,
+:global([data-theme="dark"]) .ticketCodeBadge,
+:global([data-theme="dark"]) .patientNameStr,
+:global([data-theme="dark"]) .qrModalHeader h3,
+:global([data-theme="dark"]) .emptyQueueBox h4 {
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .subtitle,
+:global([data-theme="dark"]) .inProgressSub,
+:global([data-theme="dark"]) .metricLabel,
+:global([data-theme="dark"]) .switchLabel,
+:global([data-theme="dark"]) .phoneSub,
+:global([data-theme="dark"]) .emptyQueueBox p,
+:global([data-theme="dark"]) .qrDesc {
+  color: #94a3b8 !important;
+}
+
+:global([data-theme="dark"]) .metricCard,
+:global([data-theme="dark"]) .addCard,
+:global([data-theme="dark"]) .mainControlCard,
+:global([data-theme="dark"]) .callNextBanner,
+:global([data-theme="dark"]) .waitingSection,
+:global([data-theme="dark"]) .qrModalCard {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .inProgressSection {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:global([data-theme="dark"]) .emptyQueueBox,
+:global([data-theme="dark"]) .qrDisplayBox {
+  background: #0b0f19 !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+:global([data-theme="dark"]) .metricValue {
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .qrBtn,
+:global([data-theme="dark"]) .cancelBtn,
+:global([data-theme="dark"]) .copyQrLinkBtn {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+:global([data-theme="dark"]) .queueTable th {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:global([data-theme="dark"]) .queueTable td {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .nextInLineRow {
+  background: rgba(37, 99, 235, 0.15) !important;
+}
+

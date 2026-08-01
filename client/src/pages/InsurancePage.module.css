@@ -704,3 +704,53 @@
   color: #6b7280;
   font-size: 14px;
 }
+
+/* --- Dark Mode Overrides for InsurancePage --- */
+:global([data-theme="dark"]) .title,
+:global([data-theme="dark"]) .cardTitle,
+:global([data-theme="dark"]) .insuranceName,
+:global([data-theme="dark"]) .modalHeader h2,
+:global([data-theme="dark"]) .serviceInfo strong {
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .subtitle,
+:global([data-theme="dark"]) .description,
+:global([data-theme="dark"]) .formGroup label,
+:global([data-theme="dark"]) .modalSubtitle,
+:global([data-theme="dark"]) .serviceInfo span,
+:global([data-theme="dark"]) .emptyServices {
+  color: #94a3b8 !important;
+}
+
+:global([data-theme="dark"]) .insuranceCard,
+:global([data-theme="dark"]) .tableContainer,
+:global([data-theme="dark"]) .modalContent,
+:global([data-theme="dark"]) .insuranceCardMobile {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .insuranceTable thead,
+:global([data-theme="dark"]) .coverageHeader {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:global([data-theme="dark"]) .insuranceTable th,
+:global([data-theme="dark"]) .insuranceTable td,
+:global([data-theme="dark"]) .coverageItem {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .configBtn,
+:global([data-theme="dark"]) .mobileActionBtn,
+:global([data-theme="dark"]) .cancelBtn,
+:global([data-theme="dark"]) .doneBtn {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}

@@ -559,3 +559,58 @@
   text-align: center;
   padding: 2rem 0;
 }
+
+/* --- Dark Mode Overrides for MovementsPage --- */
+:global([data-theme="dark"]) .title,
+:global([data-theme="dark"]) .summaryVal,
+:global([data-theme="dark"]) .cashBoxTitle,
+:global([data-theme="dark"]) .cardHeader h3,
+:global([data-theme="dark"]) .modalHeader h3,
+:global([data-theme="dark"]) .descCol {
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .subtitle,
+:global([data-theme="dark"]) .summaryLabel,
+:global([data-theme="dark"]) .filterItem label,
+:global([data-theme="dark"]) .dateCol,
+:global([data-theme="dark"]) .patientSubtext {
+  color: #94a3b8 !important;
+}
+
+:global([data-theme="dark"]) .summaryCard,
+:global([data-theme="dark"]) .cashBoxSection,
+:global([data-theme="dark"]) .movementsCard,
+:global([data-theme="dark"]) .modal {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .filtersBox {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:global([data-theme="dark"]) .filterItem select,
+:global([data-theme="dark"]) .filterItem input {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+:global([data-theme="dark"]) .table th {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:global([data-theme="dark"]) .table td {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .methodText {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}

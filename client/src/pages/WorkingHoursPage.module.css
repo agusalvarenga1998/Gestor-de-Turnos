@@ -443,3 +443,34 @@
     font-size: 1rem !important;
   }
 }
+
+/* --- Dark Mode Overrides for WorkingHoursPage --- */
+:global([data-theme="dark"]) .title,
+:global([data-theme="dark"]) .dayHeader h3,
+:global([data-theme="dark"]) .cardTitle {
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .subtitle,
+:global([data-theme="dark"]) .timeGroup label {
+  color: #94a3b8 !important;
+}
+
+:global([data-theme="dark"]) .scheduleContainer,
+:global([data-theme="dark"]) .dayCard {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .timeGroup input {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+:global([data-theme="dark"]) .copyBtn {
+  background: #1e293b !important;
+  color: #60a5fa !important;
+  border-color: rgba(37, 99, 235, 0.3) !important;
+}

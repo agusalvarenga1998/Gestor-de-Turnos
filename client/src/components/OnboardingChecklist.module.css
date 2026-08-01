@@ -1,5 +1,5 @@
 .card {
-  background: white;
+  background: var(--bg-surface);
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
@@ -11,7 +11,7 @@
 
 .completedCard {
   border-color: rgba(22, 163, 74, 0.2);
-  background: linear-gradient(to bottom, #ffffff, #f0fdf4);
+  background: var(--bg-surface);
 }
 
 .header {

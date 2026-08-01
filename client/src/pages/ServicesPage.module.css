@@ -524,3 +524,43 @@
     justify-content: center;
   }
 }
+
+/* --- Dark Mode Overrides for ServicesPage --- */
+:global([data-theme="dark"]) .header h1,
+:global([data-theme="dark"]) .serviceHeader h3,
+:global([data-theme="dark"]) .modal h2 {
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .subtitle,
+:global([data-theme="dark"]) .description,
+:global([data-theme="dark"]) .price span,
+:global([data-theme="dark"]) .formGroup label {
+  color: #94a3b8 !important;
+}
+
+:global([data-theme="dark"]) .serviceCard,
+:global([data-theme="dark"]) .modal {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .priceRow {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:global([data-theme="dark"]) .importBtn,
+:global([data-theme="dark"]) .syncBtn,
+:global([data-theme="dark"]) .editBtn,
+:global([data-theme="dark"]) .cancelLink {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+:global([data-theme="dark"]) .deleteBtn {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}

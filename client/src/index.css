@@ -107,6 +107,7 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 * {
@@ -185,25 +186,61 @@ select:focus {
   border: none !important;
 }
 
-/* Soporte Global para Modo Oscuro en Paneles y Tarjetas */
-[data-theme="dark"] {
-  color-scheme: dark;
-}
-
+/* Soporte Global Completo para Modo Oscuro */
 [data-theme="dark"] main[class*="mainContent"],
 [data-theme="dark"] main[class*="content"] {
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
 
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: var(--text-primary);
+}
+
 [data-theme="dark"] div[class*="Card"],
+[data-theme="dark"] div[class*="card"],
 [data-theme="dark"] div[class*="panel"],
 [data-theme="dark"] div[class*="Panel"],
 [data-theme="dark"] div[class*="modal"],
 [data-theme="dark"] div[class*="Modal"],
 [data-theme="dark"] div[class*="toolbar"],
-[data-theme="dark"] div[class*="searchBox"] {
+[data-theme="dark"] div[class*="searchBox"],
+[data-theme="dark"] div[class*="Section"],
+[data-theme="dark"] div[class*="section"],
+[data-theme="dark"] div[class*="Container"],
+[data-theme="dark"] div[class*="container"],
+[data-theme="dark"] div[class*="Box"],
+[data-theme="dark"] div[class*="box"],
+[data-theme="dark"] div[class*="Table"],
+[data-theme="dark"] div[class*="table"],
+[data-theme="dark"] div[class*="Banner"],
+[data-theme="dark"] div[class*="banner"] {
   background-color: var(--bg-surface);
   color: var(--text-primary);
   border-color: var(--border-color);
 }
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] table th {
+  background-color: var(--gray-100);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] table td {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+

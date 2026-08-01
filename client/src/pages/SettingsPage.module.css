@@ -1189,6 +1189,63 @@
   color: #b91c1c;
 }
 
+/* --- Dark Mode Overrides for SettingsPage --- */
+:global([data-theme="dark"]) .title,
+:global([data-theme="dark"]) .sectionTitle,
+:global([data-theme="dark"]) .sectionHeader h2,
+:global([data-theme="dark"]) .pricingCard h4,
+:global([data-theme="dark"]) .currency,
+:global([data-theme="dark"]) .priceNum,
+:global([data-theme="dark"]) .statusLabel {
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .subtitle,
+:global([data-theme="dark"]) .sectionHeader p,
+:global([data-theme="dark"]) .formGroup label,
+:global([data-theme="dark"]) .statusDescription,
+:global([data-theme="dark"]) .planDesc,
+:global([data-theme="dark"]) .featuresList li,
+:global([data-theme="dark"]) .period {
+  color: #94a3b8 !important;
+}
+
+:global([data-theme="dark"]) .card,
+:global([data-theme="dark"]) .accordionSection,
+:global([data-theme="dark"]) .pricingCard,
+:global([data-theme="dark"]) .tableWrapper {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .formGroup input,
+:global([data-theme="dark"]) .formGroup select,
+:global([data-theme="dark"]) .formGroup textarea {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+:global([data-theme="dark"]) .connectBtn,
+:global([data-theme="dark"]) .requestManualBtn,
+:global([data-theme="dark"]) .cancelBtn {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+:global([data-theme="dark"]) .subTable th {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:global([data-theme="dark"]) .subTable td {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
 @media (max-width: 768px) {
   .subTable th, .subTable td {
     padding: 0.75rem 0.85rem;

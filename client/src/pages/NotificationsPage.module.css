@@ -337,3 +337,31 @@
     width: 100%;
   }
 }
+
+/* --- Dark Mode Overrides for NotificationsPage --- */
+:global([data-theme="dark"]) .title,
+:global([data-theme="dark"]) .settingTitle,
+:global([data-theme="dark"]) .advanceTimeLabel {
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .subtitle,
+:global([data-theme="dark"]) .settingDesc,
+:global([data-theme="dark"]) .rangeLabels {
+  color: #94a3b8 !important;
+}
+
+:global([data-theme="dark"]) .settingsCard,
+:global([data-theme="dark"]) .advanceTimeContainer {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .settingItem {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:global([data-theme="dark"]) .slider {
+  background-color: #334155 !important;
+}
