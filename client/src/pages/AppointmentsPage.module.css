@@ -1896,5 +1896,152 @@
   margin-bottom: 0.75rem;
 }
 
+/* --- Dark Mode Overrides for Appointments Page --- */
+:global([data-theme="dark"]) .tabsHeader {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .tabBtn {
+  color: #94a3b8;
+}
+
+:global([data-theme="dark"]) .tabBtn:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:global([data-theme="dark"]) .activeTab {
+  background: #2563eb;
+  color: #ffffff !important;
+}
+
+:global([data-theme="dark"]) .viewToggle {
+  background-color: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .toggleBtn {
+  color: #94a3b8;
+}
+
+:global([data-theme="dark"]) .activeToggle {
+  background-color: #2563eb;
+  color: #ffffff !important;
+}
+
+:global([data-theme="dark"]) .calendarNavContainer,
+:global([data-theme="dark"]) .weekNavigator,
+:global([data-theme="dark"]) .weekDayCard,
+:global([data-theme="dark"]) .tableContainer,
+:global([data-theme="dark"]) .mobileApptCard,
+:global([data-theme="dark"]) .mobileAgendaSlotCard {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .navBtn,
+:global([data-theme="dark"]) .todayBtn {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .navBtn:hover,
+:global([data-theme="dark"]) .todayBtn:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+:global([data-theme="dark"]) .weekLabel,
+:global([data-theme="dark"]) .dayNum,
+:global([data-theme="dark"]) .weekDayNum {
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .dayName,
+:global([data-theme="dark"]) .weekDayName {
+  color: #94a3b8;
+}
+
+:global([data-theme="dark"]) .dayPill {
+  background: #0b0f19;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .dayPill:hover {
+  background: #1e293b;
+}
+
+:global([data-theme="dark"]) .todayPill:not(.activePill) {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: #2563eb;
+}
+
+:global([data-theme="dark"]) .appointmentsTable th,
+:global([data-theme="dark"]) .agendaTable th,
+:global([data-theme="dark"]) .timeCell {
+  background-color: #1e293b;
+  color: #94a3b8;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .appointmentsTable td,
+:global([data-theme="dark"]) .agendaTable td {
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .agendaRow,
+:global([data-theme="dark"]) .emptyRow {
+  background: #0f172a;
+}
+
+:global([data-theme="dark"]) .agendaRow:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+:global([data-theme="dark"]) .availableSlotBtn {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #64748b;
+}
+
+:global([data-theme="dark"]) .availableSlotBtn:hover {
+  background-color: rgba(37, 99, 235, 0.12);
+  border-color: #2563eb;
+  color: #60a5fa;
+}
+
+:global([data-theme="dark"]) .weekApptItem {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global([data-theme="dark"]) .weekApptItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .weekApptTime {
+  color: #94a3b8;
+}
+
+:global([data-theme="dark"]) .weekApptName {
+  color: #f8fafc;
+}
+
+:global([data-theme="dark"]) .quickPatientBox {
+  background: #0f172a;
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+:global([data-theme="dark"]) .quickPatientBoxHeader h4 {
+  color: #60a5fa;
+}
+
+:global([data-theme="dark"]) .quickPatientSub {
+  color: #94a3b8;
+}
+
 
 
