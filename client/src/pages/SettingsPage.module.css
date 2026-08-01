@@ -20,11 +20,11 @@
 
 /* Sidebar Navegación de Categorías */
 .settingsSidebar {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 90px;
 }
@@ -38,7 +38,7 @@
 .sidebarGroupTitle {
   font-size: 0.75rem;
   font-weight: 800;
-  color: #94a3b8;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.25rem 0.5rem;
@@ -68,39 +68,39 @@
 .mobileMenuToggleBtn {
   width: 100%;
   padding: 0.85rem 1rem;
-  background: white;
-  border: 1.5px solid #cbd5e1;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-  color: #1e293b;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
   transition: border-color 0.2s;
 }
 
 .mobileMenuToggleBtn:hover {
-  border-color: #2563eb;
+  border-color: var(--primary-color);
 }
 
 .mobileMenuList {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 0.75rem;
   margin-top: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   animation: fadeIn 0.2s ease-out;
 }
 
 .mobileMenuGroupTitle {
   font-size: 0.7rem;
   font-weight: 800;
-  color: #94a3b8;
+  color: var(--text-secondary);
   letter-spacing: 0.05em;
   padding: 0.35rem 0.5rem 0.15rem 0.5rem;
 }
@@ -111,9 +111,9 @@
   gap: 0.75rem;
   padding: 0.75rem 0.85rem;
   border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  color: #334155;
+  background: var(--gray-50);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
@@ -124,9 +124,9 @@
 }
 
 .mobileMenuItemActive {
-  background: #eff6ff !important;
-  border-color: #bfdbfe !important;
-  color: #1d4ed8 !important;
+  background: rgba(37, 99, 235, 0.15) !important;
+  border-color: rgba(37, 99, 235, 0.3) !important;
+  color: var(--primary-color) !important;
   font-weight: 700;
 }
 
@@ -138,7 +138,7 @@
   border-radius: 12px;
   background: transparent;
   border: 1px solid transparent;
-  color: #475569;
+  color: var(--text-secondary);
   cursor: pointer;
   text-align: left;
   transition: all 0.2s ease;
@@ -147,14 +147,14 @@
 }
 
 .navItem:hover {
-  background: #f8fafc;
-  color: #1e293b;
+  background: var(--gray-100);
+  color: var(--text-primary);
 }
 
 .navItemActive {
-  background: #eff6ff !important;
-  border-color: #bfdbfe !important;
-  color: #1d4ed8 !important;
+  background: rgba(37, 99, 235, 0.15) !important;
+  border-color: rgba(37, 99, 235, 0.3) !important;
+  color: var(--primary-color) !important;
 }
 
 .navItemText {
@@ -168,6 +168,7 @@
 .navItemTitle {
   font-size: 0.9rem;
   font-weight: 700;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -175,7 +176,7 @@
 
 .navItemSub {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -201,9 +202,9 @@
   gap: 0.75rem;
   padding: 0.75rem 0.85rem;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  color: #334155;
+  background: var(--gray-50);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
@@ -211,8 +212,8 @@
 }
 
 .navItemLink:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--gray-100);
+  color: var(--primary-color);
   transform: translateX(2px);
 }
 
@@ -624,11 +625,11 @@
 .addressInput {
   width: 100% !important;
   padding: 0.85rem 1rem !important;
-  background: #f8fafc !important;
-  border: 2px solid #e2e8f0 !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 8px !important;
   font-size: 1rem !important;
-  color: #1e293b !important;
+  color: var(--text-primary) !important;
   box-sizing: border-box;
 }
 
@@ -653,19 +654,26 @@
 }
 
 .verifyBtn {
-  background: white;
+  background: var(--gray-100);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
 }
 
+.verifyBtn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
 .gpsBtn {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.3);
   color: var(--primary-color);
 }
 
 .gpsBtn:hover {
-  background: #dbeafe;
+  background: var(--primary-color);
+  color: white;
 }
 
 @media (max-width: 768px) {
@@ -1196,7 +1204,9 @@
 :global([data-theme="dark"]) .pricingCard h4,
 :global([data-theme="dark"]) .currency,
 :global([data-theme="dark"]) .priceNum,
-:global([data-theme="dark"]) .statusLabel {
+:global([data-theme="dark"]) .statusLabel,
+:global([data-theme="dark"]) .navItemTitle,
+:global([data-theme="dark"]) .mobileMenuItem {
   color: #f8fafc !important;
 }
 
@@ -1206,22 +1216,47 @@
 :global([data-theme="dark"]) .statusDescription,
 :global([data-theme="dark"]) .planDesc,
 :global([data-theme="dark"]) .featuresList li,
-:global([data-theme="dark"]) .period {
+:global([data-theme="dark"]) .period,
+:global([data-theme="dark"]) .navItemSub,
+:global([data-theme="dark"]) .sidebarGroupTitle,
+:global([data-theme="dark"]) .mobileMenuGroupTitle,
+:global([data-theme="dark"]) .mapLabel,
+:global([data-theme="dark"]) .formGroup small {
   color: #94a3b8 !important;
 }
 
+:global([data-theme="dark"]) .settingsSidebar,
+:global([data-theme="dark"]) .mobileMenuToggleBtn,
+:global([data-theme="dark"]) .mobileMenuList,
 :global([data-theme="dark"]) .card,
 :global([data-theme="dark"]) .accordionSection,
 :global([data-theme="dark"]) .pricingCard,
-:global([data-theme="dark"]) .tableWrapper {
+:global([data-theme="dark"]) .tableWrapper,
+:global([data-theme="dark"]) .mapPreviewContainer {
   background: #0f172a !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #f8fafc;
 }
 
+:global([data-theme="dark"]) .navItem {
+  color: #94a3b8;
+}
+
+:global([data-theme="dark"]) .navItem:hover {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+:global([data-theme="dark"]) .navItemActive {
+  background: rgba(37, 99, 235, 0.2) !important;
+  border-color: rgba(37, 99, 235, 0.4) !important;
+  color: #60a5fa !important;
+}
+
 :global([data-theme="dark"]) .formGroup input,
 :global([data-theme="dark"]) .formGroup select,
-:global([data-theme="dark"]) .formGroup textarea {
+:global([data-theme="dark"]) .formGroup textarea,
+:global([data-theme="dark"]) .addressInput {
   background: #1e293b !important;
   color: #f8fafc !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
@@ -1229,10 +1264,20 @@
 
 :global([data-theme="dark"]) .connectBtn,
 :global([data-theme="dark"]) .requestManualBtn,
-:global([data-theme="dark"]) .cancelBtn {
+:global([data-theme="dark"]) .cancelBtn,
+:global([data-theme="dark"]) .verifyBtn,
+:global([data-theme="dark"]) .gpsBtn,
+:global([data-theme="dark"]) .navItemLink,
+:global([data-theme="dark"]) .mobileMenuItem {
   background: #1e293b !important;
   color: #f8fafc !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+:global([data-theme="dark"]) .verifyBtn:hover,
+:global([data-theme="dark"]) .gpsBtn:hover {
+  background: #2563eb !important;
+  color: white !important;
 }
 
 :global([data-theme="dark"]) .subTable th {
