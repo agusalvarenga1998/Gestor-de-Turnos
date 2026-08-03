@@ -59,8 +59,8 @@ export default function BirthdayModal() {
             ¡En <strong>TurnoHub</strong> te deseamos un excelente cumpleaños! 🥳
           </p>
           <p>
-            Que pases un día maravilloso, lleno de momentos felices junto a tus seres queridos y pacientes.
-            ¡Gracias por formar parte de nuestra comunidad profesional!
+            Que pases un día maravilloso, lleno de momentos felices junto a tus seres queridos.
+            ¡Gracias por tu dedicación constante y por formar parte de nuestra comunidad profesional!
           </p>
         </div>
 

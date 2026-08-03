@@ -1290,9 +1290,9 @@ export async function sendDoctorBirthdayGreetingEmail({
             <h2 class="greeting-title">¡Estimado/a ${doctorName}!</h2>
             
             <div class="message-box">
-              <p>Hoy es un día muy especial y queremos tomar un momento para agradecerte por confiar en <strong>TurnoHub</strong> para la gestión de tus consultas y atención diaria.</p>
-              <p>Esperamos que pases un día extraordinario rodeado de tus seres queridos, lleno de alegrías, descanso y muchos éxitos profesionales.</p>
-              <p>¡Gracias por tu dedicación diaria a la salud y al bienestar de tus pacientes!</p>
+              <p>Hoy es un día muy especial y queremos tomar un momento para agradecerte por confiar en <strong>TurnoHub</strong> para la gestión de tus turnos y atención diaria.</p>
+              <p>Esperamos que pases un día extraordinario rodeado de tus seres queridos, lleno de alegrías, descanso y muchos éxitos en tu actividad profesional.</p>
+              <p>¡Gracias por tu compromiso y por brindar cada día la mejor atención a tus clientes y pacientes!</p>
             </div>
 
             <p style="margin-bottom: 25px; font-weight: 600; color: #64748b;">¡Que tengas un año fantástico repleto de metas cumplidas!</p>
