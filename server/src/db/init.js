@@ -84,7 +84,9 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS notify_advance_time INTEGER DEFAULT 15,
       ADD COLUMN IF NOT EXISTS notify_email BOOLEAN DEFAULT true,
       ADD COLUMN IF NOT EXISTS notify_approval_push BOOLEAN DEFAULT true,
-      ADD COLUMN IF NOT EXISTS admin_trial_warning_sent BOOLEAN DEFAULT false;
+      ADD COLUMN IF NOT EXISTS admin_trial_warning_sent BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS date_of_birth DATE DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS birthday_email_sent_year INTEGER DEFAULT NULL;
     `);
 
     await client.query(`

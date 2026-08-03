@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import WebSocketStatus from './WebSocketStatus';
 import TrialCounter from './TrialCounter';
 import OnboardingTourModal from './OnboardingTourModal';
+import BirthdayModal from './BirthdayModal';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate, NavLink } from 'react-router-dom';
 import styles from './DoctorLayout.module.css';
@@ -114,6 +115,9 @@ export default function DoctorLayout({ children }) {
           </button>
         </nav>
       </div>
+
+      {/* Modal de Felicitación de Cumpleaños */}
+      <BirthdayModal />
 
       {/* Modal del Tour de Bienvenida */}
       <OnboardingTourModal 

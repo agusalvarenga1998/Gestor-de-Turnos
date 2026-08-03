@@ -23,7 +23,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
       d.status, d.subscription_status, d.trial_ends_at, d.subscription_expires_at, 
       d.mp_connected, d.plan_type, d.pricing_plan_id, d.commission_rate,
       d.notify_daily_summary_push, d.notify_advance_push, d.notify_advance_time, d.notify_email, d.notify_approval_push,
-      d.two_factor_enabled, d.email_verified,
+      d.two_factor_enabled, d.email_verified, d.date_of_birth,
       p.name as plan_name, p.key as plan_key, p.allow_google_calendar, 
       p.allow_mercadopago, p.allow_telemedicine, p.allow_reminders, p.allow_insurance, p.allow_patient_booking,
       p.max_patients, p.max_appointments_monthly
@@ -64,6 +64,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
     notify_approval_push: row.notify_approval_push !== false,
     two_factor_enabled: row.two_factor_enabled || false,
     email_verified: row.email_verified || false,
+    date_of_birth: row.date_of_birth || null,
     plan: {
       name: row.plan_name || (row.plan_type === 'commission' ? 'Plan Comisión' : 'Plan Mensual'),
       key: row.plan_key || row.plan_type || 'monthly',
@@ -334,7 +335,7 @@ router.put('/profile', verifyToken, async (req, res) => {
       latitude: reqLat, longitude: reqLng, booking_fee, appointment_price, 
       mp_connected, mp_access_token,
       notify_daily_summary_push, notify_advance_push, notify_advance_time, 
-      notify_email, notify_approval_push
+      notify_email, notify_approval_push, date_of_birth
     } = req.body;
     const doctorId = req.user.id;
 
@@ -395,6 +396,7 @@ router.put('/profile', verifyToken, async (req, res) => {
            notify_advance_time = COALESCE($16, notify_advance_time),
            notify_email = COALESCE($17, notify_email),
            notify_approval_push = COALESCE($18, notify_approval_push),
+           date_of_birth = COALESCE($19, date_of_birth),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $9
        RETURNING id`,
@@ -403,7 +405,7 @@ router.put('/profile', verifyToken, async (req, res) => {
         latitude, longitude, booking_fee, doctorId, mp_connected, 
         mp_access_token, appointment_price, rubro,
         notify_daily_summary_push, notify_advance_push, notify_advance_time, 
-        notify_email, notify_approval_push
+        notify_email, notify_approval_push, date_of_birth || null
       ]
     );
 

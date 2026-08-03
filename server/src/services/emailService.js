@@ -1249,3 +1249,78 @@ export async function sendAdminTrialExpiringNotification({
   }
 }
 
+// Enviar felicitación de cumpleaños personalizada al profesional
+export async function sendDoctorBirthdayGreetingEmail({
+  to,
+  doctorName
+}) {
+  try {
+    if (!to) return { sent: false, reason: 'No email' };
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+          .header { background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%); padding: 40px 20px; text-align: center; color: white; }
+          .header h1 { margin: 0; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+          .header p { margin: 10px 0 0 0; font-size: 16px; opacity: 0.95; }
+          .content { padding: 35px 30px; text-align: center; }
+          .party-icon { font-size: 64px; margin-bottom: 20px; display: inline-block; animation: bounce 1s infinite alternate; }
+          .greeting-title { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 15px; }
+          .message-box { background: linear-gradient(135deg, #fdf2f8 0%, #f3e8ff 100%); border: 1px solid #f472b6; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: left; }
+          .message-box p { margin: 0 0 12px 0; font-size: 15px; color: #4c1d95; line-height: 1.7; }
+          .message-box p:last-child { margin-bottom: 0; }
+          .button { display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); transition: transform 0.2s; }
+          .footer { padding: 25px; text-align: center; font-size: 13px; color: #94a3b8; background-color: #f8fafc; border-top: 1px solid #e2e8f0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎂 ¡Feliz Cumpleaños! 🎉</h1>
+            <p>De parte de todo el equipo de TurnoHub</p>
+          </div>
+          <div class="content">
+            <div class="party-icon">🎈🎁🥳</div>
+            <h2 class="greeting-title">¡Estimado/a ${doctorName}!</h2>
+            
+            <div class="message-box">
+              <p>Hoy es un día muy especial y queremos tomar un momento para agradecerte por confiar en <strong>TurnoHub</strong> para la gestión de tus consultas y atención diaria.</p>
+              <p>Esperamos que pases un día extraordinario rodeado de tus seres queridos, lleno de alegrías, descanso y muchos éxitos profesionales.</p>
+              <p>¡Gracias por tu dedicación diaria a la salud y al bienestar de tus pacientes!</p>
+            </div>
+
+            <p style="margin-bottom: 25px; font-weight: 600; color: #64748b;">¡Que tengas un año fantástico repleto de metas cumplidas!</p>
+
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" class="button">INGRESAR A MI PANEL</a>
+          </div>
+          <div class="footer">
+            <p>Con mucho cariño, el equipo de <strong>TurnoHub</strong>.</p>
+            <p>&copy; 2026 TurnoHub. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: getSender(),
+      to: to,
+      subject: `🎉 ¡Feliz Cumpleaños, ${doctorName}! 🎂 - De parte de TurnoHub`,
+      html: htmlContent
+    });
+
+    console.log(`✓ Email de cumpleaños enviado con éxito a ${to} (${doctorName}):`, info.messageId);
+    return { sent: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Error enviando email de cumpleaños al profesional:', error.message);
+    return { sent: false, error: error.message };
+  }
+}
+
+

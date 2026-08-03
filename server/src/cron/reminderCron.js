@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { query } from '../db/config.js';
-import { sendAppointmentReminder, sendAdminTrialExpiringNotification } from '../services/emailService.js';
+import { sendAppointmentReminder, sendAdminTrialExpiringNotification, sendDoctorBirthdayGreetingEmail } from '../services/emailService.js';
 import webpush from 'web-push';
 
 import fs from 'fs';
@@ -288,6 +288,53 @@ export const initReminderCron = () => {
       }
     } catch (error) {
       console.error('❌ Error en el cron de alerta admin de prueba gratis:', error.message);
+    }
+  });
+
+  // 5. CRON CUMPLEAÑOS: Felicitación automática por mail a los profesionales en su día (Todos los días a las 08:00 hs)
+  console.log('⏰ Cron de salutaciones de cumpleaños a profesionales inicializado (Todos los días a las 08:00 hs)');
+  cron.schedule('0 8 * * *', async () => {
+    try {
+      console.log('🔍 Buscando profesionales que cumplan años hoy...');
+      
+      const result = await query(`
+        SELECT 
+          id, 
+          name, 
+          email, 
+          date_of_birth
+        FROM doctors
+        WHERE date_of_birth IS NOT NULL
+          AND EXTRACT(MONTH FROM date_of_birth) = EXTRACT(MONTH FROM CURRENT_DATE)
+          AND EXTRACT(DAY FROM date_of_birth) = EXTRACT(DAY FROM CURRENT_DATE)
+          AND (birthday_email_sent_year IS NULL OR birthday_email_sent_year < EXTRACT(YEAR FROM CURRENT_DATE))
+      `);
+
+      if (result.rows.length === 0) {
+        return;
+      }
+
+      console.log(`🎉 ¡Hoy cumplen años ${result.rows.length} profesional(es)! Enviando emails de felicitaciones...`);
+
+      const currentYear = new Date().getFullYear();
+
+      for (const doc of result.rows) {
+        try {
+          const sentResult = await sendDoctorBirthdayGreetingEmail({
+            to: doc.email,
+            doctorName: doc.name
+          });
+
+          if (sentResult.sent) {
+            await query('UPDATE doctors SET birthday_email_sent_year = $1 WHERE id = $2', [currentYear, doc.id]);
+            console.log(`✓ Email de cumpleaños enviado exitosamente a ${doc.name} (${doc.email})`);
+          }
+        } catch (innerErr) {
+          console.error(`❌ Error enviando email de cumpleaños a ${doc.id}:`, innerErr.message);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error en el cron de cumpleaños de profesionales:', error.message);
     }
   });
 };

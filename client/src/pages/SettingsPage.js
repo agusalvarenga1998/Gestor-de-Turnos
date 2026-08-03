@@ -54,7 +54,8 @@ export default function SettingsPage() {
     longitude: null,
     booking_fee: 0,
     appointment_price: 0,
-    mp_connected: false
+    mp_connected: false,
+    date_of_birth: ''
   });
   const [mapCenter, setMapCenter] = useState([-34.6037, -58.3816]);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -304,7 +305,8 @@ export default function SettingsPage() {
         longitude: user.longitude || null,
         booking_fee: user.booking_fee || 0,
         appointment_price: user.appointment_price || 0,
-        mp_connected: user.mp_connected || false
+        mp_connected: user.mp_connected || false,
+        date_of_birth: user.date_of_birth ? user.date_of_birth.substring(0, 10) : ''
       });
       setIsCustomSpecialty(isCustom);
       setCustomSpecialty(isCustom ? spec : '');
@@ -1044,8 +1046,20 @@ export default function SettingsPage() {
                           placeholder="Ej: MED-123456"
                           disabled={savingProfile}
                         />
+                      <div className={styles.formGroup}>
+                        <label htmlFor="date_of_birth">🎂 Fecha de Nacimiento (Cumpleaños)</label>
+                        <input
+                          type="date"
+                          id="date_of_birth"
+                          name="date_of_birth"
+                          value={profileData.date_of_birth || ''}
+                          onChange={handleProfileChange}
+                          disabled={savingProfile}
+                        />
+                        <span style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                          Te enviaremos un saludo por correo y un mensaje especial en tu panel en tu día.
+                        </span>
                       </div>
-                      <div className={styles.formGroup}></div>
                     </div>
 
                     <div className={styles.formRow}>

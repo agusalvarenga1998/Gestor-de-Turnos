@@ -1,0 +1,129 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1.5rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modalCard {
+  background: white;
+  border-radius: 1.25rem;
+  padding: 2.5rem 2rem;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  position: relative;
+  overflow: hidden;
+  animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modalCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b);
+}
+
+.headerDecoration {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.emojiBalloon {
+  animation: float 2s infinite ease-in-out alternate;
+}
+
+.emojiCake {
+  animation: float 2s infinite ease-in-out alternate 0.4s;
+}
+
+.emojiSparkles {
+  animation: float 2s infinite ease-in-out alternate 0.8s;
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+}
+
+.doctorName {
+  margin: 0.4rem 0 1.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.messageBox {
+  background: linear-gradient(135deg, #fdf2f8 0%, #f3e8ff 100%);
+  border: 1px solid #f472b6;
+  border-radius: 0.875rem;
+  padding: 1.25rem;
+  margin-bottom: 1.75rem;
+  text-align: left;
+}
+
+.messageBox p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: #4c1d95;
+  line-height: 1.6;
+}
+
+.messageBox p:last-child {
+  margin-bottom: 0;
+}
+
+.closeBtn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  padding: 0.85rem 2rem;
+  border-radius: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.closeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popUp {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-8px); }
+}
