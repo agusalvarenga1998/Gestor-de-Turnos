@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { query } from '../db/config.js';
-import { sendAppointmentReminder } from '../services/emailService.js';
+import { sendAppointmentReminder, sendAdminTrialExpiringNotification } from '../services/emailService.js';
 import webpush from 'web-push';
 
 import fs from 'fs';
@@ -240,6 +240,54 @@ export const initReminderCron = () => {
       }
     } catch (error) {
       console.error('❌ Error en el cron de resumen diario push:', error.message);
+    }
+  });
+
+  // 4. CRON ADMIN: Alerta al Administrador de fin de prueba gratis en 2 días (Todos los días a las 09:00 hs)
+  console.log('⏰ Cron de alertas admin sobre prueba gratis por vencer inicializado (Todos los días a las 09:00 hs)');
+  cron.schedule('0 9 * * *', async () => {
+    try {
+      console.log('🔍 Buscando médicos con prueba gratis que vence en 2 días...');
+      
+      const result = await query(`
+        SELECT 
+          id, 
+          name, 
+          email, 
+          trial_ends_at
+        FROM doctors
+        WHERE status = 'approved'
+          AND subscription_status = 'trial'
+          AND trial_ends_at IS NOT NULL
+          AND trial_ends_at::date = (CURRENT_DATE + INTERVAL '2 days')::date
+          AND (admin_trial_warning_sent IS NULL OR admin_trial_warning_sent = false)
+      `);
+
+      if (result.rows.length === 0) {
+        return;
+      }
+
+      console.log(`📋 Se enviarán alertas al administrador (admin.turnohub@gmail.com) para ${result.rows.length} médico(s).`);
+
+      for (const doc of result.rows) {
+        try {
+          const sentResult = await sendAdminTrialExpiringNotification({
+            adminEmail: 'admin.turnohub@gmail.com',
+            doctorName: doc.name,
+            doctorEmail: doc.email,
+            trialEndsAt: doc.trial_ends_at
+          });
+
+          if (sentResult.sent) {
+            await query('UPDATE doctors SET admin_trial_warning_sent = true WHERE id = $1', [doc.id]);
+            console.log(`✓ Alerta enviada a admin.turnohub@gmail.com para el doctor ${doc.name}`);
+          }
+        } catch (innerErr) {
+          console.error(`❌ Error enviando alerta admin para doctor ${doc.id}:`, innerErr.message);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error en el cron de alerta admin de prueba gratis:', error.message);
     }
   });
 };

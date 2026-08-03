@@ -43,9 +43,12 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    const cleanPassword = password ? password.trim() : '';
+
     const result = await query(
-      'SELECT id, email, password_hash, name FROM admins WHERE email = $1',
-      [email]
+      'SELECT id, email, password_hash, name FROM admins WHERE LOWER(TRIM(email)) = $1',
+      [cleanEmail]
     );
 
     if (result.rows.length === 0) {
@@ -53,7 +56,7 @@ router.post('/login', async (req, res) => {
     }
 
     const admin = result.rows[0];
-    const passwordMatch = await bcrypt.compare(password, admin.password_hash);
+    const passwordMatch = await bcrypt.compare(cleanPassword, admin.password_hash);
 
     if (!passwordMatch) {
       return res.status(401).json({ error: 'Invalid credentials' });

@@ -2,6 +2,9 @@ import pkg from 'pg';
 const { Pool } = pkg;
 import dotenv from 'dotenv';
 
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
 dotenv.config();
 
 const poolConfig = process.env.DATABASE_URL 
@@ -14,7 +17,7 @@ const poolConfig = process.env.DATABASE_URL
       port: process.env.DB_PORT || 5432,
       database: process.env.DB_NAME || 'consultorio_medico',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
+      password: process.env.DB_PASSWORD || 'Agusagusbmx15$',
     };
 
 const pool = new Pool(poolConfig);
@@ -80,7 +83,8 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS notify_advance_push BOOLEAN DEFAULT true,
       ADD COLUMN IF NOT EXISTS notify_advance_time INTEGER DEFAULT 15,
       ADD COLUMN IF NOT EXISTS notify_email BOOLEAN DEFAULT true,
-      ADD COLUMN IF NOT EXISTS notify_approval_push BOOLEAN DEFAULT true;
+      ADD COLUMN IF NOT EXISTS notify_approval_push BOOLEAN DEFAULT true,
+      ADD COLUMN IF NOT EXISTS admin_trial_warning_sent BOOLEAN DEFAULT false;
     `);
 
     await client.query(`
@@ -419,28 +423,32 @@ async function initDatabase(retries = 3) {
       ADD COLUMN IF NOT EXISTS allow_self_queue BOOLEAN DEFAULT true;
     `);
 
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS waiting_queue (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
-        patient_id UUID REFERENCES patients(id) ON DELETE SET NULL,
-        ticket_number INTEGER NOT NULL,
-        ticket_code VARCHAR(50),
-        tracking_token UUID UNIQUE DEFAULT gen_random_uuid(),
-        patient_name VARCHAR(255) NOT NULL,
-        patient_phone VARCHAR(50),
-        patient_email VARCHAR(255),
-        service_id UUID REFERENCES services(id) ON DELETE SET NULL,
-        service_name VARCHAR(255),
-        status VARCHAR(50) DEFAULT 'waiting',
-        notes TEXT,
-        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        called_at TIMESTAMP,
-        completed_at TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log('✓ Tabla waiting_queue creada');
+    try {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS waiting_queue (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+          patient_id UUID REFERENCES patients(id) ON DELETE SET NULL,
+          ticket_number INTEGER NOT NULL,
+          ticket_code VARCHAR(50),
+          tracking_token UUID UNIQUE DEFAULT gen_random_uuid(),
+          patient_name VARCHAR(255) NOT NULL,
+          patient_phone VARCHAR(50),
+          patient_email VARCHAR(255),
+          service_id UUID,
+          service_name VARCHAR(255),
+          status VARCHAR(50) DEFAULT 'waiting',
+          notes TEXT,
+          joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          called_at TIMESTAMP,
+          completed_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      console.log('✓ Tabla waiting_queue creada/verificada');
+    } catch (wqErr) {
+      console.log('⚠️ Aviso en waiting_queue:', wqErr.message);
+    }
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS support_tickets (
@@ -459,17 +467,17 @@ async function initDatabase(retries = 3) {
     console.log('✓ Tabla support_tickets creada');
 
     // Crear usuario admin por defecto
-    const adminEmail = 'admin@example.com';
+    const adminEmail = 'admin.turnohub@gmail.com';
     const adminPass = 'adminpass123';
     const bcrypt = (await import('bcryptjs')).default;
     const hashedPass = await bcrypt.hash(adminPass, 10);
 
     await client.query(`
       INSERT INTO admins (email, password_hash, name)
-      VALUES ($1, $2, 'Administrador Central')
-      ON CONFLICT (email) DO NOTHING
+      VALUES ($1, $2, 'Administrador TurnoHub')
+      ON CONFLICT (email) DO UPDATE SET name = 'Administrador TurnoHub';
     `, [adminEmail, hashedPass]);
-    console.log('✓ Usuario admin por defecto verificado/creado');
+    console.log('✓ Usuario admin admin.turnohub@gmail.com verificado/creado');
 
     console.log('\n✅ Base de datos inicializada correctamente!');
     process.exit(0);

@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'db',
+  host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'consultorio_medico',
   user: process.env.DB_USER || 'postgres',
@@ -46,11 +46,11 @@ async function setup() {
     const hashedPass = await bcrypt.hash('adminpass123', 10);
     await client.query(`
       INSERT INTO admins (email, password_hash, name)
-      VALUES ('admin@example.com', $1, 'Administrador')
-      ON CONFLICT (email) DO NOTHING;
+      VALUES ('admin.turnohub@gmail.com', $1, 'Administrador TurnoHub')
+      ON CONFLICT (email) DO UPDATE SET name = 'Administrador TurnoHub';
     `, [hashedPass]);
 
-    console.log('✅ Tablas creadas y usuario admin@example.com listo.');
+    console.log('✅ Tablas creadas y usuario admin.turnohub@gmail.com listo.');
     process.exit(0);
   } catch (e) {
     console.error('❌ Error:', e.message);

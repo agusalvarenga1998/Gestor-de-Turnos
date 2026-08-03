@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 // Forzar que el tipo DATE (OID 1082) se retorne como string en lugar de objeto Date de JS
 types.setTypeParser(1082, (val) => val);
 
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
 dotenv.config();
 
 const poolConfig = process.env.DATABASE_URL 
@@ -17,7 +20,7 @@ const poolConfig = process.env.DATABASE_URL
       port: process.env.DB_PORT || 5432,
       database: process.env.DB_NAME || 'consultorio_medico',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
+      password: process.env.DB_PASSWORD || 'Agusagusbmx15$',
     };
 
 const pool = new Pool({

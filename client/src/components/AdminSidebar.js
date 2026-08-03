@@ -1,13 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../hooks/useAdminAuth';
+import axios from 'axios';
 import styles from './AdminSidebar.module.css';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAdminAuth();
+  const { admin, token, logout } = useAdminAuth();
   const [isOpen, setIsOpen] = useState(true);
+  const [pendingDoctorsCount, setPendingDoctorsCount] = useState(0);
+  const [pendingTicketsCount, setPendingTicketsCount] = useState(0);
+
+  useEffect(() => {
+    if (token) {
+      fetchSidebarCounters();
+    }
+  }, [token, location.pathname]);
+
+  const fetchSidebarCounters = async () => {
+    try {
+      // 1. Obtener doctores pendientes
+      const docsRes = await axios.get(`${API_BASE_URL}/api/admin/doctors`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (docsRes.data?.success && docsRes.data?.doctors) {
+        const pending = docsRes.data.doctors.filter(d => d.status === 'pending').length;
+        setPendingDoctorsCount(pending);
+      }
+
+      // 2. Obtener tickets pendientes
+      try {
+        const ticketsRes = await axios.get(`${API_BASE_URL}/api/admin/tickets`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (ticketsRes.data?.success && ticketsRes.data?.tickets) {
+          const pendingT = ticketsRes.data.tickets.filter(t => t.status === 'pending').length;
+          setPendingTicketsCount(pendingT);
+        }
+      } catch (e) {
+        // Ignorar si el endpoint no existe o falla silenciosamente
+      }
+    } catch (error) {
+      // Error silencioso para no romper renderizado de sidebar
+    }
+  };
 
   const menuItems = [
     {
@@ -18,7 +57,9 @@ export default function AdminSidebar() {
     {
       label: 'Profesionales',
       icon: '👥',
-      path: '/admin/doctors'
+      path: '/admin/doctors',
+      badge: pendingDoctorsCount > 0 ? pendingDoctorsCount : null,
+      badgeColor: '#f59e0b'
     },
     {
       label: 'Planes y Pagos',
@@ -48,7 +89,9 @@ export default function AdminSidebar() {
     {
       label: 'Tickets de Soporte',
       icon: '📩',
-      path: '/admin/support-tickets'
+      path: '/admin/support-tickets',
+      badge: pendingTicketsCount > 0 ? pendingTicketsCount : null,
+      badgeColor: '#ef4444'
     },
     {
       label: 'Transacciones y Actividad',
@@ -60,7 +103,7 @@ export default function AdminSidebar() {
   const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
-    if (window.confirm('¿Deseas cerrar sesión?')) {
+    if (window.confirm('¿Deseas cerrar la sesión de administrador?')) {
       logout();
       navigate('/admin/login');
     }
@@ -76,6 +119,7 @@ export default function AdminSidebar() {
         <button
           className={styles.toggleBtn}
           onClick={() => setIsOpen(!isOpen)}
+          title={isOpen ? "Colapsar menú" : "Expandir menú"}
         >
           {isOpen ? '◀' : '▶'}
         </button>
@@ -91,11 +135,29 @@ export default function AdminSidebar() {
           >
             <span className={styles.icon}>{item.icon}</span>
             {isOpen && <span className={styles.label}>{item.label}</span>}
+            {item.badge && (
+              <span 
+                className={styles.badge} 
+                style={{ backgroundColor: item.badgeColor || '#ef4444' }}
+                title={`${item.badge} pendientes`}
+              >
+                {item.badge}
+              </span>
+            )}
           </button>
         ))}
       </nav>
 
       <div className={styles.footer}>
+        {isOpen && (
+          <div className={styles.userInfo}>
+            <span className={styles.userRole}>SUPERADMIN</span>
+            <span className={styles.userEmail} title={admin?.email || 'admin.turnohub@gmail.com'}>
+              {admin?.email || 'admin.turnohub@gmail.com'}
+            </span>
+          </div>
+        )}
+
         <button
           className={styles.logoutBtn}
           onClick={handleLogout}

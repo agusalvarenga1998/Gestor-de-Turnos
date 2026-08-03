@@ -1159,3 +1159,93 @@ export async function sendErrorLogEmail({
     return { sent: false, error: err.message };
   }
 }
+
+// Enviar notificación al administrador cuando la prueba gratis de un médico vence en 2 días
+export async function sendAdminTrialExpiringNotification({
+  adminEmail = 'admin.turnohub@gmail.com',
+  doctorName,
+  doctorEmail,
+  trialEndsAt
+}) {
+  try {
+    const formattedDate = new Date(trialEndsAt).toLocaleDateString('es-AR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+          .header { background: linear-gradient(135deg, #f59e0b, #d97706); padding: 30px; text-align: center; color: white; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+          .content { padding: 30px; }
+          .alert-pill { display: inline-block; background-color: #fef3c7; color: #92400e; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; margin-bottom: 20px; }
+          .card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+          .field { display: flex; margin-bottom: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; }
+          .field:last-child { border-bottom: none; margin-bottom: 0; }
+          .label { width: 140px; font-weight: 600; color: #64748b; font-size: 13px; }
+          .value { flex: 1; color: #0f172a; font-weight: 600; font-size: 14px; }
+          .button { display: block; background: #2563eb; color: white; padding: 14px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; text-align: center; margin-top: 25px; }
+          .footer { padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; background-color: #f8fafc; border-top: 1px solid #e2e8f0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>⏳ Alerta de Fin de Prueba Gratis (2 días restantes)</h1>
+          </div>
+          <div class="content">
+            <div class="alert-pill">⚠️ ACCIÓN PREVENTIVA ADMIN</div>
+            <p>Hola <strong>Administrador TurnoHub</strong>,</p>
+            <p>Te notificamos que la prueba gratuita de 30 días para el profesional <strong>${doctorName}</strong> finalizará en <strong>2 días</strong>.</p>
+            
+            <div class="card">
+              <div class="field">
+                <span class="label">👨‍⚕️ Profesional:</span>
+                <span class="value">${doctorName}</span>
+              </div>
+              <div class="field">
+                <span class="label">📧 Correo:</span>
+                <span class="value">${doctorEmail}</span>
+              </div>
+              <div class="field">
+                <span class="label">📅 Fin de Prueba:</span>
+                <span class="value" style="color: #d97706;">${formattedDate}</span>
+              </div>
+            </div>
+
+            <p style="font-size: 14px; color: #475569;">Puedes comunicarte con el profesional para coordinar la activación de un plan o monitorear el estado de su cuenta desde el panel de administración.</p>
+
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/doctors" class="button">IR AL PANEL DE CONTROL ADMIN</a>
+          </div>
+          <div class="footer">
+            <p>Notificación automática del sistema TurnoHub Admin.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: getSender(),
+      to: adminEmail,
+      subject: `⏳ [ADMIN] Faltan 2 días para que termine la prueba gratis de ${doctorName}`,
+      html: htmlContent
+    });
+
+    console.log(`✓ Email de alerta fin de prueba enviado a ${adminEmail} para el doctor ${doctorName}:`, info.messageId);
+    return { sent: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Error enviando email de alerta de fin de prueba al admin:', error.message);
+    return { sent: false, error: error.message };
+  }
+}
+

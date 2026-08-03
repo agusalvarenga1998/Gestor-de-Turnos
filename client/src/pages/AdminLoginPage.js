@@ -58,12 +58,15 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.email || !formData.password) {
+    const cleanEmail = formData.email.trim();
+    const cleanPassword = formData.password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
       setLocalError('Por favor completa todos los campos');
       return;
     }
 
-    const result = await login(formData.email, formData.password);
+    const result = await login(cleanEmail, cleanPassword);
 
     if (!result.success) {
       setLocalError(result.error);
@@ -145,7 +148,7 @@ export default function AdminLoginPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="admin@example.com"
+                placeholder="admin.turnohub@gmail.com"
                 disabled={loading}
               />
             </div>
