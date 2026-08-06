@@ -7,6 +7,29 @@ import styles from './AdminPlansPage.module.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
+const ALL_APP_FEATURES = [
+  'Portal de Reservas Online para Pacientes 24/7 (Link personalizado)',
+  'Cobro Automático de Señas y Consultas con Mercado Pago',
+  'Sincronización Bidireccional Automática con Google Calendar',
+  'Recordatorios y Confirmaciones de Citas por WhatsApp',
+  'Notificaciones y Confirmaciones de Turnos por Email',
+  'Notificaciones Web Push en Tiempo Real en Celular o PC',
+  'Gestión de Fila en Vivo (Turnero Virtual y Pantalla Llamadora)',
+  'Ingreso Autónomo de Pacientes a Fila mediante Código QR',
+  'Gestión de Obras Sociales, Prepagas, Coberturas y Coseguros',
+  'Historia Clínica Digital Completa y Expedientes de Pacientes',
+  'Subida de Estudios Médicos, Imágenes y Archivos Adjuntos',
+  'Odontograma Digital Interactivo por Pieza Dental',
+  'Módulo de Caja y Finanzas (Ingresos, Señas, Gastos y Balance)',
+  'Estadísticas Avanzadas e Indicadores de Gestión y Ausentismo',
+  'Exportación de Turnos, Pacientes y Reportes a Excel (.xlsx)',
+  'Consultas Online y Telemedicina (Google Meet Automático)',
+  'Configuración de Horarios Flexibles y Bloqueo de Vacaciones',
+  'Envíos Automáticos de Saludos de Cumpleaños por Email',
+  'Aplicación Web y Móvil Instalable (PWA) sin tiendas',
+  'Soporte Técnico Preferencial y Asistencia Directa por WhatsApp'
+];
+
 export default function AdminPlansPage() {
   const { token } = useAdminAuth();
   const [plans, setPlans] = useState([]);
@@ -87,7 +110,7 @@ export default function AdminPlansPage() {
       description: '',
       price: '',
       price_period: '',
-      features: [],
+      features: [...ALL_APP_FEATURES],
       is_popular: false,
       is_enabled: true,
       allow_google_calendar: true,
@@ -157,6 +180,37 @@ export default function AdminPlansPage() {
     }));
   };
 
+  const handleLoadAllFeatures = () => {
+    setEditFormData(prev => ({
+      ...prev,
+      features: [...ALL_APP_FEATURES]
+    }));
+  };
+
+  const handleClearFeatures = () => {
+    setEditFormData(prev => ({
+      ...prev,
+      features: []
+    }));
+  };
+
+  const handleTogglePresetFeature = (feat) => {
+    setEditFormData(prev => {
+      const exists = prev.features.includes(feat);
+      if (exists) {
+        return {
+          ...prev,
+          features: prev.features.filter(f => f !== feat)
+        };
+      } else {
+        return {
+          ...prev,
+          features: [...prev.features, feat]
+        };
+      }
+    });
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!editFormData.name || !editFormData.price) {
@@ -185,7 +239,6 @@ export default function AdminPlansPage() {
       };
 
       if (selectedPlan.isNew) {
-        // CREAR PLAN NUEVO
         response = await axios.post(
           `${API_BASE_URL}/api/admin/plans`,
           payload,
@@ -194,7 +247,6 @@ export default function AdminPlansPage() {
           }
         );
       } else {
-        // ACTUALIZAR PLAN EXISTENTE
         response = await axios.put(
           `${API_BASE_URL}/api/admin/plans/${selectedPlan.id}`,
           payload,
@@ -207,7 +259,7 @@ export default function AdminPlansPage() {
       if (response.data.success) {
         setSuccessMsg(selectedPlan.isNew ? 'Plan comercial creado correctamente.' : 'Plan comercial actualizado correctamente.');
         setSelectedPlan(null);
-        fetchPlans(); // Recargar listado
+        fetchPlans();
       }
     } catch (err) {
       console.error('Error saving plan:', err);
@@ -263,14 +315,18 @@ export default function AdminPlansPage() {
                     {plan.price} <span>/ {plan.price_period}</span>
                   </div>
 
-                  <ul className={styles.pricingFeatures}>
-                    {(plan.features || []).map((feat, index) => (
-                      <li key={index}>
-                        <Icon name="check" size={16} className={styles.checkIcon} />
-                        {feat}
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Lista scrollable de funcionalidades */}
+                  <div className={styles.featuresContainer}>
+                    <p className={styles.featuresCountTitle}>Funcionalidades ({ (plan.features || []).length }):</p>
+                    <ul className={styles.pricingFeatures}>
+                      {(plan.features || []).map((feat, index) => (
+                        <li key={index}>
+                          <Icon name="check" size={16} className={styles.checkIcon} />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                   <div className={styles.technicalLimits}>
                     <div><strong>Google Calendar:</strong> {plan.allow_google_calendar ? 'Habilitado' : 'Bloqueado'}</div>
@@ -473,14 +529,56 @@ export default function AdminPlansPage() {
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label>Beneficios / Características</label>
+                    <label className={styles.featuresSectionHeader}>
+                      <span>Beneficios / Funcionalidades ({editFormData.features.length})</span>
+                    </label>
+
+                    <div className={styles.presetToolbar}>
+                      <button 
+                        type="button" 
+                        className={styles.presetBtn}
+                        onClick={handleLoadAllFeatures}
+                      >
+                        ✨ Cargar 20 Funcionalidades
+                      </button>
+                      <button 
+                        type="button" 
+                        className={styles.clearBtn}
+                        onClick={handleClearFeatures}
+                      >
+                        🧹 Vaciar Lista
+                      </button>
+                    </div>
+
+                    {/* Selector interactivo con Checkboxes */}
+                    <div className={styles.quickToggleBox}>
+                      <p className={styles.quickToggleTitle}>Marcar / Desmarcar funcionalidades:</p>
+                      <div className={styles.quickToggleList}>
+                        {ALL_APP_FEATURES.map((feat, idx) => {
+                          const isChecked = editFormData.features.includes(feat);
+                          return (
+                            <label key={idx} className={`${styles.quickToggleItem} ${isChecked ? styles.activeItem : ''}`}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleTogglePresetFeature(feat)}
+                              />
+                              <span>{feat}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Edición de texto libre */}
                     <div className={styles.featuresManager}>
+                      <p className={styles.featuresManagerTitle}>Modificar texto o agregar filas personalizadas:</p>
                       {editFormData.features.map((feat, index) => (
                         <div key={index} className={styles.featureItemInput}>
                           <input 
                             type="text" 
                             value={feat} 
-                            placeholder="Ej: Todas las funcionalidades" 
+                            placeholder="Ej: Característica personalizada" 
                             onChange={(e) => handleFeatureChange(index, e.target.value)} 
                           />
                           <button 
@@ -497,7 +595,7 @@ export default function AdminPlansPage() {
                         className={styles.addFeatureBtn}
                         onClick={addFeatureRow}
                       >
-                        + Agregar Beneficio
+                        + Agregar Beneficio Manual
                       </button>
                     </div>
                   </div>

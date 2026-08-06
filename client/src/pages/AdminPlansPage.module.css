@@ -128,161 +128,157 @@
   color: var(--gray);
 }
 
+.featuresContainer {
+  margin: 1rem 0;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem;
+  flex-grow: 1;
+}
+
+.featuresCountTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--dark-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.5rem 0;
+}
+
 .pricingFeatures {
   list-style: none;
   padding: 0;
-  margin: 1.5rem 0;
-  flex-grow: 1;
+  margin: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .pricingFeatures li {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.825rem;
   color: var(--text-primary);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
 }
 
 .checkIcon {
   color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
-.cardActions {
-  margin-top: 1.5rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-
-.editBtn {
-  width: 100%;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--dark-gray);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.editBtn:hover {
-  background: var(--primary-color, #2563eb);
-  color: white;
-  border-color: var(--primary-color, #2563eb);
-}
-
-.deleteBtn {
-  width: 100%;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #fee2e2;
-  background: #fee2e2;
-  color: #ef4444;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.deleteBtn:hover {
-  background: #ef4444;
-  color: white;
-  border-color: #ef4444;
-}
-
-.createBtn {
-  background: var(--primary-color, #2563eb);
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.createBtn:hover {
-  opacity: 0.9;
-}
-
-/* Editor Sidebar */
-.editorCard {
-  background: white;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  position: sticky;
-  top: 2rem;
-  height: fit-content;
-}
-
-.editorCard h2 {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 1.3rem;
-  color: var(--dark-gray);
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.75rem;
-}
-
-.formGroup {
-  margin-bottom: 1.25rem;
-}
-
-.formGroup label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--dark-gray);
+.featuresSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.5rem;
 }
 
-.formGroup input[type="text"],
-.formGroup textarea {
-  width: 100%;
-  padding: 0.6rem 0.8rem;
+.presetToolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.presetBtn {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  padding: 0.4rem 0.75rem;
   border-radius: 0.375rem;
-  border: 1px solid var(--border-color);
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
 }
 
-.formGroup input[type="text"]:focus,
-.formGroup textarea:focus {
-  border-color: var(--primary-color, #2563eb);
+.presetBtn:hover {
+  background: #dbeafe;
 }
 
-.checkboxes {
+.clearBtn {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clearBtn:hover {
+  background: #fee2e2;
+}
+
+.quickToggleBox {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: white;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.quickToggleTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--dark-gray);
+  margin: 0 0 0.5rem 0;
+}
+
+.quickToggleList {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin: 1.5rem 0;
+  gap: 0.35rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-.checkboxLabel {
+.quickToggleItem {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  color: #475569;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.quickToggleItem:hover {
+  background: #f1f5f9;
+}
+
+.quickToggleItem.activeItem {
+  background: #f0fdf4;
+  color: #166534;
   font-weight: 600;
-  color: var(--dark-gray);
+}
+
+.quickToggleItem input {
+  margin-top: 2px;
   cursor: pointer;
 }
 
-.checkboxLabel input {
-  width: 1.1rem;
-  height: 1.1rem;
-  cursor: pointer;
+.featuresManagerTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--dark-gray);
+  margin: 0 0 0.5rem 0;
 }
 
 .featuresManager {
   border: 1px solid var(--border-color);
   border-radius: 0.375rem;
-  padding: 1rem;
+  padding: 0.75rem;
   background: var(--bg-primary);
 }
 
