@@ -243,8 +243,50 @@ httpServer.listen(PORT, HOST, async () => {
     await query(`
       INSERT INTO pricing_plans (key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance)
       VALUES 
-      ('commission', 'Plan Comisión', 'Ideal para quienes recién comienzan', '3%', 'por turno efectivo', ARRAY['Todas las funcionalidades', 'Pacientes ilimitados', 'Soporte estándar', 'Pagas solo si trabajas'], false, true, true, true, true, true, true),
-      ('monthly', 'Plan Mensual', 'Para profesionales establecidos', 'Consultar', 'mes fijo', ARRAY['Funcionalidades avanzadas', 'Soporte prioritario 24/7', 'Integraciones personalizadas', 'Sin cobros por comisión'], true, true, true, true, true, true, true)
+      ('commission', 'Plan Comisión', 'Ideal para quienes recién comienzan', '3%', 'por turno efectivo', ARRAY[
+        'Portal de Reservas Online para Pacientes 24/7 (Link personalizado)',
+        'Cobro Automático de Señas y Consultas con Mercado Pago',
+        'Sincronización Bidireccional Automática con Google Calendar',
+        'Recordatorios y Confirmaciones de Citas por WhatsApp',
+        'Notificaciones y Confirmaciones de Turnos por Email',
+        'Notificaciones Web Push en Tiempo Real en Celular o PC',
+        'Gestión de Fila en Vivo (Turnero Virtual y Pantalla Llamadora)',
+        'Ingreso Autónomo de Pacientes a Fila mediante Código QR',
+        'Gestión de Obras Sociales, Prepagas, Coberturas y Coseguros',
+        'Historia Clínica Digital Completa y Expedientes de Pacientes',
+        'Subida de Estudios Médicos, Imágenes y Archivos Adjuntos',
+        'Odontograma Digital Interactivo por Pieza Dental',
+        'Módulo de Caja y Finanzas (Ingresos, Señas, Gastos y Balance)',
+        'Estadísticas Avanzadas e Indicadores de Gestión y Ausentismo',
+        'Exportación de Turnos, Pacientes y Reportes a Excel (.xlsx)',
+        'Consultas Online y Telemedicina (Google Meet Automático)',
+        'Configuración de Horarios Flexibles y Bloqueo de Vacaciones',
+        'Envíos Automáticos de Saludos de Cumpleaños por Email',
+        'Aplicación Web y Móvil Instalable (PWA) sin tiendas',
+        'Soporte Técnico Preferencial y Asistencia Directa por WhatsApp'
+      ], false, true, true, true, true, true, true),
+      ('monthly', 'Plan Mensual', 'Para profesionales establecidos', 'Consultar', 'mes fijo', ARRAY[
+        'Portal de Reservas Online para Pacientes 24/7 (Link personalizado)',
+        'Cobro Automático de Señas y Consultas con Mercado Pago',
+        'Sincronización Bidireccional Automática con Google Calendar',
+        'Recordatorios y Confirmaciones de Citas por WhatsApp',
+        'Notificaciones y Confirmaciones de Turnos por Email',
+        'Notificaciones Web Push en Tiempo Real en Celular o PC',
+        'Gestión de Fila en Vivo (Turnero Virtual y Pantalla Llamadora)',
+        'Ingreso Autónomo de Pacientes a Fila mediante Código QR',
+        'Gestión de Obras Sociales, Prepagas, Coberturas y Coseguros',
+        'Historia Clínica Digital Completa y Expedientes de Pacientes',
+        'Subida de Estudios Médicos, Imágenes y Archivos Adjuntos',
+        'Odontograma Digital Interactivo por Pieza Dental',
+        'Módulo de Caja y Finanzas (Ingresos, Señas, Gastos y Balance)',
+        'Estadísticas Avanzadas e Indicadores de Gestión y Ausentismo',
+        'Exportación de Turnos, Pacientes y Reportes a Excel (.xlsx)',
+        'Consultas Online y Telemedicina (Google Meet Automático)',
+        'Configuración de Horarios Flexibles y Bloqueo de Vacaciones',
+        'Envíos Automáticos de Saludos de Cumpleaños por Email',
+        'Aplicación Web y Móvil Instalable (PWA) sin tiendas',
+        'Soporte Técnico Preferencial y Asistencia Directa por WhatsApp'
+      ], true, true, true, true, true, true, true)
       ON CONFLICT (key) DO NOTHING
     `);
 
