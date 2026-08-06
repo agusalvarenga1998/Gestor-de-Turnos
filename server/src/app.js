@@ -241,52 +241,58 @@ httpServer.listen(PORT, HOST, async () => {
 
     // Poblar planes por defecto si no existen
     await query(`
-      INSERT INTO pricing_plans (key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance)
+      INSERT INTO pricing_plans (key, name, description, price, price_period, features, is_popular, is_enabled, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking)
       VALUES 
-      ('commission', 'Plan Comisión', 'Ideal para quienes recién comienzan', '3%', 'por turno efectivo', ARRAY[
+      ('mensual_pro', 'Plan Mensual Pro + Consultas Online', 'Para profesionales de la salud, medicina, psicología y estética que buscan automatización total.', '$24.999', 'mes fijo', ARRAY[
         'Portal de Reservas Online para Pacientes 24/7 (Link personalizado)',
+        'Consultas Online y Telemedicina (Google Meet Automático)',
         'Cobro Automático de Señas y Consultas con Mercado Pago',
         'Sincronización Bidireccional Automática con Google Calendar',
-        'Recordatorios y Confirmaciones de Citas por WhatsApp',
-        'Notificaciones y Confirmaciones de Turnos por Email',
+        'Recordatorios y Confirmaciones de Citas por WhatsApp y Email',
         'Notificaciones Web Push en Tiempo Real en Celular o PC',
-        'Gestión de Fila en Vivo (Turnero Virtual y Pantalla Llamadora)',
-        'Ingreso Autónomo de Pacientes a Fila mediante Código QR',
-        'Gestión de Obras Sociales, Prepagas, Coberturas y Coseguros',
         'Historia Clínica Digital Completa y Expedientes de Pacientes',
         'Subida de Estudios Médicos, Imágenes y Archivos Adjuntos',
-        'Odontograma Digital Interactivo por Pieza Dental',
+        'Gestión de Obras Sociales, Prepagas, Coberturas y Coseguros',
         'Módulo de Caja y Finanzas (Ingresos, Señas, Gastos y Balance)',
         'Estadísticas Avanzadas e Indicadores de Gestión y Ausentismo',
         'Exportación de Turnos, Pacientes y Reportes a Excel (.xlsx)',
-        'Consultas Online y Telemedicina (Google Meet Automático)',
-        'Configuración de Horarios Flexibles y Bloqueo de Vacaciones',
         'Envíos Automáticos de Saludos de Cumpleaños por Email',
-        'Aplicación Web y Móvil Instalable (PWA) sin tiendas',
         'Soporte Técnico Preferencial y Asistencia Directa por WhatsApp'
-      ], false, true, true, true, true, true, true),
-      ('monthly', 'Plan Mensual', 'Para profesionales establecidos', 'Consultar', 'mes fijo', ARRAY[
-        'Portal de Reservas Online para Pacientes 24/7 (Link personalizado)',
+      ], true, true, true, true, true, true, true, true),
+      ('odontologia', 'Plan Odontología & Clínicas Dentales', 'Diseñado especialmente para Odontólogos, Dentistas y Centros Odontológicos.', '$29.999', 'mes fijo', ARRAY[
+        'Odontograma Digital Interactivo por Pieza Dental y Tratamientos',
+        'Historia Clínica Odontológica con Radiografías y Adjuntos',
         'Cobro Automático de Señas y Consultas con Mercado Pago',
+        'Recordatorios y Confirmaciones de Turnos por WhatsApp y Email',
         'Sincronización Bidireccional Automática con Google Calendar',
-        'Recordatorios y Confirmaciones de Citas por WhatsApp',
-        'Notificaciones y Confirmaciones de Turnos por Email',
-        'Notificaciones Web Push en Tiempo Real en Celular o PC',
-        'Gestión de Fila en Vivo (Turnero Virtual y Pantalla Llamadora)',
-        'Ingreso Autónomo de Pacientes a Fila mediante Código QR',
         'Gestión de Obras Sociales, Prepagas, Coberturas y Coseguros',
-        'Historia Clínica Digital Completa y Expedientes de Pacientes',
-        'Subida de Estudios Médicos, Imágenes y Archivos Adjuntos',
-        'Odontograma Digital Interactivo por Pieza Dental',
-        'Módulo de Caja y Finanzas (Ingresos, Señas, Gastos y Balance)',
-        'Estadísticas Avanzadas e Indicadores de Gestión y Ausentismo',
-        'Exportación de Turnos, Pacientes y Reportes a Excel (.xlsx)',
-        'Consultas Online y Telemedicina (Google Meet Automático)',
-        'Configuración de Horarios Flexibles y Bloqueo de Vacaciones',
-        'Envíos Automáticos de Saludos de Cumpleaños por Email',
-        'Aplicación Web y Móvil Instalable (PWA) sin tiendas',
+        'Módulo de Caja, Finanzas y Balance en Tiempo Real',
+        'Estadísticas de Ausentismo y Exportación a Excel (.xlsx)',
+        'Notificaciones Web Push en Tiempo Real (PWA)',
         'Soporte Técnico Preferencial y Asistencia Directa por WhatsApp'
-      ], true, true, true, true, true, true, true)
+      ], false, true, true, true, true, true, true, true),
+      ('orden_llegada', 'Plan Fila Virtual & Orden de Llegada', 'Ideal para guardias, atención espontánea, barberías, estética y laboratorios sin cita previa.', '$18.999', 'mes fijo', ARRAY[
+        'Gestión de Fila en Vivo y Turnero Virtual por Orden de Llegada',
+        'Pantalla Llamadora de Pacientes / Clientes en tiempo real',
+        'Ingreso Autónomo a Fila mediante Código QR en Sala de Espera',
+        'Seguimiento del Lugar en Fila en vivo en celular del Paciente',
+        'Notificaciones Web Push y Avisos por WhatsApp cuando es su turno',
+        'Módulo de Caja y Registro de Cobros de Servicios',
+        'Estadísticas de Tiempos de Espera y Flujo de Clientes',
+        'Exportación de Reportes e Historial a Excel (.xlsx)',
+        'Aplicación Web y Móvil Instalable (PWA)',
+        'Soporte Técnico Preferencial por WhatsApp'
+      ], false, true, false, true, false, true, true, false),
+      ('commission', 'Plan Comisión Inicial', 'Ideal para profesionales que recién comienzan y no desean costo fijo mensual.', '3%', 'por turno efectivo', ARRAY[
+        'Portal de Reservas Online para Pacientes 24/7 (Link personalizado)',
+        'Cobro de Señas con Mercado Pago',
+        'Notificaciones y Confirmaciones por WhatsApp y Email',
+        'Historia Clínica Digital y Expedientes de Pacientes',
+        'Configuración de Horarios Flexibles de Atención',
+        'Módulo de Caja e Ingresos Básico',
+        'Aplicación Web y Móvil Instalable (PWA)',
+        'Sin costo de mantenimiento mensual (Pagas solo si trabajas)'
+      ], false, true, true, true, false, true, true, true)
       ON CONFLICT (key) DO NOTHING
     `);
 
