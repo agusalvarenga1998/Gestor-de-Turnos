@@ -1046,6 +1046,7 @@ export default function SettingsPage() {
                           placeholder="Ej: MED-123456"
                           disabled={savingProfile}
                         />
+                      </div>
                       <div className={styles.formGroup}>
                         <label htmlFor="date_of_birth">🎂 Fecha de Nacimiento (Cumpleaños)</label>
                         <input

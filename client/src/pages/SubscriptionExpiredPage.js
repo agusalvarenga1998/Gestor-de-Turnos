@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import axios from 'axios';
 import apiClient from '../services/api';
+import Icon from '../components/Icon';
 import styles from './SubscriptionExpiredPage.module.css';
 
 export default function SubscriptionExpiredPage() {
@@ -86,6 +87,33 @@ export default function SubscriptionExpiredPage() {
     }
   };
 
+  const getPlanFeatures = (p) => {
+    if (Array.isArray(p.features) && p.features.length > 0) {
+      return p.features;
+    }
+    if (typeof p.features === 'string' && p.features.trim()) {
+      try {
+        const parsed = JSON.parse(p.features);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        const split = p.features.split(',').map(s => s.trim()).filter(Boolean);
+        if (split.length > 0) return split;
+      }
+    }
+    
+    const list = [];
+    if (p.allow_patient_booking !== false) list.push('Portal de Reservas de Pacientes');
+    if (p.allow_mercadopago !== false) list.push('Cobros de Señas con Mercado Pago');
+    if (p.allow_google_calendar !== false) list.push('Sincronización con Google Calendar');
+    if (p.allow_reminders !== false) list.push('Recordatorios automáticos');
+    if (p.allow_insurance !== false) list.push('Gestión de Obras Sociales');
+    if (p.allow_telemedicine) list.push('Consultas Online / Telemedicina');
+    if (list.length === 0) {
+      list.push('Gestión completa de turnos y pacientes', 'Soporte técnico preferencial');
+    }
+    return list;
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>
@@ -116,45 +144,84 @@ export default function SubscriptionExpiredPage() {
             <p>Cargando planes comerciales...</p>
           ) : (
             <div className={styles.plansGrid}>
-              {plans.map(p => (
-                <div key={p.id} className={`${styles.planCard} ${p.is_popular ? styles.popular : ''}`}>
-                  {p.is_popular && <span className={styles.popularLabel}>Recomendado</span>}
-                  <h3>{p.name}</h3>
-                  <div className={styles.price}>
-                    <span className={styles.amount}>
-                      {(() => {
-                        if (p.price === null || p.price === undefined || p.price === '') return 'Consultar';
-                        const str = String(p.price).trim();
-                        if (str.includes('%')) return str;
-                        const num = parseFloat(str);
-                        if (!isNaN(num)) return `$${num.toLocaleString('es-AR')}`;
-                        return str.startsWith('$') ? str : `$${str}`;
-                      })()}
-                    </span>
-                    <span className={styles.period}>/ {p.price_period === 'monthly' ? 'mes' : (p.price_period || 'mes')}</span>
+              {plans.map(p => {
+                const featureList = getPlanFeatures(p);
+                return (
+                  <div key={p.id} className={`${styles.planCard} ${p.is_popular ? styles.popular : ''}`}>
+                    {p.is_popular && <span className={styles.popularLabel}>Recomendado</span>}
+                    <h3>{p.name}</h3>
+                    <div className={styles.price}>
+                      <span className={styles.amount}>
+                        {(() => {
+                          if (p.price === null || p.price === undefined || p.price === '') return 'Consultar';
+                          const str = String(p.price).trim();
+                          if (str.includes('%')) return str;
+                          const num = parseFloat(str);
+                          if (!isNaN(num)) return `$${num.toLocaleString('es-AR')}`;
+                          return str.startsWith('$') ? str : `$${str}`;
+                        })()}
+                      </span>
+                      <span className={styles.period}>/ {p.price_period === 'monthly' ? 'mes' : (p.price_period || 'mes')}</span>
+                    </div>
+                    <p className={styles.planDesc}>{p.description}</p>
+                    
+                    {featureList.length > 0 && (
+                      <div className={styles.featuresWrapper}>
+                        <p className={styles.featuresTitle}>Incluye:</p>
+                        <ul className={styles.featuresList}>
+                          {featureList.map((f, i) => (
+                            <li key={i}>
+                              <span className={styles.checkIcon}>✓</span>
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className={styles.planActions}>
+                      <button
+                        className={styles.payBtn}
+                        onClick={() => handlePayPlan(p.id)}
+                        disabled={submitting}
+                      >
+                        Pagar Online
+                      </button>
+                      <button
+                        className={styles.requestBtn}
+                        onClick={() => handleRequestPlan(p.id)}
+                        disabled={submitting}
+                      >
+                        Solicitar Habilitación Manual
+                      </button>
+                    </div>
                   </div>
-                  <p className={styles.planDesc}>{p.description}</p>
-                  
-                  <div className={styles.planActions}>
-                    <button
-                      className={styles.payBtn}
-                      onClick={() => handlePayPlan(p.id)}
-                      disabled={submitting}
-                    >
-                      Pagar Online
-                    </button>
-                    <button
-                      className={styles.requestBtn}
-                      onClick={() => handleRequestPlan(p.id)}
-                      disabled={submitting}
-                    >
-                      Solicitar Habilitación Manual
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+        </div>
+
+        {/* Sección de contacto por WhatsApp */}
+        <div className={styles.contactCard}>
+          <div className={styles.contactInfo}>
+            <div className={styles.wppIconBadge}>
+              <Icon name="whatsapp" size={26} color="#25D366" />
+            </div>
+            <div className={styles.contactDetails}>
+              <h4>¿Tienes dudas o necesitas ayuda?</h4>
+              <p>Contactate con nosotros para más información sobre planes y promociones.</p>
+            </div>
+          </div>
+          <a
+            href="https://wa.me/5493765409032?text=Hola%20TurnoHub,%20quisiera%20más%20información%20sobre%20los%20planes%20de%20suscripción."
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.contactWppBtn}
+          >
+            <Icon name="whatsapp" size={18} color="#FFFFFF" />
+            <span>Contactar por WhatsApp</span>
+          </a>
         </div>
 
         <div className={styles.footerActions}>

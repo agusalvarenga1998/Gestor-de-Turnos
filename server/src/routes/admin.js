@@ -565,7 +565,7 @@ router.patch('/doctors/:id/plan', verifyAdmin, async (req, res) => {
 router.get('/public/plans', async (req, res) => {
   try {
     const result = await query(
-      'SELECT id, key, name, description, price, price_period, features, is_popular FROM pricing_plans WHERE is_enabled = true ORDER BY is_popular DESC, created_at ASC'
+      'SELECT id, key, name, description, price, price_period, features, is_popular, allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking, max_patients, max_appointments_monthly FROM pricing_plans WHERE is_enabled = true ORDER BY is_popular DESC, created_at ASC'
     );
     res.json({ success: true, plans: result.rows });
   } catch (error) {

@@ -181,17 +181,58 @@
 }
 
 .planDesc {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--gray);
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0;
   line-height: 1.4;
+}
+
+.featuresWrapper {
+  margin-bottom: 1.25rem;
   flex: 1;
+  text-align: left;
+}
+
+.featuresTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--dark-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem 0;
+}
+
+.featuresList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.featuresList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.3;
+}
+
+.checkIcon {
+  color: #10b981;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .planActions {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: auto;
 }
 
 .payBtn, .requestBtn {
@@ -226,8 +267,75 @@
   border-color: #cbd5e1;
 }
 
-.footerActions {
+/* Contact Card WhatsApp */
+.contactCard {
   margin-top: 2rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-xl);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  text-align: left;
+}
+
+.contactInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wppIconBadge {
+  background: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.contactDetails h4 {
+  margin: 0 0 0.2rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #14532d;
+}
+
+.contactDetails p {
+  margin: 0;
+  font-size: 0.825rem;
+  color: #166534;
+}
+
+.contactWppBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #25D366;
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);
+  white-space: nowrap;
+}
+
+.contactWppBtn:hover {
+  background: #20ba5a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(37, 211, 102, 0.4);
+}
+
+.footerActions {
+  margin-top: 1.5rem;
   border-top: 1px solid #e2e8f0;
   padding-top: 1.5rem;
   display: flex;
@@ -268,5 +376,21 @@
 
   .title {
     font-size: var(--font-size-xl);
+  }
+
+  .contactCard {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .contactInfo {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .contactWppBtn {
+    justify-content: center;
+    width: 100%;
   }
 }
