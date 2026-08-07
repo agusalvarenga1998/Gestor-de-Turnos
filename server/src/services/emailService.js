@@ -1263,45 +1263,47 @@ export async function sendDoctorBirthdayGreetingEmail({
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
-          .header { background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%); padding: 40px 20px; text-align: center; color: white; }
-          .header h1 { margin: 0; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-          .header p { margin: 10px 0 0 0; font-size: 16px; opacity: 0.95; }
-          .content { padding: 35px 30px; text-align: center; }
-          .party-icon { font-size: 64px; margin-bottom: 20px; display: inline-block; animation: bounce 1s infinite alternate; }
-          .greeting-title { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 15px; }
-          .message-box { background: linear-gradient(135deg, #fdf2f8 0%, #f3e8ff 100%); border: 1px solid #f472b6; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: left; }
-          .message-box p { margin: 0 0 12px 0; font-size: 15px; color: #4c1d95; line-height: 1.7; }
-          .message-box p:last-child { margin-bottom: 0; }
-          .button { display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); transition: transform 0.2s; }
-          .footer { padding: 25px; text-align: center; font-size: 13px; color: #94a3b8; background-color: #f8fafc; border-top: 1px solid #e2e8f0; }
-        </style>
       </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🎂 ¡Feliz Cumpleaños! 🎉</h1>
-            <p>De parte de todo el equipo de TurnoHub</p>
+      <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #0f172a; background-color: #f1f5f9; margin: 0; padding: 20px 0;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #cbd5e1;">
+          
+          <!-- Encabezado con Gradiente -->
+          <div style="background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); padding: 40px 20px; text-align: center; color: #ffffff;">
+            <h1 style="margin: 0; font-size: 30px; font-weight: 800; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">🎂 ¡Feliz Cumpleaños! 🎉</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px; color: #f1f5f9; opacity: 0.95;">De parte de todo el equipo de TurnoHub</p>
           </div>
-          <div class="content">
-            <div class="party-icon">🎈🎁🥳</div>
-            <h2 class="greeting-title">¡Estimado/a ${doctorName}!</h2>
+
+          <!-- Contenido Principal -->
+          <div style="padding: 35px 30px; text-align: center; background-color: #ffffff;">
+            <div style="font-size: 64px; margin-bottom: 20px;">🎈🎁🥳</div>
+            <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 20px;">¡Estimado/a ${doctorName}!</h2>
             
-            <div class="message-box">
-              <p>Hoy es un día muy especial y queremos tomar un momento para agradecerte por confiar en <strong>TurnoHub</strong> para la gestión de tus turnos y atención diaria.</p>
-              <p>Esperamos que pases un día extraordinario rodeado de tus seres queridos, lleno de alegrías, descanso y muchos éxitos en tu actividad profesional.</p>
-              <p>¡Gracias por tu compromiso y por brindar cada día la mejor atención a tus clientes y pacientes!</p>
+            <!-- Caja de Mensaje con Alto Contraste -->
+            <div style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-left: 6px solid #7c3aed; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: left;">
+              <p style="margin: 0 0 14px 0; font-size: 16px; color: #0f172a; line-height: 1.7; font-weight: 500;">
+                Hoy es un día muy especial y queremos tomar un momento para agradecerte por confiar en <strong style="color: #2563eb; font-weight: 700;">TurnoHub</strong> para la gestión de tus turnos y atención diaria.
+              </p>
+              <p style="margin: 0 0 14px 0; font-size: 16px; color: #0f172a; line-height: 1.7; font-weight: 500;">
+                Esperamos que pases un día extraordinario rodeado de tus seres queridos, lleno de alegrías, descanso y muchos éxitos en tu actividad profesional.
+              </p>
+              <p style="margin: 0; font-size: 16px; color: #0f172a; line-height: 1.7; font-weight: 500;">
+                ¡Gracias por tu compromiso y por brindar cada día la mejor atención a tus pacientes y clientes!
+              </p>
             </div>
 
-            <p style="margin-bottom: 25px; font-weight: 600; color: #64748b;">¡Que tengas un año fantástico repleto de metas cumplidas!</p>
+            <p style="margin-bottom: 30px; font-size: 16px; font-weight: 700; color: #334155;">
+              ¡Que tengas un año fantástico repleto de metas cumplidas! ✨
+            </p>
 
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" class="button">INGRESAR A MI PANEL</a>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+              INGRESAR A MI PANEL
+            </a>
           </div>
-          <div class="footer">
-            <p>Con mucho cariño, el equipo de <strong>TurnoHub</strong>.</p>
-            <p>&copy; 2026 TurnoHub. Todos los derechos reservados.</p>
+
+          <!-- Footer -->
+          <div style="padding: 25px; text-align: center; font-size: 14px; color: #64748b; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0 0 6px 0; color: #475569; font-weight: 600;">Con mucho cariño, el equipo de TurnoHub.</p>
+            <p style="margin: 0; color: #94a3b8;">&copy; 2026 TurnoHub. Todos los derechos reservados.</p>
           </div>
         </div>
       </body>
