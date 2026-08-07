@@ -9,22 +9,40 @@ export default function BirthdayModal() {
   useEffect(() => {
     if (!user || !user.date_of_birth) return;
 
+    const today = new Date();
     // Verificar si la sesión ya cerró la tarjeta en el día de hoy
-    const dismissedKey = `birthday_dismissed_${user.id}_${new Date().toDateString()}`;
+    const dismissedKey = `birthday_dismissed_${user.id}_${today.toDateString()}`;
     if (sessionStorage.getItem(dismissedKey)) {
       return;
     }
 
     try {
-      const today = new Date();
-      // Formato date_of_birth: 'YYYY-MM-DD' o ISO string
-      const dobStr = user.date_of_birth.substring(0, 10);
-      const [year, month, day] = dobStr.split('-').map(Number);
+      let dobMonth = null;
+      let dobDay = null;
 
-      const currentMonth = today.getMonth() + 1; // 1-indexed
+      if (typeof user.date_of_birth === 'string') {
+        const cleanStr = user.date_of_birth.substring(0, 10);
+        if (cleanStr.includes('-')) {
+          const parts = cleanStr.split('-').map(Number);
+          if (parts.length === 3 && !isNaN(parts[1]) && !isNaN(parts[2])) {
+            dobMonth = parts[1];
+            dobDay = parts[2];
+          }
+        }
+      }
+
+      if (!dobMonth || !dobDay) {
+        const dobDate = new Date(user.date_of_birth);
+        if (!isNaN(dobDate.getTime())) {
+          dobMonth = dobDate.getUTCMonth() + 1;
+          dobDay = dobDate.getUTCDate();
+        }
+      }
+
+      const currentMonth = today.getMonth() + 1; // 1-indexed (1..12)
       const currentDay = today.getDate();
 
-      if (month === currentMonth && day === currentDay) {
+      if (dobMonth === currentMonth && dobDay === currentDay) {
         setShowModal(true);
       }
     } catch (err) {
