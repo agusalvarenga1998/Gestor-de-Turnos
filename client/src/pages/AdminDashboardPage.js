@@ -46,9 +46,23 @@ export default function AdminDashboardPage() {
         const approvedCount = docList.filter(d => d.status === 'approved').length;
         const rejectedCount = docList.filter(d => d.status === 'rejected').length;
         const suspendedCount = docList.filter(d => d.status === 'suspended').length;
-        const trialCount = docList.filter(d => d.subscription_status === 'trial').length;
         
-        // Pruebas por vencer en los próximos 3 días
+        // Trials activos (fecha futura)
+        const trialCount = docList.filter(d => {
+          if (d.subscription_status !== 'trial') return false;
+          if (!d.trial_ends_at) return true;
+          return new Date(d.trial_ends_at) >= now;
+        }).length;
+
+        // Cuentas vencidas (trial o activa con fecha pasada, o estado expired)
+        const expiredTrialCount = docList.filter(d => {
+          if (d.subscription_status === 'expired') return true;
+          if (d.subscription_status === 'trial' && d.trial_ends_at && new Date(d.trial_ends_at) < now) return true;
+          if (d.subscription_status === 'active' && d.subscription_expires_at && new Date(d.subscription_expires_at) < now) return true;
+          return false;
+        }).length;
+        
+        // Pruebas por vencer en los próximos 3 días (que aún no han vencido)
         const expiringTrialCount = docList.filter(d => {
           if (d.subscription_status === 'trial' && d.trial_ends_at) {
             const endDate = new Date(d.trial_ends_at);
@@ -65,7 +79,8 @@ export default function AdminDashboardPage() {
           rejected: rejectedCount,
           suspended: suspendedCount,
           trial: trialCount,
-          expiringTrial: expiringTrialCount
+          expiringTrial: expiringTrialCount,
+          expiredTrial: expiredTrialCount
         });
       }
 
@@ -134,6 +149,23 @@ export default function AdminDashboardPage() {
                 onClick={() => navigate('/admin/doctors?tab=trial')}
               >
                 Ver Pruebas por Vencer
+              </button>
+            </div>
+          )}
+
+          {stats.expiredTrial > 0 && (
+            <div className={styles.alertBanner} style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}>
+              <span className={styles.alertIcon}>🚫</span>
+              <div className={styles.alertText}>
+                <strong style={{ color: '#991b1b' }}>{stats.expiredTrial} profesional(es) con prueba gratis o suscripción VENCIDA.</strong>
+                <span style={{ color: '#7f1d1d' }}>Puedes extender su período o reactivarlos con un plan activo desde la lista de profesionales.</span>
+              </div>
+              <button 
+                className={styles.alertBtn} 
+                style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+                onClick={() => navigate('/admin/doctors?status=expired')}
+              >
+                Ver Cuentas Vencidas
               </button>
             </div>
           )}

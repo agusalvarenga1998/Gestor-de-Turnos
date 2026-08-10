@@ -239,10 +239,10 @@ router.post('/login', async (req, res) => {
     let subscriptionStatus = doctor.subscription_status;
 
     // Actualizar estado de suscripción basado en fechas
-    if (subscriptionStatus === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) {
+    if ((subscriptionStatus === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) ||
+        (subscriptionStatus === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now)) {
       subscriptionStatus = 'expired';
-    } else if (subscriptionStatus === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now) {
-      subscriptionStatus = 'expired';
+      await query("UPDATE doctors SET subscription_status = 'expired' WHERE id = $1", [doctor.id]);
     }
 
     if (subscriptionStatus === 'expired') {
@@ -298,10 +298,10 @@ router.get('/verify', verifyToken, async (req, res) => {
     let subscriptionStatus = doctorProfile.subscription_status;
 
     // Actualizar estado de suscripción basado en fechas
-    if (subscriptionStatus === 'trial' && doctorProfile.trial_ends_at && new Date(doctorProfile.trial_ends_at) < now) {
+    if ((subscriptionStatus === 'trial' && doctorProfile.trial_ends_at && new Date(doctorProfile.trial_ends_at) < now) ||
+        (subscriptionStatus === 'active' && doctorProfile.subscription_expires_at && new Date(doctorProfile.subscription_expires_at) < now)) {
       subscriptionStatus = 'expired';
-    } else if (subscriptionStatus === 'active' && doctorProfile.subscription_expires_at && new Date(doctorProfile.subscription_expires_at) < now) {
-      subscriptionStatus = 'expired';
+      await query("UPDATE doctors SET subscription_status = 'expired' WHERE id = $1", [doctorProfile.id]);
     }
 
     doctorProfile.subscription_status = subscriptionStatus;
@@ -577,10 +577,10 @@ router.get('/google/callback', async (req, res) => {
     // Verificar suscripción
     const now = new Date();
     let isExpired = false;
-    if (doctor.subscription_status === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) {
+    if ((doctor.subscription_status === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) ||
+        (doctor.subscription_status === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now)) {
       isExpired = true;
-    } else if (doctor.subscription_status === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now) {
-      isExpired = true;
+      await query("UPDATE doctors SET subscription_status = 'expired' WHERE id = $1", [doctor.id]);
     } else if (doctor.subscription_status === 'expired') {
       isExpired = true;
     }

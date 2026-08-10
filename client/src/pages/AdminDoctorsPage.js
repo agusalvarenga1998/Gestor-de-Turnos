@@ -164,6 +164,18 @@ export default function AdminDoctorsPage() {
   };
 
   const getSubscriptionStatus = (doctor) => {
+    const now = new Date();
+    const isTrialExpired = doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now;
+    const isActiveExpired = doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now;
+    const isExpired = doctor.subscription_status === 'expired' || (doctor.subscription_status === 'trial' && isTrialExpired) || (doctor.subscription_status === 'active' && isActiveExpired);
+
+    if (isExpired) {
+      return (
+        <span className={styles.badge} style={{ backgroundColor: '#fee2e2', color: '#991b1b', fontWeight: 600 }}>
+          {doctor.subscription_status === 'trial' || isTrialExpired ? 'Trial Vencido' : 'Vencida'}
+        </span>
+      );
+    }
     if (doctor.subscription_status === 'trial') {
       return (
         <span className={styles.badge} style={{ backgroundColor: '#fef3c7', color: '#b45309' }}>
@@ -175,13 +187,6 @@ export default function AdminDoctorsPage() {
       return (
         <span className={styles.badge} style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
           Activa
-        </span>
-      );
-    }
-    if (doctor.subscription_status === 'expired') {
-      return (
-        <span className={styles.badge} style={{ backgroundColor: '#fee2e2', color: '#991b1b' }}>
-          Vencida
         </span>
       );
     }
@@ -309,9 +314,24 @@ export default function AdminDoctorsPage() {
                   </div>
                 </td>
                 <td className={styles.expiry}>
-                  {doctor.subscription_expires_at
-                    ? new Date(doctor.subscription_expires_at).toLocaleDateString('es-ES')
-                    : '-'}
+                  {(() => {
+                    const expiryDateStr = doctor.subscription_expires_at || doctor.trial_ends_at;
+                    if (!expiryDateStr) return '-';
+                    const expiryDate = new Date(expiryDateStr);
+                    const isExpired = expiryDate < new Date();
+                    const isTrial = doctor.subscription_status === 'trial' || (!doctor.subscription_expires_at && doctor.trial_ends_at);
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ color: isExpired ? '#dc2626' : '#0f172a', fontWeight: isExpired ? 700 : 400 }}>
+                          {expiryDate.toLocaleDateString('es-ES')}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: isExpired ? '#ef4444' : '#64748b', fontWeight: isExpired ? 600 : 400 }}>
+                          {isExpired ? '⚠️ (Vencido)' : isTrial ? '(Trial)' : '(Suscripción)'}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className={styles.debt}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

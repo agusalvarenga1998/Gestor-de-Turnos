@@ -60,9 +60,15 @@ export default function AdminReportsPage() {
     .reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
 
   // 2. Distribución de Estados de Suscripciones (Médicos)
-  const activeCount = doctors.filter(d => d.subscription_status === 'active').length;
-  const trialCount = doctors.filter(d => d.subscription_status === 'trial').length;
-  const expiredCount = doctors.filter(d => d.subscription_status === 'expired' || d.subscription_status === 'unpaid').length;
+  const now = new Date();
+  const activeCount = doctors.filter(d => d.subscription_status === 'active' && (!d.subscription_expires_at || new Date(d.subscription_expires_at) >= now)).length;
+  const trialCount = doctors.filter(d => d.subscription_status === 'trial' && (!d.trial_ends_at || new Date(d.trial_ends_at) >= now)).length;
+  const expiredCount = doctors.filter(d => 
+    d.subscription_status === 'expired' || 
+    d.subscription_status === 'unpaid' ||
+    (d.subscription_status === 'trial' && d.trial_ends_at && new Date(d.trial_ends_at) < now) ||
+    (d.subscription_status === 'active' && d.subscription_expires_at && new Date(d.subscription_expires_at) < now)
+  ).length;
   const suspendedCount = doctors.filter(d => d.status === 'suspended').length;
   
   const totalInPlan = activeCount + trialCount + expiredCount + suspendedCount;

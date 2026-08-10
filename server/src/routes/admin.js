@@ -91,6 +91,18 @@ router.post('/login', async (req, res) => {
 // Get all doctors with their status and subscription info
 router.get('/doctors', verifyAdmin, async (req, res) => {
   try {
+    // Sincronizar y marcar automáticamente en DB los trials o suscripciones ya vencidas
+    await query(`
+      UPDATE doctors
+      SET subscription_status = 'expired'
+      WHERE status = 'approved'
+        AND (
+          (subscription_status = 'trial' AND trial_ends_at IS NOT NULL AND trial_ends_at < CURRENT_TIMESTAMP)
+          OR
+          (subscription_status = 'active' AND subscription_expires_at IS NOT NULL AND subscription_expires_at < CURRENT_TIMESTAMP)
+        )
+    `);
+
     const result = await query(`
       SELECT
         id,

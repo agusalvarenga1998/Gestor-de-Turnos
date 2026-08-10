@@ -75,10 +75,10 @@ export const checkSubscription = async (req, res, next) => {
     const now = new Date();
     let isExpired = false;
 
-    if (doctor.subscription_status === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) {
+    if ((doctor.subscription_status === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) ||
+        (doctor.subscription_status === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now)) {
       isExpired = true;
-    } else if (doctor.subscription_status === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now) {
-      isExpired = true;
+      await query("UPDATE doctors SET subscription_status = 'expired' WHERE id = $1", [req.user.id]);
     } else if (doctor.subscription_status === 'expired') {
       isExpired = true;
     }

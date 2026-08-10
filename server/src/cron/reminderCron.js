@@ -337,4 +337,26 @@ export const initReminderCron = () => {
       console.error('❌ Error en el cron de cumpleaños de profesionales:', error.message);
     }
   });
+
+  // 6. CRON SUSCRIPCIONES: Actualizar automáticamente cuentas con trial o suscripción vencida (Cada hora)
+  console.log('⏰ Cron de actualización automática de suscripciones/trials vencidos inicializado (Cada hora)');
+  cron.schedule('0 * * * *', async () => {
+    try {
+      const result = await query(`
+        UPDATE doctors
+        SET subscription_status = 'expired'
+        WHERE status = 'approved'
+          AND (
+            (subscription_status = 'trial' AND trial_ends_at IS NOT NULL AND trial_ends_at < CURRENT_TIMESTAMP)
+            OR
+            (subscription_status = 'active' AND subscription_expires_at IS NOT NULL AND subscription_expires_at < CURRENT_TIMESTAMP)
+          )
+      `);
+      if (result.rowCount > 0) {
+        console.log(`🔒 Se actualizaron ${result.rowCount} cuenta(s) a estado 'expired' (vencidas).`);
+      }
+    } catch (error) {
+      console.error('❌ Error en el cron de actualización de suscripciones vencidas:', error.message);
+    }
+  });
 };
