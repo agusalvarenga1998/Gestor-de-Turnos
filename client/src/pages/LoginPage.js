@@ -99,6 +99,12 @@ export default function LoginPage() {
         return;
       }
       setLocalError(result.error);
+    } else {
+      if (result.doctor?.subscription_status === 'expired') {
+        navigate('/subscription-expired', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
   };
 

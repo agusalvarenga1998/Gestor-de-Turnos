@@ -50,7 +50,9 @@ apiClient.interceptors.response.use(
       window.location.href = '/login';
     } else if (error.response?.status === 403 && error.response?.data?.subscriptionExpired) {
       // Suscripción expirada
-      window.location.href = '/subscription-expired';
+      if (typeof window !== 'undefined' && window.location.pathname !== '/subscription-expired') {
+        window.location.href = '/subscription-expired';
+      }
     } else if (error.response?.status >= 500) {
       // Error del servidor - Notificado a soporte
       console.error('⚠️ Error 500 detectado:', error.response?.data?.message || error.message);

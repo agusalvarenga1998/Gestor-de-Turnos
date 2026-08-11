@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', token);
         setToken(token);
         setUser(doctor);
-        return { success: true };
+        return { success: true, doctor };
       } else {
         setError(response.message);
         return { success: false, error: response.message };
@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }) => {
     token,
     loading,
     error,
-    isAuthenticated: !!user && !!token && !isPending && !isSubscriptionExpired,
+    isAuthenticated: !!user && !!token && !isPending,
     isPending,
     isSubscriptionExpired,
     login,

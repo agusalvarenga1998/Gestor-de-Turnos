@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import axios from 'axios';
-import apiClient from '../services/api';
+import apiClient, { authAPI } from '../services/api';
 import Icon from '../components/Icon';
 import styles from './SubscriptionExpiredPage.module.css';
 
@@ -19,10 +19,11 @@ export default function SubscriptionExpiredPage() {
     
     // Polling para verificar si el plan ha sido activado por el webhook de MP o el admin
     const interval = setInterval(async () => {
-      if (user) {
+      const currentToken = localStorage.getItem('token');
+      if (currentToken) {
         try {
-          const res = await apiClient.get('/api/doctor/profile');
-          if (res.data.success && res.data.doctor.subscription_status === 'active') {
+          const res = await authAPI.verify(currentToken);
+          if (res.success && res.doctor && res.doctor.subscription_status === 'active') {
             await refreshUser();
             navigate('/dashboard');
           }
@@ -33,7 +34,7 @@ export default function SubscriptionExpiredPage() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [user, navigate, refreshUser]);
+  }, [navigate, refreshUser]);
 
   const fetchPlans = async () => {
     try {

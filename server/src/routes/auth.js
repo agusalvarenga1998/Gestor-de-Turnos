@@ -246,11 +246,7 @@ router.post('/login', async (req, res) => {
     }
 
     if (subscriptionStatus === 'expired') {
-      return res.status(403).json({
-        success: false,
-        subscriptionExpired: true,
-        message: 'Tu período de prueba gratuita ha finalizado. Contactá al administrador para rehabilitar tu cuenta.'
-      });
+      doctor.subscription_status = 'expired';
     }
 
 
@@ -586,11 +582,8 @@ router.get('/google/callback', async (req, res) => {
     }
 
     if (isExpired) {
-      console.log('⏳ Suscripción expirada, redirigiendo a página de expiración...');
-      const redirectUrl = `${FRONTEND_URL}/subscription-expired`;
-      console.log('🔄 Redirigiendo a:', redirectUrl);
-      console.log('✓ Flujo completado\n');
-      return res.redirect(redirectUrl);
+      doctor.subscription_status = 'expired';
+      console.log('⏳ Suscripción expirada, emitiendo JWT para permitir renovación/solicitud de plan...');
     }
 
     // Generar JWT
