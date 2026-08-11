@@ -1325,4 +1325,78 @@ export async function sendDoctorBirthdayGreetingEmail({
   }
 }
 
+// Enviar email al administrador notificando una solicitud manual de activación de plan
+export async function sendPlanRequestEmailToAdmin({
+  doctorName,
+  doctorEmail,
+  doctorPhone,
+  planName,
+  planPrice
+}) {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin.turnohub@gmail.com';
+    const adminUrl = `${process.env.FRONTEND_URL || 'https://turnohub.com.ar'}/admin/subscriptions`;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #0f172a; background-color: #f1f5f9; margin: 0; padding: 20px 0;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #cbd5e1;">
+          
+          <div style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); padding: 35px 20px; text-align: center; color: #ffffff;">
+            <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #ffffff;">📩 Solicitud de Activación de Plan</h1>
+            <p style="margin: 8px 0 0 0; font-size: 15px; color: #e2e8f0;">Un profesional ha solicitado la habilitación manual de un plan</p>
+          </div>
+
+          <div style="padding: 30px; background-color: #ffffff;">
+            <div style="background-color: #eff6ff; border-left: 5px solid #2563eb; padding: 18px; border-radius: 8px; margin-bottom: 25px;">
+              <h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 16px;">Detalles del Profesional</h3>
+              <p style="margin: 4px 0; font-size: 15px;"><strong>Nombre:</strong> ${doctorName || 'No especificado'}</p>
+              <p style="margin: 4px 0; font-size: 15px;"><strong>Email:</strong> ${doctorEmail || 'No especificado'}</p>
+              <p style="margin: 4px 0; font-size: 15px;"><strong>Teléfono:</strong> ${doctorPhone || 'No especificado'}</p>
+            </div>
+
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 18px; border-radius: 8px; margin-bottom: 25px;">
+              <h3 style="margin: 0 0 10px 0; color: #0f172a; font-size: 16px;">Plan Solicitado</h3>
+              <p style="margin: 4px 0; font-size: 15px;"><strong>Plan:</strong> ${planName}</p>
+              <p style="margin: 4px 0; font-size: 15px;"><strong>Precio:</strong> ${planPrice ? `$${planPrice}` : 'Consultar'}</p>
+              <p style="margin: 4px 0; font-size: 15px;"><strong>Estado:</strong> <span style="background-color: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-weight: 600;">Pendiente de Aprobación</span></p>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${adminUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px;">
+                IR AL PANEL DE ADMINISTRACIÓN
+              </a>
+            </div>
+          </div>
+
+          <div style="padding: 20px; text-align: center; font-size: 13px; color: #64748b; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0;">Notificación automática enviada por TurnoHub System.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    console.log(`📧 Enviando email de solicitud de plan al admin: ${adminEmail}`);
+
+    const info = await transporter.sendMail({
+      from: getSender(),
+      to: adminEmail,
+      subject: `🛎️ Nueva Solicitud de Plan: ${doctorName} (${planName})`,
+      html: htmlContent
+    });
+
+    console.log('✓ Email de solicitud de plan enviado al admin:', info.messageId);
+    return { sent: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Error enviando email de solicitud de plan al admin:', error.message);
+    return { sent: false, error: error.message };
+  }
+}
+
 
