@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { query } from '../db/config.js';
 import { sendAppointmentReminder, sendAdminTrialExpiringNotification, sendDoctorBirthdayGreetingEmail } from '../services/emailService.js';
+import { autoUpdatePastAppointments } from '../services/appointmentService.js';
 import webpush from 'web-push';
 
 import fs from 'fs';
@@ -357,6 +358,16 @@ export const initReminderCron = () => {
       }
     } catch (error) {
       console.error('❌ Error en el cron de actualización de suscripciones vencidas:', error.message);
+    }
+  });
+
+  // 7. CRON AUTO-UPDATE TURNOS Y SOLICITUDES VENCIDAS (Cada 15 minutos)
+  console.log('⏰ Cron de auto-actualización de turnos pasados y solicitudes vencidas inicializado (Cada 15 minutos)');
+  cron.schedule('*/15 * * * *', async () => {
+    try {
+      await autoUpdatePastAppointments();
+    } catch (error) {
+      console.error('❌ Error en el cron de auto-actualización de turnos pasados:', error.message);
     }
   });
 };

@@ -91,6 +91,7 @@
 .badgeABSENT { background: #fff7ed; color: #ea580c; }
 .badgeabsent { background: #fff7ed; color: #ea580c; }
 .statusAbsent { background: #fff7ed; color: #ea580c; }
+.statusExpired { background: #f1f5f9; color: #64748b; }
 
 .statusAnnouncement h1 {
   font-size: 1.5rem;

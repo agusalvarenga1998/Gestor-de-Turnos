@@ -267,7 +267,8 @@ export default function DashboardNewPage() {
       scheduled: { label: 'PROGRAMADO', class: styles.statusScheduled },
       completed: { label: 'COMPLETADO', class: styles.statusCompleted },
       cancelled: { label: 'CANCELADO', class: styles.statusCancelled },
-      absent: { label: 'AUSENTE', class: styles.statusAbsent }
+      absent: { label: 'AUSENTE', class: styles.statusAbsent },
+      expired: { label: 'SOLICITUD VENCIDA', class: styles.statusExpired }
     };
     const badge = badges[status] || badges.scheduled;
     return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
@@ -796,7 +797,7 @@ export default function DashboardNewPage() {
                             📅 {formatDateString(appt.appointment_date)} - {appt.appointment_time} hs
                           </span>
                           <span className={`${styles.pastApptStatus} ${appt.status === 'completed' ? styles.pastCompleted : styles.pastOther}`}>
-                            {appt.status === 'completed' ? 'Realizado' : (appt.status === 'cancelled' ? 'Cancelado' : 'Programado')}
+                            {appt.status === 'completed' ? 'Realizado' : (appt.status === 'cancelled' ? 'Cancelado' : (appt.status === 'expired' ? 'Solicitud Vencida' : 'Programado'))}
                           </span>
                         </div>
                         <p className={styles.pastApptReason}>

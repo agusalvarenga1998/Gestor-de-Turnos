@@ -506,26 +506,49 @@ export const autoUpdatePastAppointments = async (doctorId) => {
     const timeOptions = { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
     const currentTime = new Intl.DateTimeFormat('en-US', timeOptions).format(now);
 
-    const result = await query(`
+    const docClause = doctorId ? 'WHERE doctor_id = $1 AND' : 'WHERE';
+    const params = doctorId ? [doctorId, currentDate, currentTime] : [currentDate, currentTime];
+    const dateIdx = doctorId ? '$2' : '$1';
+    const timeIdx = doctorId ? '$3' : '$2';
+
+    // 1. Citas programadas pasadas -> Ausente ('absent')
+    const resultAbsent = await query(`
       UPDATE appointments 
       SET status = 'absent', updated_at = CURRENT_TIMESTAMP
-      WHERE doctor_id = $1 
-        AND status = 'scheduled' 
+      ${docClause} status = 'scheduled' 
         AND (
-          appointment_date < $2::date 
+          appointment_date < ${dateIdx}::date 
           OR (
-            appointment_date = $2::date 
-            AND (appointment_time + (COALESCE(duration_minutes, 30) || ' minutes')::INTERVAL) < $3::time
+            appointment_date = ${dateIdx}::date 
+            AND (appointment_time + (COALESCE(duration_minutes, 30) || ' minutes')::INTERVAL) < ${timeIdx}::time
           )
         )
       RETURNING id
-    `, [doctorId, currentDate, currentTime]);
+    `, params);
 
-    if (result.rows.length > 0) {
-      console.log(`🤖 Auto-update: ${result.rows.length} past appointments marked as 'absent' for doctor ${doctorId}`);
+    // 2. Solicitudes de turno pasadas nunca respondidas -> Solicitud Vencida ('expired')
+    const resultExpired = await query(`
+      UPDATE appointments 
+      SET status = 'expired', updated_at = CURRENT_TIMESTAMP
+      ${docClause} status IN ('pending', 'pending_payment') 
+        AND (
+          appointment_date < ${dateIdx}::date 
+          OR (
+            appointment_date = ${dateIdx}::date 
+            AND (appointment_time + (COALESCE(duration_minutes, 30) || ' minutes')::INTERVAL) < ${timeIdx}::time
+          )
+        )
+      RETURNING id
+    `, params);
+
+    if (resultAbsent.rows.length > 0) {
+      console.log(`🤖 Auto-update: ${resultAbsent.rows.length} citas pasadas marcadas como 'absent' ${doctorId ? `para doctor ${doctorId}` : ''}`);
+    }
+    if (resultExpired.rows.length > 0) {
+      console.log(`🤖 Auto-update: ${resultExpired.rows.length} solicitudes de turno vencidas marcadas como 'expired' ${doctorId ? `para doctor ${doctorId}` : ''}`);
     }
   } catch (error) {
-    console.error('Error in autoUpdatePastAppointments:', error);
+    console.error('Error en autoUpdatePastAppointments:', error);
   }
 };
 

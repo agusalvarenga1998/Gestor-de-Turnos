@@ -287,7 +287,7 @@ export default function AppointmentsPage() {
     } else if (activeTab === 'pending') {
       filtered = filtered.filter(a => ['pending', 'pending_payment'].includes(a.status));
     } else if (activeTab === 'cancelled') {
-      filtered = filtered.filter(a => ['cancelled', 'rejected'].includes(a.status));
+      filtered = filtered.filter(a => ['cancelled', 'rejected', 'expired'].includes(a.status));
     } else { // activeTab === 'all'
       if (filterStatus !== 'all') {
         filtered = filtered.filter(a => a.status === filterStatus);
@@ -488,7 +488,8 @@ export default function AppointmentsPage() {
       completed: { label: 'Completado', class: styles.statusCompleted },
       cancelled: { label: 'Cancelado', class: styles.statusCancelled },
       rejected: { label: 'Rechazado', class: styles.statusRejected },
-      absent: { label: 'Ausente', class: styles.statusAbsent }
+      absent: { label: 'Ausente', class: styles.statusAbsent },
+      expired: { label: 'Solicitud Vencida', class: styles.statusExpired }
     };
     const badge = badges[status] || badges.scheduled;
     return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
@@ -1247,6 +1248,7 @@ export default function AppointmentsPage() {
                   <option value="cancelled">Cancelado</option>
                   <option value="rejected">Rechazado</option>
                   <option value="absent">Ausente / No asistió</option>
+                  <option value="expired">Solicitud Vencida / No Respondida</option>
                 </select>
 
                 <input
