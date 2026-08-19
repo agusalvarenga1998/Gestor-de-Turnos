@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import axios from 'axios';
 import { AuthProvider } from './context/AuthContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
+import { SellerAuthProvider } from './context/SellerAuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { useAuth } from './hooks/useAuth';
@@ -49,6 +50,10 @@ import AdminReportsPage from './pages/AdminReportsPage';
 import AdminSupportTicketsPage from './pages/AdminSupportTicketsPage';
 import AdminActivityPage from './pages/AdminActivityPage';
 
+// Páginas - Vendedor
+import SellerLoginPage from './pages/SellerLoginPage';
+import SellerDashboardPage from './pages/SellerDashboardPage';
+
 // Páginas - Info / Landing
 import LandingPage from './pages/LandingPage';
 import WhyTurnoHubPage from './pages/WhyTurnoHubPage';
@@ -60,6 +65,8 @@ import TermsOfServicePage from './pages/TermsOfServicePage';
 // Componentes
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
+import ProtectedSellerRoute from './components/ProtectedSellerRoute';
+import DemoBanner from './components/DemoBanner';
 import Loading from './components/Loading';
 import WhatsAppBubble from './components/WhatsAppBubble';
 import ThemeToggle from './components/ThemeToggle';
@@ -140,6 +147,7 @@ function AppContent() {
 
   return (
     <>
+    <DemoBanner />
     <PageTracker />
     <Routes>
       {/* Portal del Cliente (públicas) - siempre disponible */}
@@ -245,6 +253,17 @@ function AppContent() {
         }
       />
 
+      {/* Rutas de Vendedor */}
+      <Route path="/seller/login" element={<SellerLoginPage />} />
+      <Route
+        path="/seller/dashboard"
+        element={
+          <ProtectedSellerRoute>
+            <SellerDashboardPage />
+          </ProtectedSellerRoute>
+        }
+      />
+
       {/* Rutas protegidas del doctor */}
       {isAuthenticated && (
         <>
@@ -285,11 +304,13 @@ function App() {
       <ThemeProvider>
         <Router>
           <AdminAuthProvider>
-            <AuthProvider>
-              <WebSocketProvider>
-                <AppContent />
-              </WebSocketProvider>
-            </AuthProvider>
+            <SellerAuthProvider>
+              <AuthProvider>
+                <WebSocketProvider>
+                  <AppContent />
+                </WebSocketProvider>
+              </AuthProvider>
+            </SellerAuthProvider>
           </AdminAuthProvider>
         </Router>
       </ThemeProvider>

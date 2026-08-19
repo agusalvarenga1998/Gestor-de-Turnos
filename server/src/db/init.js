@@ -481,6 +481,31 @@ async function initDatabase(retries = 3) {
     `, [adminEmail, hashedPass]);
     console.log('✓ Usuario admin admin.turnohub@gmail.com verificado/creado');
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sellers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(50),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Tabla sellers creada');
+
+    const sellerEmail = 'vendedor@turnohub.com';
+    const sellerPass = 'Vendedor2026!';
+    const hashedSellerPass = await bcrypt.hash(sellerPass, 10);
+
+    await client.query(`
+      INSERT INTO sellers (email, password_hash, name, phone)
+      VALUES ($1, $2, 'Vendedor Oficial TurnoHub', '+5491100000000')
+      ON CONFLICT (email) DO UPDATE SET name = 'Vendedor Oficial TurnoHub';
+    `, [sellerEmail, hashedSellerPass]);
+    console.log('✓ Usuario vendedor demo vendedor@turnohub.com verificado/creado');
+
     console.log('\n✅ Base de datos inicializada correctamente!');
     process.exit(0);
   } catch (error) {

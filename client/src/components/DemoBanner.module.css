@@ -1,0 +1,69 @@
+.demoBannerContainer {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  color: #ffffff;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  font-family: 'Inter', sans-serif;
+  border-bottom: 2px solid #6366f1;
+}
+
+.demoInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: rgba(99, 102, 241, 0.3);
+  border: 1px solid #818cf8;
+  color: #c7d2fe;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.doctorText {
+  font-size: 14px;
+  color: #e0e7ff;
+}
+
+.doctorName {
+  font-weight: 700;
+  color: #ffffff;
+  text-decoration: underline;
+  text-decoration-color: #818cf8;
+}
+
+.exitButton {
+  background-color: #4f46e5;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.exitButton:hover {
+  background-color: #4338ca;
+  transform: translateY(-1px);
+}

@@ -22,6 +22,7 @@ import mercadopagoRoutes from './routes/mercadopago.js';
 import movementsRoutes from './routes/movements.js';
 import supportRoutes from './routes/support.js';
 import queueRoutes from './routes/queue.js';
+import sellerRoutes from './routes/seller.js';
 import path from 'path';
 import { uploadsDir } from './utils/paths.js';
 import { query } from './db/config.js';
@@ -165,6 +166,7 @@ app.use('/api/mercadopago', mercadopagoRoutes);
 app.use('/api/movements', movementsRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/queue', queueRoutes);
+app.use('/api/seller', sellerRoutes);
 
 // Servir archivos estáticos (uploads)
 app.use('/uploads', express.static(uploadsDir));
