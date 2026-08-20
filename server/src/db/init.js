@@ -504,7 +504,8 @@ async function initDatabase(retries = 3) {
       VALUES ($1, $2, 'Vendedor Oficial TurnoHub', '+5491100000000')
       ON CONFLICT (email) DO UPDATE SET name = 'Vendedor Oficial TurnoHub';
     `, [sellerEmail, hashedSellerPass]);
-    console.log('✓ Usuario vendedor demo vendedor@turnohub.com verificado/creado');
+    const { seedDemoAccounts } = await import('./seed-demo-accounts.js');
+    await seedDemoAccounts();
 
     console.log('\n✅ Base de datos inicializada correctamente!');
     process.exit(0);

@@ -110,7 +110,7 @@ router.get('/verify', verifySeller, async (req, res) => {
   }
 });
 
-// Obtener listado de profesionales con información de vencimiento y estado
+// Obtener listado de profesionales con seguimiento y notas comerciales
 router.get('/doctors', verifySeller, async (req, res) => {
   try {
     // Sincronizar estados de prueba o suscripción vencidos primero
@@ -137,6 +137,7 @@ router.get('/doctors', verifySeller, async (req, res) => {
         d.subscription_status,
         d.subscription_expires_at,
         d.trial_ends_at,
+        d.seller_notes,
         d.created_at,
         p.name as plan_name,
         p.key as plan_key,
@@ -191,6 +192,8 @@ router.get('/doctors', verifySeller, async (req, res) => {
         status: doc.status,
         subscription_status: doc.subscription_status || 'trial',
         plan_name: doc.plan_name || 'Plan Estándar',
+        plan_key: doc.plan_key || 'mensual_pro',
+        seller_notes: doc.seller_notes || '',
         expiration_date: expirationDate,
         days_remaining: daysRemaining,
         expiration_status: expirationStatus,
@@ -211,7 +214,192 @@ router.get('/doctors', verifySeller, async (req, res) => {
   }
 });
 
-// Impersonar / Ingresar en Modo Demo a la cuenta de un profesional
+// Guardar / Actualizar nota comercial de seguimiento para un profesional
+router.put('/doctors/:doctorId/notes', verifySeller, async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const { notes } = req.body;
+
+    await query(`
+      UPDATE doctors
+      SET seller_notes = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+    `, [notes || '', doctorId]);
+
+    res.json({
+      success: true,
+      message: 'Nota de seguimiento actualizada correctamente',
+      seller_notes: notes
+    });
+  } catch (error) {
+    console.error('Error al actualizar nota comercial:', error);
+    res.status(500).json({ error: 'Error al guardar la nota comercial' });
+  }
+});
+
+// Obtener la lista de los 4 Planes con sus cuentas de Demo Pre-cargadas
+router.get('/plans-demo', verifySeller, async (req, res) => {
+  try {
+    const demoEmails = [
+      'demo.mensual@turnohub.com',
+      'demo.odontologia@turnohub.com',
+      'demo.filavirtual@turnohub.com',
+      'demo.comision@turnohub.com'
+    ];
+
+    const result = await query(`
+      SELECT id, email, name, specialization, clinic_name, pricing_plan_id
+      FROM doctors
+      WHERE email = ANY($1)
+    `, [demoEmails]);
+
+    const demoMap = {};
+    result.rows.forEach(doc => {
+      demoMap[doc.email] = doc;
+    });
+
+    const planDemos = [
+      {
+        planKey: 'mensual_pro',
+        title: 'Plan Mensual Pro + Consultas Online',
+        subtitle: 'Para Medicina, Psicología, Estética y Consultorios Médicos',
+        price: '$24.999 / mes',
+        badgeText: '⭐ Más Vendido',
+        badgeColor: '#4f46e5',
+        features: [
+          'Portal de Reservas Online 24/7 con link personalizable',
+          'Cobro automático de señas por Mercado Pago',
+          'Telemedicina con enlace Google Meet automático',
+          'Notificaciones e Historial Clínico completo',
+          'Módulo de Caja, Finanzas y balances en vivo'
+        ],
+        demoDataSummary: '15 Pacientes, 10 Turnos agendados, Caja con movimientos e Historia Clínica médica',
+        demoEmail: 'demo.mensual@turnohub.com',
+        doctorId: demoMap['demo.mensual@turnohub.com']?.id || null
+      },
+      {
+        planKey: 'odontologia',
+        title: 'Plan Odontología & Clínicas Dentales',
+        subtitle: 'Para Dentistas, Odontólogos y Centros Odontológicos',
+        price: '$29.999 / mes',
+        badgeText: '🦷 Odontograma Digital',
+        badgeColor: '#0284c7',
+        features: [
+          'Odontograma Digital Interactivo pieza por pieza',
+          'Ficha Clínica Odontológica con imágenes y adjuntos',
+          'Gestión de Obras Sociales, Coberturas y Coseguros',
+          'Cobro de señas por Mercado Pago y Recordatorios',
+          'Módulo de Finanzas y Ausentismo de pacientes'
+        ],
+        demoDataSummary: 'Odontograma dental pre-cargado con restauraciones, Ficha dental y Pacientes de odontología',
+        demoEmail: 'demo.odontologia@turnohub.com',
+        doctorId: demoMap['demo.odontologia@turnohub.com']?.id || null
+      },
+      {
+        planKey: 'orden_llegada',
+        title: 'Plan Fila Virtual & Orden de Llegada',
+        subtitle: 'Para Guardias, Barberías, Estética sin cita previa y Laboratorios',
+        price: '$18.999 / mes',
+        badgeText: '👥 Sin Cita Previa',
+        badgeColor: '#d97706',
+        features: [
+          'Gestión de Fila en Vivo y Turnero por Orden de Llegada',
+          'Pantalla Llamadora TV en vivo para sala de espera',
+          'Ingreso con Código QR autónomo desde celular del cliente',
+          'Avisos por WhatsApp y Push cuando es el turno del cliente',
+          'Módulo de Caja y reporte de tiempos de espera'
+        ],
+        demoDataSummary: 'Turnero activo en vivo, 3 Clientes en Fila (Esperando, Llamado, Completado) y Pantalla Llamadora',
+        demoEmail: 'demo.filavirtual@turnohub.com',
+        doctorId: demoMap['demo.filavirtual@turnohub.com']?.id || null
+      },
+      {
+        planKey: 'commission',
+        title: 'Plan Comisión Inicial',
+        subtitle: 'Para profesionales que recién comienzan sin costo fijo',
+        price: '3% por turno efectivo',
+        badgeText: '🌱 Sin Costo Fijo',
+        badgeColor: '#16a34a',
+        features: [
+          'Sin costo de mantenimiento fijo mensual',
+          'Portal de Reservas Online 24/7',
+          'Cobro de señas con Mercado Pago',
+          'Notificaciones por WhatsApp y Email',
+          'Ideal para comenzar a trabajar de inmediato'
+        ],
+        demoDataSummary: 'Turnos con seña cobrada por Mercado Pago, Pacientes y cálculo de comisiones',
+        demoEmail: 'demo.comision@turnohub.com',
+        doctorId: demoMap['demo.comision@turnohub.com']?.id || null
+      }
+    ];
+
+    res.json({
+      success: true,
+      plans: planDemos
+    });
+  } catch (error) {
+    console.error('Error al obtener demos de planes:', error);
+    res.status(500).json({ error: 'Error al obtener la lista de demos por plan' });
+  }
+});
+
+// Lanzar Demo de un Plan específico por su planKey
+router.post('/launch-plan-demo/:planKey', verifySeller, async (req, res) => {
+  try {
+    const { planKey } = req.params;
+
+    const emailMap = {
+      mensual_pro: 'demo.mensual@turnohub.com',
+      odontologia: 'demo.odontologia@turnohub.com',
+      orden_llegada: 'demo.filavirtual@turnohub.com',
+      commission: 'demo.comision@turnohub.com'
+    };
+
+    const targetEmail = emailMap[planKey];
+    if (!targetEmail) {
+      return res.status(400).json({ error: 'Clave de plan no válida' });
+    }
+
+    const docRes = await query('SELECT id FROM doctors WHERE email = $1', [targetEmail]);
+    if (docRes.rows.length === 0) {
+      return res.status(444).json({ error: 'La cuenta demo de este plan no fue inicializada' });
+    }
+
+    const doctorId = docRes.rows[0].id;
+    const doctorProfile = await getDoctorProfileWithPlan(doctorId);
+
+    // Generar token con flag demo
+    const token = jwt.sign(
+      {
+        id: doctorProfile.id,
+        email: doctorProfile.email,
+        name: doctorProfile.name,
+        role: 'doctor',
+        isDemoMode: true,
+        sellerId: req.seller.id,
+        sellerName: req.seller.name
+      },
+      JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+
+    res.json({
+      success: true,
+      message: `Demo del ${doctorProfile.name} iniciada`,
+      token,
+      doctor: {
+        ...doctorProfile,
+        isDemoMode: true,
+        sellerName: req.seller.name
+      }
+    });
+  } catch (error) {
+    console.error('Error al lanzar demo por plan:', error);
+    res.status(500).json({ error: 'Error al iniciar la demostración del plan' });
+  }
+});
+
+// Impersonar / Ingresar en Modo Demo a la cuenta de cualquier profesional
 router.post('/impersonate/:doctorId', verifySeller, async (req, res) => {
   try {
     const { doctorId } = req.params;
