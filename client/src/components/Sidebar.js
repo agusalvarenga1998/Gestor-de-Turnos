@@ -156,7 +156,7 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
             title="Cerrar sesión"
           >
             <Icon name="logout" size={20} color="currentColor" />
-            {(!isCollapsed || isOpen) && <span>Salir</span>}
+            {(!isCollapsed || isOpen) && <span>Cerrar sesión</span>}
           </button>
         </div>
       </aside>
