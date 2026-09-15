@@ -133,6 +133,22 @@ export async function seedDemoAccounts() {
 
       console.log(`  ✓ Profesional Demo [${demoConf.planKey}]: ${demoConf.email} (${doctorId})`);
 
+      // Asegurar que tengan al menos registros iniciales de auditoría
+      const checkAudit = await client.query(`SELECT COUNT(*) FROM audit_logs WHERE doctor_id = $1`, [doctorId]);
+      if (parseInt(checkAudit.rows[0].count, 10) === 0) {
+        await client.query(`
+          INSERT INTO audit_logs (doctor_id, action, details, ip_address, created_at)
+          VALUES 
+          ($1, 'login', 'Inicio de sesión exitoso', '127.0.0.1', NOW() - INTERVAL '3 hours'),
+          ($1, 'page_view', 'Accedió a pantalla: Dashboard Principal (/dashboard)', '127.0.0.1', NOW() - INTERVAL '2 hours 55 minutes'),
+          ($1, 'create_patient', 'Nuevo paciente dado de alta: Carlos Benítez', '127.0.0.1', NOW() - INTERVAL '2 hours 40 minutes'),
+          ($1, 'create_appointment', 'Turno agendado para hoy 10:00 (Paciente: Carlos Benítez)', '127.0.0.1', NOW() - INTERVAL '2 hours 30 minutes'),
+          ($1, 'page_view', 'Accedió a pantalla: Agenda y Gestión de Turnos (/appointments)', '127.0.0.1', NOW() - INTERVAL '2 hours'),
+          ($1, 'create_movement', 'Movimiento manual registrado: cobro de $15000', '127.0.0.1', NOW() - INTERVAL '1 hour 30 minutes'),
+          ($1, 'page_view', 'Accedió a pantalla: Caja y Movimientos de Dinero (/movements)', '127.0.0.1', NOW() - INTERVAL '1 hour');
+        `, [doctorId]);
+      }
+
       // Cargar datos específicos para cada tipo de demo si está vacía
       const checkPatients = await client.query(`SELECT COUNT(*) FROM patients WHERE doctor_id = $1`, [doctorId]);
       const patientsCount = parseInt(checkPatients.rows[0].count, 10);
@@ -211,7 +227,20 @@ export async function seedDemoAccounts() {
           ($1, -2500, 'gasto', 'efectivo', 'Compra de insumos y descartables');
         `, [doctorId]);
 
-        console.log(`    → Datos de prueba cargados correctamente para ${demoConf.email}`);
+        // Cargar actividades de auditoría de prueba
+        await client.query(`
+          INSERT INTO audit_logs (doctor_id, action, details, ip_address, created_at)
+          VALUES 
+          ($1, 'login', 'Inicio de sesión exitoso', '127.0.0.1', NOW() - INTERVAL '3 hours'),
+          ($1, 'page_view', 'Accedió a pantalla: Dashboard Principal (/dashboard)', '127.0.0.1', NOW() - INTERVAL '2 hours 55 minutes'),
+          ($1, 'create_patient', 'Nuevo paciente dado de alta: Carlos Benítez', '127.0.0.1', NOW() - INTERVAL '2 hours 40 minutes'),
+          ($1, 'create_appointment', 'Turno agendado para hoy 10:00 (Paciente: Carlos Benítez)', '127.0.0.1', NOW() - INTERVAL '2 hours 30 minutes'),
+          ($1, 'page_view', 'Accedió a pantalla: Agenda y Gestión de Turnos (/appointments)', '127.0.0.1', NOW() - INTERVAL '2 hours'),
+          ($1, 'create_movement', 'Movimiento manual registrado: cobro de $15000', '127.0.0.1', NOW() - INTERVAL '1 hour 30 minutes'),
+          ($1, 'page_view', 'Accedió a pantalla: Caja y Movimientos de Dinero (/movements)', '127.0.0.1', NOW() - INTERVAL '1 hour');
+        `, [doctorId]);
+
+        console.log(`    → Datos de prueba y auditoría cargados correctamente para ${demoConf.email}`);
       }
     }
 

@@ -1,6 +1,7 @@
 import * as appointmentService from '../services/appointmentService.js';
 import * as availabilityService from '../services/availabilityService.js';
 import { query } from '../db/config.js';
+import { logAction } from '../services/auditService.js';
 
 // Crear una nueva cita
 export const createAppointment = async (req, res) => {
@@ -112,6 +113,8 @@ export const createAppointment = async (req, res) => {
     await appointmentService.recalculateQueueForDate(doctorId, appointment_date);
 
     console.log('✓ Cola recalculada\n');
+
+    await logAction(doctorId, 'create_appointment', `Turno agendado para el ${appointment_date} ${appointment_time} (Paciente ID: ${patientId})`, req.ip);
 
     res.status(201).json({
       success: true,
@@ -257,6 +260,13 @@ export const updateAppointment = async (req, res) => {
       await appointmentService.recalculateQueueForDate(doctorId, updateData.appointment_date);
     }
 
+    await logAction(
+      doctorId, 
+      updateData.status ? 'update_appointment_status' : 'update_appointment',
+      updateData.status ? `Estado de turno cambiado a: ${updateData.status}` : `Turno actualizado (ID: ${appointmentId})`,
+      req.ip
+    );
+
     res.json({
       success: true,
       message: 'Cita actualizada exitosamente',
@@ -297,6 +307,8 @@ export const cancelAppointment = async (req, res) => {
 
     // Recalcular cola
     await appointmentService.recalculateQueueForDate(doctorId, appointment.appointment_date);
+
+    await logAction(doctorId, 'update_appointment_status', `Turno cancelado (ID: ${appointmentId})`, req.ip);
 
     res.json({
       success: true,

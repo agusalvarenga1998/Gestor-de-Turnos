@@ -1,5 +1,6 @@
 import * as patientService from '../services/patientService.js';
 import { query } from '../db/config.js';
+import { logAction } from '../services/auditService.js';
 
 // Crear un nuevo paciente
 export const createPatient = async (req, res) => {
@@ -60,6 +61,8 @@ export const createPatient = async (req, res) => {
       insurance_plan_id,
       insurance_policy_number
     });
+
+    await logAction(doctorId, 'create_patient', `Nuevo paciente dado de alta: ${name}${document_number ? ` (DNI: ${document_number})` : ''}`, req.ip);
 
     res.status(201).json({
       success: true,
@@ -142,13 +145,15 @@ export const updatePatient = async (req, res) => {
     const patient = await patientService.getPatientById(patientId, doctorId);
 
     if (!patient) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
         message: 'Paciente no encontrado'
       });
     }
 
     const updatedPatient = await patientService.updatePatient(patientId, doctorId, updateData);
+
+    await logAction(doctorId, 'update_patient', `Información de paciente actualizada: ${updatedPatient.name || patient.name}`, req.ip);
 
     res.json({
       success: true,
@@ -180,6 +185,8 @@ export const deletePatient = async (req, res) => {
     }
 
     const deletedPatient = await patientService.deletePatient(patientId, doctorId);
+
+    await logAction(doctorId, 'delete_patient', `Paciente eliminado/desactivado: ${patient.name}`, req.ip);
 
     res.json({
       success: true,

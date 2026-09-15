@@ -18,13 +18,24 @@ export const verifyToken = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
 
-    // Validar versión del token contra la base de datos
-    const result = await query('SELECT token_version FROM doctors WHERE id = $1', [decoded.id]);
-    if (result.rows.length === 0 || result.rows[0].token_version !== decoded.token_version) {
+    // Validar existencia del doctor y versión de token (excepto en Modo Demo de vendedor)
+    const result = await query('SELECT id, token_version FROM doctors WHERE id = $1', [decoded.id]);
+    
+    if (result.rows.length === 0) {
       return res.status(401).json({
         success: false,
-        message: 'Sesión inválida o expirada. Inicia sesión nuevamente.'
+        message: 'Usuario no encontrado.'
       });
+    }
+
+    // Si NO es modo demo, verificar token_version
+    if (!decoded.isDemoMode) {
+      if (decoded.token_version !== undefined && result.rows[0].token_version !== decoded.token_version) {
+        return res.status(401).json({
+          success: false,
+          message: 'Sesión inválida o expirada. Inicia sesión nuevamente.'
+        });
+      }
     }
 
     next();
@@ -45,6 +56,11 @@ export const verifyDoctorRole = async (req, res, next) => {
     });
   }
 
+  // Si es Modo Demo de Vendedor, permitir acceso directo
+  if (req.user.isDemoMode) {
+    return next();
+  }
+
   // Si ya sabemos que está expirada por el token, bloqueamos
   if (req.user.subscription_status === 'expired') {
     return res.status(403).json({
@@ -60,6 +76,11 @@ export const verifyDoctorRole = async (req, res, next) => {
 // Middleware específico para verificar suscripción consultando la DB (más seguro)
 export const checkSubscription = async (req, res, next) => {
   try {
+    // Si es Modo Demo de Vendedor, omitir chequeo de bloqueo por vencimiento
+    if (req.user && req.user.isDemoMode) {
+      return next();
+    }
+
     const { query } = await import('../db/config.js');
     
     const result = await query(

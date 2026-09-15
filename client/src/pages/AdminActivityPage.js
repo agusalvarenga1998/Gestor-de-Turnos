@@ -189,6 +189,43 @@ export default function AdminActivityPage() {
     }
   };
 
+  const renderActionBadge = (action) => {
+    switch (action) {
+      case 'page_view':
+        return <span className={styles.badge} style={{ background: '#dbeafe', color: '#1d4ed8', fontWeight: 800 }}>📱 Ingreso a Pantalla</span>;
+      case 'login':
+      case 'login_google':
+        return <span className={styles.badge} style={{ background: '#dcfce7', color: '#166534', fontWeight: 800 }}>🔑 Inicio de Sesión</span>;
+      case 'register':
+        return <span className={styles.badge} style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800 }}>✨ Registro</span>;
+      case 'create_appointment':
+        return <span className={styles.badge} style={{ background: '#e0e7ff', color: '#3730a3', fontWeight: 800 }}>📅 Alta de Turno</span>;
+      case 'update_appointment':
+      case 'update_appointment_status':
+        return <span className={styles.badge} style={{ background: '#fae8ff', color: '#86198f', fontWeight: 800 }}>🔄 Estado de Turno</span>;
+      case 'create_patient':
+        return <span className={styles.badge} style={{ background: '#ccfbf1', color: '#115e59', fontWeight: 800 }}>👤 Alta Paciente</span>;
+      case 'update_patient':
+        return <span className={styles.badge} style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 800 }}>✏️ Edición Paciente</span>;
+      case 'delete_patient':
+        return <span className={styles.badge} style={{ background: '#fee2e2', color: '#991b1b', fontWeight: 800 }}>🗑️ Eliminar Paciente</span>;
+      case 'create_medical_record':
+        return <span className={styles.badge} style={{ background: '#fef9c3', color: '#854d0e', fontWeight: 800 }}>📋 Historia Clínica</span>;
+      case 'delete_medical_record':
+        return <span className={styles.badge} style={{ background: '#fee2e2', color: '#991b1b', fontWeight: 800 }}>🗑️ Borrar Ficha</span>;
+      case 'create_movement':
+      case 'daily_close':
+      case 'export_movements_csv':
+        return <span className={styles.badge} style={{ background: '#d1fae5', color: '#065f46', fontWeight: 800 }}>💰 Caja y Movimientos</span>;
+      case 'update_services':
+        return <span className={styles.badge} style={{ background: '#ffedd5', color: '#9a3412', fontWeight 800 }}>🛠️ Servicios</span>;
+      case 'update_working_hours':
+        return <span className={styles.badge} style={{ background: '#ede9fe', color: '#5b21b6', fontWeight: 800 }}>⏰ Horarios</span>;
+      default:
+        return <span className={styles.badge} style={{ background: '#f1f5f9', color: '#334155' }}>{action}</span>;
+    }
+  };
+
   return (
     <AdminLayout>
       <div className={styles.container}>
@@ -284,6 +321,14 @@ export default function AdminActivityPage() {
               <option value="all">Todas las actividades</option>
               <option value="page_view">📱 Ingreso a Pantallas (Vistas)</option>
               <option value="login">🔑 Inicios de Sesión</option>
+              <option value="create_appointment">📅 Alta de Turnos</option>
+              <option value="update_appointment_status">🔄 Estado de Turnos</option>
+              <option value="create_patient">👤 Alta de Pacientes</option>
+              <option value="update_patient">✏️ Edición de Pacientes</option>
+              <option value="create_medical_record">📋 Historias Clínicas</option>
+              <option value="create_movement">💰 Movimientos de Caja</option>
+              <option value="update_services">🛠️ Servicios</option>
+              <option value="update_working_hours">⏰ Horarios de Atención</option>
             </select>
           )}
 
@@ -384,28 +429,16 @@ export default function AdminActivityPage() {
                         <strong>{l.doctor_name}</strong>
                         <div className={styles.doctorMeta}>{l.doctor_email}</div>
                       </td>
-                      <td>
-                        {l.action === 'page_view' ? (
-                          <span className={styles.badge} style={{ background: '#dbeafe', color: '#1d4ed8', fontWeight: 800 }}>
-                            📱 Ingreso a Pantalla
-                          </span>
-                        ) : l.action === 'login' ? (
-                          <span className={styles.badge} style={{ background: '#dcfce7', color: '#166534', fontWeight: 800 }}>
-                            🔑 Inicio de Sesión
-                          </span>
-                        ) : (
-                          <span className={styles.badge} style={{ background: '#f1f5f9', color: '#334155' }}>
-                            {l.action}
-                          </span>
-                        )}
-                      </td>
+                      <td>{renderActionBadge(l.action)}</td>
                       <td>
                         {l.action === 'page_view' ? (
                           <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>
                             🖥️ {l.details}
                           </div>
                         ) : (
-                          <div className={styles.codeBox}>{l.details || 'Sin detalles adicionales'}</div>
+                          <div style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                            {l.details || 'Sin detalles adicionales'}
+                          </div>
                         )}
                       </td>
                       <td><code style={{ fontSize: '0.85rem' }}>{l.ip_address || 'N/A'}</code></td>

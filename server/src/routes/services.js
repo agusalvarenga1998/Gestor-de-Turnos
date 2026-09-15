@@ -1,6 +1,7 @@
 import express from 'express';
 import { query } from '../db/config.js';
 import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
+import { logAction } from '../services/auditService.js';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 
@@ -131,6 +132,8 @@ router.post('/', async (req, res) => {
       [doctorId, name, description, price || 0, duration_minutes, booking_fee || 0, code || null, is_online || false]
     );
 
+    await logAction(doctorId, 'update_services', `Nuevo servicio creado: ${name} ($${price || 0}, ${duration_minutes} min)`, req.ip);
+
     res.status(201).json({ success: true, service: result.rows[0] });
   } catch (error) {
     console.error('Error creating service:', error);
@@ -164,6 +167,8 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Servicio no encontrado o no tienes permiso' });
     }
 
+    await logAction(doctorId, 'update_services', `Servicio actualizado: ${name}`, req.ip);
+
     res.json({ success: true, service: result.rows[0] });
   } catch (error) {
     console.error('Error updating service:', error);
@@ -178,13 +183,15 @@ router.delete('/:id', async (req, res) => {
     const doctorId = req.user.id;
 
     const result = await query(
-      'DELETE FROM services WHERE id = $1 AND doctor_id = $2 RETURNING id',
+      'DELETE FROM services WHERE id = $1 AND doctor_id = $2 RETURNING id, name',
       [id, doctorId]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Servicio no encontrado' });
     }
+
+    await logAction(doctorId, 'update_services', `Servicio eliminado (ID: ${id})`, req.ip);
 
     res.json({ success: true, message: 'Servicio eliminado correctamente' });
   } catch (error) {

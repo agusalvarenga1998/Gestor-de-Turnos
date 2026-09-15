@@ -3,6 +3,7 @@ import * as patientService from '../services/patientService.js';
 import path from 'path';
 import fs from 'fs';
 import { uploadsDir } from '../utils/paths.js';
+import { logAction } from '../services/auditService.js';
 
 export const createRecord = async (req, res) => {
   try {
@@ -37,6 +38,13 @@ export const createRecord = async (req, res) => {
     }
 
     const record = await patientRecordService.createRecord(doctorId, patientId, recordData);
+
+    await logAction(
+      doctorId, 
+      'create_medical_record', 
+      `Ficha médica / Nota agregada para ${patient.name}: ${title || type || 'Sin título'}`, 
+      req.ip
+    );
 
     res.status(201).json({
       success: true,
@@ -94,6 +102,8 @@ export const deleteRecord = async (req, res) => {
         fs.unlinkSync(fullPath);
       }
     }
+
+    await logAction(doctorId, 'delete_medical_record', `Registro médico eliminado (ID: ${recordId})`, req.ip);
 
     res.json({
       success: true,

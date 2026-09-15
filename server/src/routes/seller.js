@@ -375,6 +375,8 @@ router.post('/launch-plan-demo/:planKey', verifySeller, async (req, res) => {
         email: doctorProfile.email,
         name: doctorProfile.name,
         role: 'doctor',
+        status: doctorProfile.status || 'approved',
+        subscription_status: doctorProfile.subscription_status || 'active',
         isDemoMode: true,
         sellerId: req.seller.id,
         sellerName: req.seller.name
@@ -417,6 +419,8 @@ router.post('/impersonate/:doctorId', verifySeller, async (req, res) => {
         email: doctorProfile.email,
         name: doctorProfile.name,
         role: 'doctor',
+        status: doctorProfile.status || 'approved',
+        subscription_status: doctorProfile.subscription_status || 'active',
         isDemoMode: true,
         sellerId: req.seller.id,
         sellerName: req.seller.name

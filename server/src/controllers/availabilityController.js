@@ -1,4 +1,5 @@
 import * as availabilityService from '../services/availabilityService.js';
+import { logAction } from '../services/auditService.js';
 
 // Crear disponibilidad
 export const createAvailability = async (req, res) => {
@@ -26,6 +27,8 @@ export const createAvailability = async (req, res) => {
       start_time,
       end_time
     });
+
+    await logAction(doctorId, 'update_working_hours', `Nuevo bloque horario agregado: Día ${day_of_week} (${start_time} - ${end_time})`, req.ip);
 
     res.status(201).json({
       success: true,

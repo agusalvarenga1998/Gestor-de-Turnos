@@ -93,6 +93,7 @@ function PageTracker() {
     const screenMap = {
       '/dashboard': 'Dashboard Principal',
       '/appointments': 'Agenda y Gestión de Turnos',
+      '/queue': 'Sala de Espera y Fila en Vivo',
       '/patients': 'Listado de Clientes / Pacientes',
       '/services': 'Mis Servicios',
       '/reports': 'Estadísticas y Reportes',
@@ -108,6 +109,7 @@ function PageTracker() {
     let pageName = screenMap[currentPath];
     if (!pageName) {
       if (currentPath.startsWith('/patients/')) pageName = 'Detalle de Paciente';
+      else if (currentPath.startsWith('/patient-history/')) pageName = 'Historia Clínica de Paciente';
       else if (currentPath.startsWith('/admin/')) return;
       else pageName = currentPath;
     }
