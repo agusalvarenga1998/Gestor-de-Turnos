@@ -218,7 +218,7 @@ export default function AdminActivityPage() {
       case 'export_movements_csv':
         return <span className={styles.badge} style={{ background: '#d1fae5', color: '#065f46', fontWeight: 800 }}>💰 Caja y Movimientos</span>;
       case 'update_services':
-        return <span className={styles.badge} style={{ background: '#ffedd5', color: '#9a3412', fontWeight 800 }}>🛠️ Servicios</span>;
+        return <span className={styles.badge} style={{ background: '#ffedd5', color: '#9a3412', fontWeight: 800 }}>🛠️ Servicios</span>;
       case 'update_working_hours':
         return <span className={styles.badge} style={{ background: '#ede9fe', color: '#5b21b6', fontWeight: 800 }}>⏰ Horarios</span>;
       default:
