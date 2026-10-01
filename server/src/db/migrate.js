@@ -266,7 +266,83 @@ async function migrate() {
     `);
     console.log('✓ Tabla doctors actualizada.\n');
 
-    await client.query("INSERT INTO schema_migrations(version) VALUES('001_legacy_schema')");
+    await client.query("INSERT INTO schema_migrations(version) VALUES('001_legacy_schema') ON CONFLICT DO NOTHING");
+    
+    // Migración 002: Módulo de vendedores
+    if (!(await client.query("SELECT 1 FROM schema_migrations WHERE version='002_sellers_module'")).rowCount) {
+      console.log('🔄 Ejecutando migración 002: Módulo de Vendedores...\n');
+      
+      await client.query(`
+        ALTER TABLE doctors 
+        ADD COLUMN IF NOT EXISTS registered_by_seller_id UUID,
+        ADD COLUMN IF NOT EXISTS commercial_status VARCHAR(50) DEFAULT 'lead',
+        ADD COLUMN IF NOT EXISTS activated_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS first_payment_at TIMESTAMP;
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS sellers (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          phone VARCHAR(50),
+          is_active BOOLEAN DEFAULT true,
+          commission_type VARCHAR(50) DEFAULT 'fixed',
+          commission_value DECIMAL(10,2) DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      await client.query(`
+        ALTER TABLE sellers
+        ADD COLUMN IF NOT EXISTS commission_type VARCHAR(50) DEFAULT 'fixed',
+        ADD COLUMN IF NOT EXISTS commission_value DECIMAL(10,2) DEFAULT 0;
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS seller_invitations (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          seller_id UUID NOT NULL,
+          email VARCHAR(255) NOT NULL,
+          token_hash VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'pending',
+          expires_at TIMESTAMP NOT NULL,
+          accepted_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(email, status)
+        );
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS seller_commissions (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          seller_id UUID NOT NULL,
+          doctor_id UUID NOT NULL,
+          amount DECIMAL(10,2) NOT NULL,
+          reason VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'pending',
+          generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          paid_at TIMESTAMP
+        );
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS seller_notes (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          seller_id UUID NOT NULL,
+          doctor_id UUID NOT NULL,
+          note TEXT NOT NULL,
+          created_by UUID,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      await client.query("INSERT INTO schema_migrations(version) VALUES('002_sellers_module')");
+      console.log('✓ Migración 002 completada.\n');
+    }
+
     await client.query('COMMIT');
     console.log('✅ Base de datos sincronizada exitosamente!');
   } catch (error) {
