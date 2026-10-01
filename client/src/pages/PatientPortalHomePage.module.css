@@ -434,6 +434,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .fullWidth {
@@ -456,14 +457,21 @@
 
 .formGroup input, .formGroup select, .datePickerInput {
   width: 100%;
+  min-height: 48px;
   box-sizing: border-box;
   padding: 12px 16px;
   border: 1px solid var(--outline-variant);
-  border-radius: 0.75rem;
+  border-radius: 10px;
   font-size: 1rem;
   background-color: var(--surface-container-lowest);
   color: var(--on-surface);
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formGroup :global(.react-datepicker-wrapper),
+.formGroup :global(.react-datepicker__input-container) {
+  display: block;
+  width: 100%;
 }
 
 .formGroup input:focus, .formGroup select:focus, .datePickerInput:focus {
@@ -530,6 +538,12 @@
   border: 1px solid var(--outline-variant);
 }
 
+@media (max-width: 520px) {
+  .customerTypeToggle {
+    flex-direction: column;
+  }
+}
+
 @media (min-width: 768px) {
   .customerTypeToggle {
     grid-column: span 2;
@@ -545,8 +559,9 @@
   font-size: 0.875rem;
   color: var(--on-surface-variant);
   cursor: pointer;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   transition: all 0.2s ease;
+  min-height: 42px;
 }
 
 .toggleBtn:active {
@@ -565,6 +580,23 @@
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
+}
+
+.patientRecoveryBox {
+  grid-column: span 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 18px;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: 12px;
+}
+
+@media (min-width: 768px) {
+  .patientRecoveryBox {
+    grid-column: span 2;
+  }
 }
 
 @media (min-width: 768px) {
@@ -638,7 +670,7 @@
 .formCardBox {
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
-  border-radius: 1rem;
+  border-radius: 12px;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -803,7 +835,7 @@
 
 .mapFrame {
   height: 300px;
-  border-radius: 1rem;
+  border-radius: 12px;
   overflow: hidden;
   margin: 1rem 0;
   border: 1px solid var(--outline-variant);
@@ -864,7 +896,7 @@
   background: var(--primary);
   color: #ffffff;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: 10px;
   font-weight: 700;
   margin-top: 2rem;
   cursor: pointer;
@@ -911,7 +943,7 @@
 .paymentSummary {
   background: var(--surface-container-low);
   padding: 1.5rem;
-  border-radius: 1rem;
+  border-radius: 12px;
   margin-top: 2rem;
   border: 1px solid var(--outline-variant);
 }
@@ -927,9 +959,16 @@
 .paymentRow {
   display: flex;
   justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 0.75rem;
   font-size: 0.95rem;
   color: var(--on-surface-variant);
+}
+
+.paymentRow span:last-child,
+.paymentRow strong:last-child {
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .highlightRow {
@@ -947,6 +986,21 @@
   border-top: 2px solid var(--outline-variant);
   color: var(--primary);
   font-size: 1.15rem;
+}
+
+@media (max-width: 480px) {
+  .paymentSummary {
+    padding: 1.15rem;
+  }
+
+  .paymentRow {
+    align-items: flex-start;
+    font-size: 0.9rem;
+  }
+
+  .totalRow {
+    font-size: 1rem;
+  }
 }
 
 .totalRow strong {

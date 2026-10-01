@@ -1,0 +1,98 @@
+.accessBox {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+
+.helpText {
+  margin: 0;
+  color: #434654;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.accessGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+@media (min-width: 640px) {
+  .accessGrid {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.field span {
+  color: #434654;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #c3c5d7;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #141b2b;
+  font: inherit;
+}
+
+.field input:focus {
+  border-color: #003fb1;
+  box-shadow: 0 0 0 3px rgba(0, 63, 177, 0.15);
+  outline: none;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 48px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.primaryButton {
+  padding: 0 18px;
+  background: #003fb1;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.primaryButton:disabled {
+  background: #e7eaf6;
+  color: #747a8c;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  justify-self: start;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #003fb1;
+  border-color: #c3c5d7;
+}
+
+.status {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #eef4ff;
+  color: #183a77;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}

@@ -1039,8 +1039,8 @@ export default function PatientPortalHomePage() {
 
                             {isExistingCustomer ? (
                               <>
-                                <div className={styles.dniSearchWrapper}>
-                                  <div className={styles.formGroup} style={{ flex: 1 }}>
+                                <div className={styles.patientRecoveryBox}>
+                                  <div className={styles.formGroup}>
                                     <label>INGRESA TU DNI</label>
                                     <input
                                       type="text"
