@@ -27,11 +27,20 @@ export async function stabilizeSchema() {
         amount numeric(12,2) NOT NULL, currency text NOT NULL, processed_at timestamptz NOT NULL DEFAULT now()
       );
     `);
-    const type = (await client.query("SELECT data_type FROM information_schema.columns WHERE table_name='waiting_queue' AND column_name='service_id' AND table_schema='public'")).rows[0]?.data_type;
-    if (type === 'uuid') {
-      // Preserve original UUIDs for historical reconciliation; never silently discard them.
+    const columns = (await client.query(`SELECT table_name,data_type FROM information_schema.columns
+      WHERE table_schema=current_schema() AND
+      ((table_name='waiting_queue' AND column_name='service_id') OR (table_name='services' AND column_name='id'))`)).rows;
+    const queueType = columns.find(column => column.table_name === 'waiting_queue')?.data_type;
+    const serviceType = columns.find(column => column.table_name === 'services')?.data_type;
+    if (!['uuid', 'smallint', 'integer', 'bigint'].includes(serviceType)) {
+      throw new Error('Tipo de identificador de services no soportado: ' + serviceType);
+    }
+    if (queueType && queueType !== serviceType) {
+      // Preserve incompatible historical IDs; matching UUID installations need no conversion.
       await client.query('ALTER TABLE waiting_queue RENAME COLUMN service_id TO legacy_service_id');
-      await client.query('ALTER TABLE waiting_queue ADD COLUMN service_id integer REFERENCES services(id) ON DELETE SET NULL');
+    }
+    if (queueType !== serviceType) {
+      await client.query(`ALTER TABLE waiting_queue ADD COLUMN service_id ${serviceType} REFERENCES services(id) ON DELETE SET NULL`);
     }
     await client.query(`
       ALTER TABLE services ADD CONSTRAINT services_valid_values CHECK (duration_minutes BETWEEN 5 AND 720 AND price >= 0 AND price <> 'NaN'::numeric AND booking_fee >= 0 AND booking_fee <> 'NaN'::numeric) NOT VALID;
