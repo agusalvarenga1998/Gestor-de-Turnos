@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAdminAuth } from '../hooks/useAdminAuth';
+import AdminLayout from '../components/AdminLayout';
 import styles from './AdminSellersPage.module.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
@@ -102,6 +103,7 @@ const AdminSellersPage = () => {
   };
 
   return (
+    <AdminLayout>
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Gestión de Vendedores</h2>
@@ -246,6 +248,7 @@ const AdminSellersPage = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 
