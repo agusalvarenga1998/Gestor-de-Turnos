@@ -1196,5 +1196,69 @@ router.get('/activity-logs', verifyAdmin, async (req, res) => {
     res.status(500).json({ error: 'Error al obtener historial de actividad' });
   }
 });
+// GET /sellers - List all sellers with metrics
+router.get('/sellers', verifyAdmin, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT s.id, s.name, s.email, s.phone, s.is_active, s.commission_type, s.commission_value, s.created_at,
+        (SELECT COUNT(*) FROM doctors d WHERE d.registered_by_seller_id = s.id) as total_leads,
+        (SELECT COUNT(*) FROM doctors d WHERE d.registered_by_seller_id = s.id AND d.commercial_status = 'paying') as total_paying
+      FROM sellers s
+      ORDER BY s.created_at DESC
+    `);
+    res.json({ success: true, sellers: result.rows });
+  } catch (error) {
+    console.error('Error fetching sellers:', error);
+    res.status(500).json({ error: 'Error al obtener vendedores' });
+  }
+});
+
+// POST /sellers - Create a new seller
+router.post('/sellers', verifyAdmin, async (req, res) => {
+  try {
+    const { name, email, phone, password, commission_type, commission_value } = req.body;
+    
+    const existing = await query('SELECT id FROM sellers WHERE email = $1', [email]);
+    if (existing.rows.length > 0) return res.status(400).json({ error: 'Email ya registrado' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const result = await query(`
+      INSERT INTO sellers (name, email, phone, password_hash, commission_type, commission_value)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, name, email, phone, is_active, commission_type, commission_value
+    `, [name, email, phone, passwordHash, commission_type || 'fixed', commission_value || 0]);
+    
+    res.status(201).json({ success: true, seller: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating seller:', error);
+    res.status(500).json({ error: 'Error al crear vendedor' });
+  }
+});
+
+// PUT /sellers/:id - Update a seller
+router.put('/sellers/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, phone, is_active, commission_type, commission_value, password } = req.body;
+    
+    if (password) {
+      const passwordHash = await bcrypt.hash(password, 10);
+      await query(`
+        UPDATE sellers SET name=$1, phone=$2, is_active=$3, commission_type=$4, commission_value=$5, password_hash=$6, updated_at=CURRENT_TIMESTAMP
+        WHERE id=$7
+      `, [name, phone, is_active, commission_type, commission_value, passwordHash, id]);
+    } else {
+      await query(`
+        UPDATE sellers SET name=$1, phone=$2, is_active=$3, commission_type=$4, commission_value=$5, updated_at=CURRENT_TIMESTAMP
+        WHERE id=$6
+      `, [name, phone, is_active, commission_type, commission_value, id]);
+    }
+    
+    res.json({ success: true, message: 'Vendedor actualizado' });
+  } catch (error) {
+    console.error('Error updating seller:', error);
+    res.status(500).json({ error: 'Error al actualizar vendedor' });
+  }
+});
 
 export default router;

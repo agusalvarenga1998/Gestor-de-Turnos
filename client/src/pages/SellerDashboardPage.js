@@ -23,10 +23,44 @@ const SellerDashboardPage = () => {
   const [noteText, setNoteText] = useState('');
   const [savingNoteId, setSavingNoteId] = useState(null);
 
+  // Estado para creación de leads (nuevos profesionales)
+  const [showNewLeadForm, setShowNewLeadForm] = useState(false);
+  const [newLeadData, setNewLeadData] = useState({ name: '', email: '', phone: '', specialization: '', rubro: '', notes: '' });
+  const [creatingLead, setCreatingLead] = useState(false);
+  const [leadError, setLeadError] = useState(null);
+  const [leadSuccess, setLeadSuccess] = useState(null);
+
   // Datos de Pestaña Demos por Plan
   const [planDemos, setPlanDemos] = useState([]);
   const [loadingDemos, setLoadingDemos] = useState(true);
   const [launchingPlanKey, setLaunchingPlanKey] = useState(null);
+
+  // Crear un nuevo lead (profesional)
+  const handleCreateLead = async (e) => {
+    e.preventDefault();
+    setCreatingLead(true);
+    setLeadError(null);
+    setLeadSuccess(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/seller/doctors`, newLeadData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setLeadSuccess('Profesional registrado correctamente.');
+        setNewLeadData({ name: '', email: '', phone: '', specialization: '', rubro: '', notes: '' });
+        fetchDoctors(); // Recargar la lista
+        setTimeout(() => {
+          setShowNewLeadForm(false);
+          setLeadSuccess(null);
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Error al registrar profesional:', err);
+      setLeadError(err.response?.data?.error || 'Error al registrar profesional.');
+    } finally {
+      setCreatingLead(false);
+    }
+  };
 
   // Cargar Profesionales para Seguimiento
   const fetchDoctors = async () => {
@@ -199,6 +233,51 @@ const SellerDashboardPage = () => {
         {/* CONTENIDO PESTAÑA 1: SEGUIMIENTO DE PROFESIONALES */}
         {activeTab === 'seguimiento' && (
           <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+              <button 
+                onClick={() => setShowNewLeadForm(!showNewLeadForm)}
+                style={{ background: 'var(--primary-color)', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <span className="material-symbols-outlined">{showNewLeadForm ? 'close' : 'add'}</span>
+                {showNewLeadForm ? 'Cancelar' : 'Nuevo Profesional'}
+              </button>
+            </div>
+
+            {showNewLeadForm && (
+              <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '24px' }}>
+                <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Registrar Nuevo Profesional</h3>
+                {leadError && <div style={{ color: 'var(--danger-color)', marginBottom: '16px' }}>{leadError}</div>}
+                {leadSuccess && <div style={{ color: 'var(--success-color)', marginBottom: '16px' }}>{leadSuccess}</div>}
+                <form onSubmit={handleCreateLead} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Nombre completo *</label>
+                    <input required type="text" value={newLeadData.name} onChange={e => setNewLeadData({...newLeadData, name: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Email *</label>
+                    <input required type="email" value={newLeadData.email} onChange={e => setNewLeadData({...newLeadData, email: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Teléfono *</label>
+                    <input required type="tel" value={newLeadData.phone} onChange={e => setNewLeadData({...newLeadData, phone: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Especialidad</label>
+                    <input type="text" value={newLeadData.specialization} onChange={e => setNewLeadData({...newLeadData, specialization: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} />
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Notas Comerciales (Opcional)</label>
+                    <textarea value={newLeadData.notes} onChange={e => setNewLeadData({...newLeadData, notes: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', minHeight: '80px' }} />
+                  </div>
+                  <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button type="submit" disabled={creatingLead} style={{ background: 'var(--success-color)', color: 'white', padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                      {creatingLead ? 'Guardando...' : 'Registrar Profesional'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
             {/* KPI Cards */}
             <div className={styles.kpiGrid}>
               <div className={styles.kpiCard}>

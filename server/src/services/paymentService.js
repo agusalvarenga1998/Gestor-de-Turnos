@@ -26,8 +26,24 @@ export async function applyApprovedPayment(payment, referenceId, kind) {
     if (kind === 'subscription') {
       const plan = (await client.query('SELECT key FROM pricing_plans WHERE id=$1', [row.pricing_plan_id])).rows[0];
       if (!plan) throw httpError('Plan no disponible.', 409);
-      const updated = await client.query(`UPDATE doctors SET subscription_status='active', subscription_expires_at=GREATEST(COALESCE(subscription_expires_at,now()),now())+interval '30 days', pricing_plan_id=$2,plan_type=$3 WHERE id=$1 RETURNING subscription_expires_at`, [row.doctor_id, row.pricing_plan_id, plan.key === 'commission' ? 'commission' : 'monthly']);
-      await client.query("UPDATE subscriptions SET status='approved',mp_payment_id=$2,period_start=now(),period_end=$3 WHERE id=$1", [referenceId, String(payment.id), updated.rows[0].subscription_expires_at]);
+      const updated = await client.query(`UPDATE doctors SET subscription_status='active', subscription_expires_at=GREATEST(COALESCE(subscription_expires_at,now()),now())+interval '30 days', pricing_plan_id=$2,plan_type=$3 WHERE id=$1 RETURNING subscription_expires_at, registered_by_seller_id, commercial_status`, [row.doctor_id, row.pricing_plan_id, plan.key === 'commission' ? 'commission' : 'monthly']);
+      const docData = updated.rows[0];
+      await client.query("UPDATE subscriptions SET status='approved',mp_payment_id=$2,period_start=now(),period_end=$3 WHERE id=$1", [referenceId, String(payment.id), docData.subscription_expires_at]);
+      
+      // Comisión de ventas si es la primera suscripción (pase a paying)
+      if (docData.registered_by_seller_id && docData.commercial_status !== 'paying') {
+        const seller = (await client.query('SELECT commission_type, commission_value FROM sellers WHERE id=$1', [docData.registered_by_seller_id])).rows[0];
+        if (seller) {
+          let commissionAmount = seller.commission_value || 0;
+          if (seller.commission_type === 'percentage') {
+            commissionAmount = (payment.transaction_amount * (seller.commission_value / 100));
+          }
+          if (commissionAmount > 0) {
+            await client.query(`INSERT INTO seller_commissions (seller_id, doctor_id, amount, reason, status) VALUES ($1, $2, $3, 'Conversión a plan pago', 'pending')`, [docData.registered_by_seller_id, row.doctor_id, commissionAmount]);
+          }
+          await client.query(`UPDATE doctors SET commercial_status='paying', first_payment_at=NOW() WHERE id=$1`, [row.doctor_id]);
+        }
+      }
     } else {
       await client.query("UPDATE appointments SET status='pending',payment_status=CASE WHEN GREATEST(total_amount-COALESCE(system_fee,0),0) >= COALESCE(total_price,0)-COALESCE(coverage_amount,0) THEN 'paid' ELSE 'partial' END,booking_fee_paid=GREATEST(total_amount-COALESCE(system_fee,0),0),fee_charged=true,updated_at=now() WHERE id=$1", [referenceId]);
       afterCommit(async () => {

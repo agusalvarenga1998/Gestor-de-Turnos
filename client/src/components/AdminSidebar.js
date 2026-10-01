@@ -62,6 +62,11 @@ export default function AdminSidebar() {
       badgeColor: '#f59e0b'
     },
     {
+      label: 'Vendedores',
+      icon: '💼',
+      path: '/admin/sellers'
+    },
+    {
       label: 'Planes y Pagos',
       icon: '💳',
       path: '/admin/subscriptions'

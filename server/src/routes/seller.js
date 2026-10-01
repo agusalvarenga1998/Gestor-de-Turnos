@@ -147,12 +147,13 @@ router.get('/doctors', verifySeller, async (req, res) => {
         (SELECT COUNT(*) FROM appointments app WHERE app.doctor_id = d.id) as total_appointments
       FROM doctors d
       LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
+      WHERE d.registered_by_seller_id = $1
       ORDER BY 
         CASE 
           WHEN d.subscription_status = 'trial' THEN COALESCE(d.trial_ends_at, d.created_at)
           ELSE COALESCE(d.subscription_expires_at, d.created_at)
         END ASC
-    `);
+    `, [req.seller.id]);
 
     const now = new Date();
 
@@ -449,6 +450,47 @@ router.post('/impersonate/:doctorId', verifySeller, async (req, res) => {
   } catch (error) {
     console.error('Error al ingresar en modo demo:', error);
     res.status(500).json({ error: 'Error al ingresar a las pantallas del profesional' });
+  }
+});
+// Registrar un nuevo profesional (como lead)
+router.post('/doctors', verifySeller, async (req, res) => {
+  try {
+    const { name, email, phone, specialization, rubro, notes } = req.body;
+    
+    // Check if doctor exists
+    const existing = await query('SELECT id FROM doctors WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Ya existe un profesional con este email' });
+    }
+
+    // Insert new doctor
+    const result = await query(`
+      INSERT INTO doctors (
+        name, email, phone, specialization, rubro, 
+        registered_by_seller_id, commercial_status, seller_notes, is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, 'lead', $7, false)
+      RETURNING id, name, email, commercial_status, created_at
+    `, [name, email, phone, specialization, rubro, req.seller.id, notes || '']);
+
+    const newDoctor = result.rows[0];
+
+    // Optionally add note to seller_notes table
+    if (notes) {
+      await query(`
+        INSERT INTO seller_notes (seller_id, doctor_id, note, created_by)
+        VALUES ($1, $2, $3, $1)
+      `, [req.seller.id, newDoctor.id, notes]);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Profesional registrado correctamente',
+      doctor: newDoctor
+    });
+  } catch (error) {
+    console.error('Error al registrar profesional:', error);
+    res.status(500).json({ error: 'Error al registrar profesional' });
   }
 });
 

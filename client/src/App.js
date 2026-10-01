@@ -49,6 +49,7 @@ import AdminTemplateInsurancesPage from './pages/AdminTemplateInsurancesPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminSupportTicketsPage from './pages/AdminSupportTicketsPage';
 import AdminActivityPage from './pages/AdminActivityPage';
+import AdminSellersPage from './pages/AdminSellersPage';
 
 // Páginas - Vendedor
 import SellerLoginPage from './pages/SellerLoginPage';
@@ -251,6 +252,14 @@ function AppContent() {
         element={
           <ProtectedAdminRoute>
             <AdminActivityPage />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/sellers"
+        element={
+          <ProtectedAdminRoute>
+            <AdminSellersPage />
           </ProtectedAdminRoute>
         }
       />
