@@ -514,6 +514,59 @@ async function initDatabase(retries = 3) {
     const { seedDemoAccounts } = await import('./seed-demo-accounts.js');
     await seedDemoAccounts();
 
+    console.log('Aplicando esquema del módulo de vendedores...');
+    await client.query(`
+      ALTER TABLE doctors 
+      ADD COLUMN IF NOT EXISTS registered_by_seller_id UUID REFERENCES sellers(id),
+      ADD COLUMN IF NOT EXISTS commercial_status VARCHAR(50) DEFAULT 'lead',
+      ADD COLUMN IF NOT EXISTS activated_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS first_payment_at TIMESTAMP;
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS seller_invitations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        seller_id UUID REFERENCES sellers(id) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        token_hash VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending',
+        expires_at TIMESTAMP NOT NULL,
+        accepted_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(email, status)
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS seller_commissions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        seller_id UUID REFERENCES sellers(id) NOT NULL,
+        doctor_id UUID REFERENCES doctors(id) NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        reason VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending',
+        generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        paid_at TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS seller_notes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        seller_id UUID REFERENCES sellers(id) NOT NULL,
+        doctor_id UUID REFERENCES doctors(id) NOT NULL,
+        note TEXT NOT NULL,
+        created_by UUID REFERENCES sellers(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      ALTER TABLE sellers
+      ADD COLUMN IF NOT EXISTS commission_type VARCHAR(50) DEFAULT 'fixed',
+      ADD COLUMN IF NOT EXISTS commission_value DECIMAL(10,2) DEFAULT 0;
+    `);
+
     console.log('\n✅ Base de datos inicializada correctamente!');
     process.exit(0);
   } catch (error) {
