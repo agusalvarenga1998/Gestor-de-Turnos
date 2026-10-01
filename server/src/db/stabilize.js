@@ -4,10 +4,74 @@ import 'dotenv/config';
 import { pathToFileURL } from 'node:url';
 import pool, { transaction } from './config.js';
 
+async function stabilizeSellersModule(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS sellers (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      phone VARCHAR(50),
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    ALTER TABLE sellers
+    ADD COLUMN IF NOT EXISTS commission_type VARCHAR(50) DEFAULT 'fixed',
+    ADD COLUMN IF NOT EXISTS commission_value DECIMAL(10,2) DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+  `);
+
+  await client.query(`
+    ALTER TABLE doctors
+    ADD COLUMN IF NOT EXISTS registered_by_seller_id UUID REFERENCES sellers(id),
+    ADD COLUMN IF NOT EXISTS commercial_status VARCHAR(50) DEFAULT 'lead',
+    ADD COLUMN IF NOT EXISTS activated_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS first_payment_at TIMESTAMP;
+  `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS seller_invitations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      seller_id UUID NOT NULL REFERENCES sellers(id),
+      email VARCHAR(255) NOT NULL,
+      token_hash VARCHAR(255) NOT NULL,
+      status VARCHAR(50) DEFAULT 'pending',
+      expires_at TIMESTAMP NOT NULL,
+      accepted_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS seller_commissions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      seller_id UUID NOT NULL REFERENCES sellers(id),
+      doctor_id UUID NOT NULL REFERENCES doctors(id),
+      amount DECIMAL(10,2) NOT NULL,
+      reason VARCHAR(255) NOT NULL,
+      status VARCHAR(50) DEFAULT 'pending',
+      generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      paid_at TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS seller_notes (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      seller_id UUID NOT NULL REFERENCES sellers(id),
+      doctor_id UUID NOT NULL REFERENCES doctors(id),
+      note TEXT NOT NULL,
+      created_by UUID,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+}
+
 export async function stabilizeSchema() {
   await transaction(async client => {
     await client.query("SELECT pg_advisory_xact_lock(hashtextextended('turnohub:migrations',0))");
     await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+    await stabilizeSellersModule(client);
     if ((await client.query("SELECT 1 FROM schema_migrations WHERE version='002_stabilization'")).rowCount) return;
     await client.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS patients_doctor_document_unique ON patients(doctor_id, document_number) WHERE document_number IS NOT NULL;

@@ -80,6 +80,7 @@ import { setupWebSocket } from './websocket/server.js';
 import { initReminderCron } from './cron/reminderCron.js';
 
 const app = express();
+app.set('trust proxy', 1);
 const httpServer = createServer(app);
 
 // Seguridad y CORS

@@ -49,4 +49,57 @@ try {
       console.log(`PASS services ${serviceType} / waiting_queue ${queueType}: migración completa, datos preservados e idempotencia`);
     });
   }
+
+  await transaction(async client => {
+    const schema = 'migration_test_' + randomUUID().replaceAll('-', '');
+    await client.query(`CREATE SCHEMA ${schema}`);
+    await client.query(`SET LOCAL search_path TO ${schema}`);
+    await client.query(`
+      CREATE TABLE schema_migrations(version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now());
+      INSERT INTO schema_migrations(version) VALUES('002_stabilization');
+      CREATE TABLE doctors(id uuid PRIMARY KEY);
+      CREATE TABLE appointments(
+        id uuid PRIMARY KEY,
+        doctor_id uuid,
+        booking_fee_paid numeric,
+        payment_status text,
+        total_price numeric,
+        coverage_amount numeric
+      );
+      CREATE TABLE movements(
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        doctor_id uuid,
+        appointment_id uuid,
+        amount numeric,
+        type text,
+        payment_method text,
+        description text
+      );
+      CREATE TABLE sellers (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        email varchar(255) UNIQUE NOT NULL,
+        password_hash varchar(255) NOT NULL,
+        name varchar(255) NOT NULL,
+        phone varchar(50),
+        is_active boolean DEFAULT true,
+        created_at timestamp DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await stabilizeSchema();
+    const sellerColumns = (await client.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema=current_schema() AND table_name='sellers'
+    `)).rows.map(row => row.column_name);
+    assert.ok(sellerColumns.includes('commission_type'), 'sellers must include commission_type even after 002_stabilization');
+    assert.ok(sellerColumns.includes('commission_value'), 'sellers must include commission_value even after 002_stabilization');
+    assert.ok(sellerColumns.includes('updated_at'), 'sellers must include updated_at even after 002_stabilization');
+    const doctorColumns = (await client.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema=current_schema() AND table_name='doctors'
+    `)).rows.map(row => row.column_name);
+    assert.ok(doctorColumns.includes('registered_by_seller_id'), 'doctors must keep seller attribution column');
+    assert.equal((await client.query("SELECT to_regclass('seller_commissions') IS NOT NULL AS exists")).rows[0].exists, true);
+    await client.query(`DROP SCHEMA ${schema} CASCADE`);
+    console.log('PASS módulo vendedores: columnas críticas se estabilizan aunque 002_stabilization ya exista');
+  });
 } finally { await pool.end(); }
