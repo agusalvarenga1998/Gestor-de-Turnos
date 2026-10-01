@@ -1,3 +1,4 @@
+import { finiteAmount, validDuration } from '../utils/validation.js';
 import express from 'express';
 import { query } from '../db/config.js';
 import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
@@ -42,7 +43,7 @@ router.get('/doctor/me', verifyToken, verifyDoctorRole, checkSubscription, async
     res.json({ success: true, services: result.rows });
   } catch (error) {
     console.error('Error fetching my services:', error);
-    res.status(500).json({ error: 'Error al obtener tus servicios' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : undefined, error: 'Error al obtener tus servicios' });
   }
 });
 
@@ -74,7 +75,7 @@ router.post('/doctor/me/sync-templates', verifyToken, verifyDoctorRole, checkSub
     });
   } catch (error) {
     console.error('Error syncing template services:', error);
-    res.status(500).json({ error: 'Error al sincronizar los servicios base' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : undefined, error: 'Error al sincronizar los servicios base' });
   }
 });
 
@@ -92,13 +93,13 @@ router.get('/doctor/:doctorId', async (req, res) => {
     }
 
     const result = await query(
-      'SELECT * FROM services WHERE doctor_id = $1 AND is_active = TRUE ORDER BY name ASC',
+      `SELECT * FROM services WHERE doctor_id = $1 AND is_active = TRUE AND duration_minutes BETWEEN 5 AND 720 AND price >= 0 AND price <> 'NaN'::numeric ORDER BY name ASC`,
       [doctorId]
     );
     res.json({ success: true, services: result.rows });
   } catch (error) {
     console.error('Error fetching services:', error);
-    res.status(500).json({ error: 'Error al obtener servicios' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : undefined, error: 'Error al obtener servicios' });
   }
 });
 
@@ -118,6 +119,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Nombre y duración son requeridos' });
     }
 
+    validDuration(duration_minutes);
+    finiteAmount(price ?? 0);
+    finiteAmount(booking_fee ?? 0);
     if (is_online === true || is_online === 'true') {
       const planRes = await query('SELECT p.allow_telemedicine FROM doctors d LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id WHERE d.id = $1', [doctorId]);
       if (planRes.rows.length > 0 && planRes.rows[0].allow_telemedicine === false) {
@@ -137,7 +141,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ success: true, service: result.rows[0] });
   } catch (error) {
     console.error('Error creating service:', error);
-    res.status(500).json({ error: 'Error al crear servicio' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : undefined, error: 'Error al crear servicio' });
   }
 });
 
@@ -148,6 +152,9 @@ router.put('/:id', async (req, res) => {
     const { name, description, price, duration_minutes, is_active, booking_fee, code, is_online } = req.body;
     const doctorId = req.user.id;
 
+    validDuration(duration_minutes);
+    finiteAmount(price ?? 0);
+    finiteAmount(booking_fee ?? 0);
     if (is_online === true || is_online === 'true') {
       const planRes = await query('SELECT p.allow_telemedicine FROM doctors d LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id WHERE d.id = $1', [doctorId]);
       if (planRes.rows.length > 0 && planRes.rows[0].allow_telemedicine === false) {
@@ -172,7 +179,7 @@ router.put('/:id', async (req, res) => {
     res.json({ success: true, service: result.rows[0] });
   } catch (error) {
     console.error('Error updating service:', error);
-    res.status(500).json({ error: 'Error al actualizar servicio' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : undefined, error: 'Error al actualizar servicio' });
   }
 });
 
@@ -196,7 +203,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ success: true, message: 'Servicio eliminado correctamente' });
   } catch (error) {
     console.error('Error deleting service:', error);
-    res.status(500).json({ error: 'Error al eliminar servicio' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : undefined, error: 'Error al eliminar servicio' });
   }
 });
 
@@ -263,7 +270,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
     });
   } catch (error) {
     console.error('Error importing services:', error);
-    res.status(500).json({ error: 'Error al procesar el archivo Excel' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : undefined, error: 'Error al procesar el archivo Excel' });
   }
 });
 

@@ -1,3 +1,5 @@
+import { stabilizeSchema } from './db/stabilize.js';
+import { startEmailDelivery } from './services/emailService.js';
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -7,6 +9,7 @@ import { createServer } from 'http';
 import fs from 'fs';
 
 // Imports de rutas
+import patientAccessRoutes from './routes/patientAccess.js';
 import authRoutes from './routes/auth.js';
 import appointmentRoutes from './routes/appointments.js';
 import patientRoutes from './routes/patients.js';
@@ -105,10 +108,7 @@ app.use(cors({
     // Permitir peticiones sin origen (como mobile apps o curl)
     if (!origin) return callback(null, true);
     if (
-      allowedOrigins.indexOf(origin) !== -1 || 
-      origin.includes('localhost') || 
-      origin.includes('127.0.0.1') ||
-      origin.includes('turnohub.com.ar')
+      allowedOrigins.includes(origin)
     ) {
       callback(null, true);
     } else {
@@ -116,7 +116,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Patient-Access', 'ngrok-skip-browser-warning']
 }));
 
 // Middleware de parseo
@@ -130,6 +130,7 @@ app.use(requestLogger);
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
+    revision: process.env.RENDER_GIT_COMMIT || null,
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
@@ -152,6 +153,7 @@ app.get('/robots.txt', (req, res) => {
 
 // Rutas
 app.use('/api/auth', authRoutes);
+app.use('/api/patient-access', patientAccessRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/doctor', doctorRoutes);
@@ -169,7 +171,7 @@ app.use('/api/queue', queueRoutes);
 app.use('/api/seller', sellerRoutes);
 
 // Servir archivos estáticos (uploads)
-app.use('/uploads', express.static(uploadsDir));
+// Los adjuntos clínicos se entregan mediante patient-records/file con autenticación.
 
 // Configurar WebSocket
 const wss = new WebSocketServer({ server: httpServer });
@@ -191,6 +193,8 @@ const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Iniciar servidor
+await stabilizeSchema();
+if (process.env.EMAIL_WORKER_ENABLED !== 'false') startEmailDelivery();
 httpServer.listen(PORT, HOST, async () => {
   // Asegurar que existe la carpeta de subidas
   if (!fs.existsSync(uploadsDir)) {

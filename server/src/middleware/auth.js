@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { query } from '../db/config.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+import { jwtSecret as JWT_SECRET } from '../utils/security.js';
 
 // Middleware para verificar JWT
 export const verifyToken = async (req, res, next) => {
@@ -16,10 +16,11 @@ export const verifyToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.purpose || decoded.role !== 'doctor') throw new Error('Token de sesión requerido');
     req.user = decoded;
 
     // Validar existencia del doctor y versión de token (excepto en Modo Demo de vendedor)
-    const result = await query('SELECT id, token_version FROM doctors WHERE id = $1', [decoded.id]);
+    const result = await query('SELECT id, token_version, status FROM doctors WHERE id = $1', [decoded.id]);
     
     if (result.rows.length === 0) {
       return res.status(401).json({
@@ -28,9 +29,10 @@ export const verifyToken = async (req, res, next) => {
       });
     }
 
+    if (result.rows[0].status !== 'approved') return res.status(403).json({ success: false, suspended: true, message: 'La cuenta no está habilitada. Contacta con soporte.' });
     // Si NO es modo demo, verificar token_version
-    if (!decoded.isDemoMode) {
-      if (decoded.token_version !== undefined && result.rows[0].token_version !== decoded.token_version) {
+    {
+      if (result.rows[0].token_version !== decoded.token_version) {
         return res.status(401).json({
           success: false,
           message: 'Sesión inválida o expirada. Inicia sesión nuevamente.'
@@ -115,7 +117,7 @@ export const checkSubscription = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Error verificando suscripción:', error);
-    next(); // En caso de error, permitimos pasar para no bloquear la app por error de DB
+    res.status(503).json({ success: false, message: 'No pudimos verificar tu plan. Vuelve a intentar en unos segundos.' });
   }
 };
 

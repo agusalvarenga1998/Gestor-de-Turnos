@@ -1,3 +1,5 @@
+import { loginLimit } from '../middleware/rateLimits.js';
+import { getSmtpStatus } from '../services/emailService.js';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -11,7 +13,8 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+router.use('/login', loginLimit);
+import { jwtSecret as JWT_SECRET } from '../utils/security.js';
 
 const verifyAdmin = (req, res, next) => {
   try {
@@ -89,6 +92,18 @@ router.post('/login', async (req, res) => {
 });
 
 // Get all doctors with their status and subscription info
+router.get('/system-status', verifyAdmin, async (req, res) => {
+  try {
+    const counts = (await query(`SELECT
+      count(*) FILTER (WHERE status IN ('pending','processing'))::integer AS pending,
+      count(*) FILTER (WHERE status='failed')::integer AS failed,
+      count(*) FILTER (WHERE status='expired')::integer AS expired
+      FROM email_outbox`)).rows[0];
+    res.json({ database: 'ready', smtp: getSmtpStatus(), emailQueue: { ...counts, workerEnabled: process.env.EMAIL_WORKER_ENABLED !== 'false' } });
+  }
+  catch { res.status(503).json({ database: 'unavailable', smtp: getSmtpStatus() }); }
+});
+
 router.get('/doctors', verifyAdmin, async (req, res) => {
   try {
     // Sincronizar y marcar automáticamente en DB los trials o suscripciones ya vencidas

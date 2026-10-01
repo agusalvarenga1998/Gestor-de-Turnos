@@ -1,4 +1,5 @@
-import { query, transaction } from '../db/config.js';
+import { calendarDate, validDuration } from '../utils/validation.js';
+import { query } from '../db/config.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // Crear disponibilidad para un día específico
@@ -121,7 +122,10 @@ export const deleteVacation = async (vacationId, doctorId) => {
 };
 
 // Verificar si el doctor está disponible en una fecha/hora con una duración específica
-export const isAvailableAt = async (doctorId, date, time, durationMinutes = 30) => {
+export const isAvailableAt = async (doctorId, date, time, durationMinutes = 30, excludeId = null) => {
+  calendarDate(date);
+  validDuration(durationMinutes);
+  if (!/^([01]\d|2[0-3]):[0-5]\d(:00)?$/.test(time) || new Date(`${date}T${time.length === 5 ? time + ":00" : time}-03:00`) <= new Date()) return { available: false, reason: "Elige una fecha y hora futuras." };
   const [year, month, day] = date.split('-').map(Number);
   const dateObj = new Date(year, month - 1, day);
   const dayOfWeek = dateObj.getDay();
@@ -163,8 +167,8 @@ export const isAvailableAt = async (doctorId, date, time, durationMinutes = 30) 
   // Una cita solapa si: (inicio_nueva < fin_existente) AND (fin_nueva > inicio_existente)
   const existingAppointments = await query(
     `SELECT appointment_time, duration_minutes FROM appointments
-     WHERE doctor_id = $1 AND appointment_date = $2 AND status NOT IN ('cancelled', 'rejected')`,
-    [doctorId, date]
+     WHERE doctor_id = $1 AND appointment_date = $2 AND status NOT IN ('cancelled', 'rejected', 'absent', 'completed') AND ($3::uuid IS NULL OR id <> $3)`,
+    [doctorId, date, excludeId]
   );
 
   for (const appt of existingAppointments.rows) {

@@ -1,0 +1,62 @@
+import { stabilizeLedger } from './stabilizeLedger.js';
+import { migrateNotificationOutbox } from './notificationOutbox.js';
+import 'dotenv/config';
+import { pathToFileURL } from 'node:url';
+import pool, { transaction } from './config.js';
+
+export async function stabilizeSchema() {
+  await transaction(async client => {
+    await client.query("SELECT pg_advisory_xact_lock(hashtextextended('turnohub:migrations',0))");
+    await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+    if ((await client.query("SELECT 1 FROM schema_migrations WHERE version='002_stabilization'")).rowCount) return;
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS patients_doctor_document_unique ON patients(doctor_id, document_number) WHERE document_number IS NOT NULL;
+      DROP INDEX IF EXISTS idx_patients_document_number;
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS portal_token uuid NOT NULL DEFAULT gen_random_uuid();
+      CREATE UNIQUE INDEX IF NOT EXISTS appointments_portal_token_unique ON appointments(portal_token);
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS booking_contact jsonb;
+      ALTER TABLE waiting_queue ADD COLUMN IF NOT EXISTS queue_day date;
+      CREATE UNIQUE INDEX IF NOT EXISTS waiting_queue_daily_number ON waiting_queue(doctor_id,queue_day,ticket_number);
+      CREATE TABLE IF NOT EXISTS patient_access_challenges (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(), patient_id uuid REFERENCES patients(id) ON DELETE CASCADE,
+        doctor_id uuid NOT NULL REFERENCES doctors(id) ON DELETE CASCADE, code_hash text NOT NULL,
+        expires_at timestamptz NOT NULL, attempts integer NOT NULL DEFAULT 0, consumed_at timestamptz
+      );
+      CREATE TABLE IF NOT EXISTS payment_receipts (
+        payment_id text PRIMARY KEY, reference_id uuid NOT NULL, kind text NOT NULL,
+        amount numeric(12,2) NOT NULL, currency text NOT NULL, processed_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    const type = (await client.query("SELECT data_type FROM information_schema.columns WHERE table_name='waiting_queue' AND column_name='service_id' AND table_schema='public'")).rows[0]?.data_type;
+    if (type === 'uuid') {
+      // Preserve original UUIDs for historical reconciliation; never silently discard them.
+      await client.query('ALTER TABLE waiting_queue RENAME COLUMN service_id TO legacy_service_id');
+      await client.query('ALTER TABLE waiting_queue ADD COLUMN service_id integer REFERENCES services(id) ON DELETE SET NULL');
+    }
+    await client.query(`
+      ALTER TABLE services ADD CONSTRAINT services_valid_values CHECK (duration_minutes BETWEEN 5 AND 720 AND price >= 0 AND price <> 'NaN'::numeric AND booking_fee >= 0 AND booking_fee <> 'NaN'::numeric) NOT VALID;
+      ALTER TABLE movements ADD CONSTRAINT movements_finite_amount CHECK (amount <> 'NaN'::numeric AND abs(amount) <= 99999999.99) NOT VALID;
+      CREATE OR REPLACE FUNCTION prevent_appointment_overlap() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF NEW.status NOT IN ('cancelled','rejected','absent','completed') THEN
+          PERFORM pg_advisory_xact_lock(hashtextextended('booking:' || NEW.doctor_id::text,0));
+          IF NEW.duration_minutes IS NULL OR NEW.duration_minutes <= 0 THEN RAISE EXCEPTION 'Duración inválida' USING ERRCODE='23514'; END IF;
+          IF EXISTS (SELECT 1 FROM appointments a WHERE a.doctor_id=NEW.doctor_id AND a.appointment_date=NEW.appointment_date
+            AND a.id<>NEW.id AND a.status NOT IN ('cancelled','rejected','absent','completed')
+            AND NEW.appointment_time < a.appointment_time + make_interval(mins => a.duration_minutes)
+            AND a.appointment_time < NEW.appointment_time + make_interval(mins => NEW.duration_minutes))
+          THEN RAISE EXCEPTION 'El horario ya no está disponible' USING ERRCODE='23P01'; END IF;
+        END IF;
+        RETURN NEW;
+      END $$;
+      CREATE TRIGGER appointments_no_overlap BEFORE INSERT OR UPDATE OF appointment_date,appointment_time,duration_minutes,status ON appointments FOR EACH ROW EXECUTE FUNCTION prevent_appointment_overlap();
+      INSERT INTO schema_migrations(version) VALUES('002_stabilization');
+    `);
+  });
+  await stabilizeLedger();
+  await migrateNotificationOutbox();
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  stabilizeSchema().then(() => console.log('Migraciones de estabilización aplicadas/verificadas.')).catch(error => { console.error(error.message); process.exitCode = 1; }).finally(() => pool.end());
+}

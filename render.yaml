@@ -7,7 +7,7 @@ services:
     region: ohio
     rootDir: server
     buildCommand: npm install
-    startCommand: npm run db:init && npm start
+    startCommand: npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -31,6 +31,8 @@ services:
         value: https://turnohub.com.ar 
       - key: BACKEND_WEBHOOK_URL
         value: https://api.turnohub.com.ar/api/webhooks
+      - key: BACKEND_URL
+        value: https://api.turnohub.com.ar
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET

@@ -12,6 +12,10 @@ import styles from './AppointmentsPage.module.css';
 export default function AppointmentsPage() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [workingHours, setWorkingHours] = useState([]);
+  useEffect(() => {
+    appointmentAPI.getWorkingHours().then(data => setWorkingHours(data.availabilities || [])).catch(() => setError('No pudimos cargar tus horarios de atención.'));
+  }, []);
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,14 +107,14 @@ export default function AppointmentsPage() {
   const generateTimeSlots = (dayAppointments = []) => {
     const slots = new Set();
     
-    // Add standard 30-minute slots
-    for (let hour = 8; hour <= 20; hour++) {
-      slots.add(`${String(hour).padStart(2, '0')}:00`);
-      if (hour < 20) {
-        slots.add(`${String(hour).padStart(2, '0')}:30`);
+    const day = parseLocalDate(selectedDate).getDay();
+    workingHours.filter(shift => Number(shift.day_of_week) === day).forEach(shift => {
+      const toMinutes = time => Number(time.slice(0,2))*60 + Number(time.slice(3,5));
+      for (let minute = toMinutes(shift.start_time); minute < toMinutes(shift.end_time); minute += 30) {
+        slots.add(String(Math.floor(minute/60)).padStart(2,'0') + ':' + String(minute%60).padStart(2,'0'));
       }
-    }
-    
+    });
+
     // Dynamically insert any scheduled appointment times for the selected date
     dayAppointments.forEach(appt => {
       if (appt.appointment_date && appt.appointment_time) {

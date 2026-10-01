@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import dns from 'dns';
 import { query } from '../db/config.js';
+import { enqueueEmail, startEmailOutbox } from './emailOutbox.js';
 
 // Forzar IPv4 para evitar el error ENETUNREACH (IPv6) ocasional en Render
 dns.setDefaultResultOrder('ipv4first');
@@ -16,23 +17,37 @@ const getSender = () => {
 // Crear transportador de email con configuración dinámica y respaldos seguros
 const smtpPort = String(process.env.SMTP_PORT || '465');
 const transporter = nodemailer.createTransport({
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 30000,
   host: process.env.SMTP_HOST || 'mail.turnohub.com.ar',
   port: parseInt(smtpPort),
   secure: smtpPort === '465',
   auth: {
     user: process.env.SMTP_USER || 'turno-no-reply@turnohub.com.ar',
-    pass: process.env.SMTP_PASSWORD || 'Agusagusbmx15*'
+    pass: process.env.SMTP_PASSWORD
   },
   tls: {
-    rejectUnauthorized: false
+    rejectUnauthorized: true
   }
 });
 
+export const startEmailDelivery = () => startEmailOutbox(mail => transporter.sendMail(mail));
+
+export async function sendPatientAccessCode(to, code) {
+  return transporter.sendMail({ from: getSender(), to, subject: 'Tu código de acceso a TurnoHub',
+    text: `Tu código es ${code}. Vence en 10 minutos. No lo compartas. Si no lo solicitaste, ignora este mensaje.` });
+}
+
+let smtpStatus = 'checking';
+export const getSmtpStatus = () => smtpStatus;
 // Verificar servidor SMTP al arrancar
 transporter.verify((error) => {
   if (error) {
+    smtpStatus = 'unavailable';
     console.error('❌ Error verificando servidor SMTP de TurnoHub:', error.message);
   } else {
+    smtpStatus = 'ready';
     console.log('📧 Servidor SMTP de TurnoHub verificado y listo para enviar correos');
   }
 });
@@ -268,15 +283,15 @@ export async function sendAppointmentConfirmation({
 
     console.log('📧 Enviando email a:', to);
 
-    const info = await transporter.sendMail({
+    const info = await enqueueEmail({
       from: getSender(),
       to: to,
       subject: emailSubject,
       html: htmlContent
     });
 
-    console.log('✓ Email enviado:', info.messageId);
-    return { sent: true, messageId: info.messageId };
+    console.log('✓ Confirmación guardada en la cola:', info.messageId);
+    return info;
 
   } catch (error) {
     console.error('❌ Error enviando email:', error.message);
@@ -414,15 +429,15 @@ export async function sendDelayNotification({
 
     console.log('📧 Enviando notificación de retraso a:', to);
 
-    const info = await transporter.sendMail({
+    const info = await enqueueEmail({
       from: getSender(),
       to: to,
       subject: `⏱️ Tu cita con ${doctorName} se ha retrasado ${delayMinutes} minutos`,
       html: htmlContent
-    });
+    }, { ttlMinutes: 60 });
 
-    console.log('✓ Notificación de retraso enviada:', info.messageId);
-    return { sent: true, messageId: info.messageId };
+    console.log('✓ Aviso de retraso guardado en la cola:', info.messageId);
+    return info;
 
   } catch (error) {
     console.error('❌ Error enviando notificación de retraso:', error.message);
@@ -591,15 +606,15 @@ export async function sendAppointmentRejectionEmail({
 
     console.log('📧 Enviando notificación de rechazo a:', to);
 
-    const info = await transporter.sendMail({
+    const info = await enqueueEmail({
       from: getSender(),
       to: to,
       subject: `❌ Tu cita con ${doctorName} ha sido rechazada`,
       html: htmlContent
     });
 
-    console.log('✓ Notificación de rechazo enviada:', info.messageId);
-    return { sent: true, messageId: info.messageId };
+    console.log('✓ Aviso de rechazo guardado en la cola:', info.messageId);
+    return info;
 
   } catch (error) {
     console.error('❌ Error enviando notificación de rechazo:', error.message);
@@ -1400,3 +1415,7 @@ export async function sendPlanRequestEmailToAdmin({
 }
 
 
+
+export async function sendVerificationEmail(to, verificationUrl) {
+  return transporter.sendMail({ from: getSender(), to, subject: 'Verifica tu email de TurnoHub', text: 'Confirma tu email con este enlace (válido por una hora): ' + verificationUrl });
+}

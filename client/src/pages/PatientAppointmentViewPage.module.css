@@ -1,10 +1,10 @@
-:root {
-  --ticket-bg: #ffffff;
+.container {
+  --ticket-bg: var(--bg-surface, #ffffff);
   --ticket-border: #e2e8f0;
   --primary: #2563eb;
   --primary-glow: rgba(37, 99, 235, 0.15);
-  --text-main: #1e293b;
-  --text-muted: #64748b;
+  --text-main: var(--text-primary, #1e293b);
+  --text-muted: var(--text-secondary, #64748b);
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
@@ -12,7 +12,8 @@
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+  background: var(--bg-primary, #f0f4f8);
+  color: var(--text-main);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,7 +61,7 @@
 
 .ticketHeader {
   padding: 2rem;
-  background: #f8fafc;
+  background: var(--ticket-bg);
   border-bottom: 1px dashed var(--ticket-border);
   text-align: center;
 }
@@ -226,7 +227,7 @@
 
 /* Booking Code */
 .codeContainer {
-  background: #f8fafc;
+  background: var(--ticket-bg);
   padding: 1.5rem;
   border-radius: 16px;
   text-align: center;
@@ -519,3 +520,8 @@
   line-height: 1.4;
   font-weight: 500;
 }
+
+.bookingCode { overflow-wrap: anywhere; font-size: clamp(0.9rem, 3vw, 1.4rem); }
+
+.badge { background: #dbeafe; color: #1e40af; }
+:global([data-theme="dark"]) .container { --primary: #93c5fd; --ticket-border: #334155; --text-muted: #cbd5e1; }

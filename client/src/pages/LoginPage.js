@@ -30,13 +30,18 @@ const carouselData = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, loading, error, setError, isAuthenticated } = useAuth();
+  const { login, loading: initializing, error, setError, isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [submitting, setSubmitting] = useState(false);
+  const loading = initializing || submitting;
   const [localError, setLocalError] = useState('');
+  const [challengeToken, setChallengeToken] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('challenge') || '');
+  const [code, setCode] = useState('');
+  useEffect(() => { if (window.location.hash) window.history.replaceState(null, '', window.location.pathname); }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('login');
@@ -78,12 +83,15 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.email || !formData.password) {
+    if (!challengeToken && (!formData.email || !formData.password)) {
       setLocalError('Por favor completa todos los campos requeridos');
       return;
     }
 
-    const result = await login(formData.email, formData.password);
+    setSubmitting(true);
+    const result = await login(formData.email, formData.password, challengeToken, code);
+    setSubmitting(false);
+    if (result.requires2FA) { setChallengeToken(result.challengeToken); return; }
 
     if (!result.success) {
       if (result.pending) {
@@ -189,6 +197,12 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handleSubmit} className={styles.loginForm}>
+              {challengeToken && <div className={styles.formGroup}>
+                <label htmlFor="otp">Código de tu aplicación de autenticación</label>
+                <input id="otp" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} required />
+                <button type="button" onClick={() => { setChallengeToken(''); setCode(''); }}>Volver al ingreso</button>
+              </div>}
+              {!challengeToken && <>
               
               <div className={styles.formGroup}>
                 <label>CORREO ELECTRÓNICO</label>
@@ -235,8 +249,9 @@ export default function LoginPage() {
                 <Link to="/support" className={styles.link}>Necesito ayuda</Link>
               </div>
 
+              </>}
               <button type="submit" className={styles.submitBtn} disabled={loading}>
-                {loading ? 'INGRESANDO...' : 'INGRESAR AL PANEL'}
+                {loading ? 'INGRESANDO...' : challengeToken ? 'VERIFICAR E INGRESAR' : 'INGRESAR AL PANEL'}
               </button>
               
               <div className={styles.loginDivider}>

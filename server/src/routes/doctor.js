@@ -1,8 +1,6 @@
 import express from 'express';
 import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
 import { query, transaction } from '../db/config.js';
-import { getAppointmentsForToday, getAppointmentsByDoctor } from '../services/appointmentService.js';
-import { getPatientsByDoctor } from '../services/patientService.js';
 import { getDashboard, getStatistics } from '../controllers/doctorController.js';
 import { copyTemplateServicesToDoctor } from '../services/templateService.js';
 import webpush from 'web-push';
@@ -145,7 +143,7 @@ router.post('/subscriptions/mercadopago-preference', verifyOnlyDoctorRole, async
     const adminTokenResult = await query("SELECT mp_access_token FROM admins WHERE mp_connected = true LIMIT 1");
     const platformToken = (adminTokenResult.rows.length > 0 && adminTokenResult.rows[0].mp_access_token)
       ? adminTokenResult.rows[0].mp_access_token
-      : (process.env.MP_ACCESS_TOKEN || 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647');
+      : (process.env.MP_ACCESS_TOKEN);
 
     const preference = await createSubscriptionPreference({
       subscriptionId,

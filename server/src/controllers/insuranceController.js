@@ -1,6 +1,6 @@
 import * as insuranceService from '../services/insuranceService.js';
 import * as insurancePlanService from '../services/insurancePlanService.js';
-import { query } from '../db/config.js';
+import { query, transaction } from '../db/config.js';
 import * as XLSX from 'xlsx';
 
 export const exportInsuranceCoverages = async (req, res) => {
@@ -515,7 +515,8 @@ export const importFromCatalog = async (req, res) => {
 
     let importedCount = 0;
 
-    await query('BEGIN');
+    await transaction(async () => {
+    await query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['insurance-import:' + doctorId]);
 
     for (const templateId of insuranceIds) {
       // 1. Obtener datos de la plantilla
@@ -528,7 +529,7 @@ export const importFromCatalog = async (req, res) => {
         continue;
       }
 
-      const { name, acronym } = insRes.rows[0];
+      const { name } = insRes.rows[0];
 
       // 2. Verificar si el doctor ya lo tiene importado (por nombre)
       const existingRes = await query(
@@ -573,7 +574,7 @@ export const importFromCatalog = async (req, res) => {
       }
     }
 
-    await query('COMMIT');
+    });
 
     res.json({
       success: true,
@@ -581,7 +582,7 @@ export const importFromCatalog = async (req, res) => {
       importedCount
     });
   } catch (error) {
-    await query('ROLLBACK');
+
     console.error('Error importing from catalog:', error);
     res.status(500).json({ success: false, message: 'Error al importar los convenios del catálogo' });
   }

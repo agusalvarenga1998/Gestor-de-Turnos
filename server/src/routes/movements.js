@@ -1,3 +1,4 @@
+import { finiteAmount, httpError } from '../utils/validation.js';
 import express from 'express';
 import { query } from '../db/config.js';
 import { verifyToken, verifyDoctorRole, checkSubscription } from '../middleware/auth.js';
@@ -78,7 +79,11 @@ router.post('/', async (req, res) => {
     }
 
     // Si es un egreso o reembolso, nos aseguramos que el monto sea guardado como negativo
-    let finalAmount = parseFloat(amount);
+    let finalAmount = finiteAmount(amount);
+    if (finalAmount <= 0) throw httpError('Ingresa un importe mayor a cero.', 400);
+    if (!['cobro', 'seña', 'gasto', 'reembolso'].includes(type)) throw httpError('Tipo de movimiento inválido.', 400);
+    if (!['efectivo', 'transferencia', 'mercadopago', 'tarjeta', 'otro'].includes(paymentMethod)) throw httpError('Método de pago inválido.', 400);
+    if (appointmentId && !(await query('SELECT id FROM appointments WHERE id=$1 AND doctor_id=$2', [appointmentId, doctorId])).rowCount) throw httpError('Turno no encontrado.', 404);
     if ((type === 'gasto' || type === 'reembolso') && finalAmount > 0) {
       finalAmount = -finalAmount;
     }
@@ -102,7 +107,7 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error al registrar movimiento manual:', error);
-    res.status(500).json({ success: false, message: 'Error al registrar movimiento manual' });
+    res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Error al registrar movimiento manual' });
   }
 });
 

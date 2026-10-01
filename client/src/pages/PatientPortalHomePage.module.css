@@ -1214,3 +1214,5 @@ button:active, a:active, .menuCard:active, .serviceOption:active {
 }
 
 
+
+.serviceOption { font: inherit; text-align: left; width: 100%; }

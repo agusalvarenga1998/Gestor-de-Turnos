@@ -33,11 +33,11 @@ export const AuthProvider = ({ children }) => {
     verifyToken();
   }, [token]);
 
-  const login = async (email, password) => {
-    setLoading(true);
+  const login = async (email, password, challengeToken, code) => {
     setError(null);
     try {
-      const response = await authAPI.login(email, password);
+      const response = challengeToken ? await authAPI.verifySecondFactor(challengeToken, code) : await authAPI.login(email, password);
+      if (response.requires2FA) return response;
       if (response.success) {
         const { token, doctor } = response;
         localStorage.setItem('token', token);
@@ -75,8 +75,6 @@ export const AuthProvider = ({ children }) => {
 
       setError(message);
       return { success: false, error: message };
-    } finally {
-      setLoading(false);
     }
   };
 

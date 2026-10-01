@@ -1,45 +1,18 @@
-import { query, transaction } from '../db/config.js';
+import { randomUUID } from 'node:crypto';
+import { query, transaction, afterCommit } from '../db/config.js';
 import { v4 as uuidv4 } from 'uuid';
 import * as googleCalendarService from './googleCalendarService.js';
 import * as emailService from './emailService.js';
 import { sendWhatsAppConfirmationServer } from './whatsappService.js';
-const generateAppointmentCode = (doctorName, doctorId, appointmentDate, appointmentTime) => {
-  const getInitials = (name) => {
-    if (!name) return 'TH';
-    const cleanName = name.replace(/^(dr|dra|lic|prof|ing|escr|cont|profesor|abogado)\.?\s+/i, '');
-    const words = cleanName.trim().split(/\s+/);
-    return words
-      .map(w => w.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 3);
-  };
-
-  const initials = getInitials(doctorName);
-  const partialId = String(doctorId || '').substring(0, 4);
-  
-  let cleanDate = '';
-  if (appointmentDate instanceof Date) {
-    const yyyy = appointmentDate.getFullYear();
-    const mm = String(appointmentDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(appointmentDate.getDate()).padStart(2, '0');
-    cleanDate = `${yyyy}${mm}${dd}`;
-  } else {
-    cleanDate = String(appointmentDate || '').substring(0, 10).replace(/-/g, '');
-  }
-
-  const cleanTime = String(appointmentTime || '').substring(0, 5).replace(/:/g, '');
-
-  return `${initials}${partialId}-${cleanDate}${cleanTime}`;
-};
+const generateAppointmentCode = () => randomUUID();
 
 // Crear una cita
 export const createAppointment = async (doctorId, patientId, appointmentData) => {
-  const { 
-    appointment_date, 
-    appointment_time, 
-    end_time, 
-    reason_for_visit, 
+  const {
+    appointment_date,
+    appointment_time,
+    end_time,
+    reason_for_visit,
     insurance_company_id,
     serviceId,
     durationMinutes,
@@ -57,7 +30,7 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
 
     // Obtener información del doctor (precio base, plan, nombre y especialidad)
     const doctorInfoResult = await query(
-      'SELECT name, specialization, appointment_price, plan_type, commission_rate FROM doctors WHERE id = $1', 
+      'SELECT name, specialization, appointment_price, plan_type, commission_rate FROM doctors WHERE id = $1',
       [doctorId]
     );
     const doctor = doctorInfoResult.rows[0];
@@ -78,19 +51,19 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
 
     const result = await query(
       `INSERT INTO appointments (
-        id, 
-        doctor_id, 
-        patient_id, 
-        appointment_date, 
-        appointment_time, 
-        end_time, 
-        reason_for_visit, 
-        status, 
-        confirmation_token, 
-        insurance_company_id, 
-        total_amount, 
-        system_fee, 
-        payment_status, 
+        id,
+        doctor_id,
+        patient_id,
+        appointment_date,
+        appointment_time,
+        end_time,
+        reason_for_visit,
+        status,
+        confirmation_token,
+        insurance_company_id,
+        total_amount,
+        system_fee,
+        payment_status,
         appointment_code,
         total_price,
         service_id,
@@ -101,18 +74,18 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
       VALUES ($1, $2, $3, $4, $5, $6, $7, 'scheduled', $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *`,
       [
-        appointmentId, 
-        doctorId, 
-        patientId, 
-        appointment_date, 
-        appointment_time, 
-        end_time || null, 
-        reason_for_visit, 
-        confirmationToken, 
-        insurance_company_id || null, 
-        0, 
-        systemFee, 
-        'paid', 
+        appointmentId,
+        doctorId,
+        patientId,
+        appointment_date,
+        appointment_time,
+        end_time || null,
+        reason_for_visit,
+        confirmationToken,
+        insurance_company_id || null,
+        0,
+        systemFee,
+        finalPrice > 0 ? 'pending' : 'paid',
         appointmentCode,
         finalPrice,
         serviceId || null,
@@ -132,6 +105,7 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
 
     const patient = patientResult.rows[0];
 
+    afterCommit(async () => {
     // Enviar email de confirmación (en segundo plano / no bloqueante)
     if (patient && patient.email) {
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointment/${confirmationToken}`;
@@ -193,6 +167,7 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
         console.error('❌ Error sincronizando con Google Calendar en segundo plano:', error.message);
       });
 
+    });
     console.log('✓ Cita creada exitosamente\n');
     return appointment;
   } catch (error) {
@@ -288,9 +263,8 @@ export const getAppointmentById = async (appointmentId) => {
 
 // Actualizar cita
 export const updateAppointment = async (appointmentId, updateData) => {
-  const { appointment_date, appointment_time, end_time, status, reason_for_visit, notes, delay_minutes, insurance_company_id, payment_status } = updateData;
+  const { appointment_date, appointment_time, end_time, status, reason_for_visit, notes, delay_minutes, insurance_company_id, payment_status, settlement_method } = updateData;
 
-  try {
     // Obtener cita actual para sincronización
     const currentResult = await query(
       'SELECT * FROM appointments WHERE id = $1',
@@ -310,10 +284,11 @@ export const updateAppointment = async (appointmentId, updateData) => {
            delay_minutes = COALESCE($7, delay_minutes),
            insurance_company_id = COALESCE($9, insurance_company_id),
            payment_status = COALESCE($10, payment_status),
+           settlement_method = COALESCE($11, settlement_method),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $8
        RETURNING *`,
-      [appointment_date, appointment_time, end_time, status, reason_for_visit, notes, delay_minutes, appointmentId, insurance_company_id, payment_status]
+      [appointment_date, appointment_time, end_time, status, reason_for_visit, notes, delay_minutes, appointmentId, insurance_company_id, payment_status, settlement_method]
     );
 
     const updatedAppointment = result.rows[0];
@@ -362,14 +337,10 @@ export const updateAppointment = async (appointmentId, updateData) => {
     }
 
     return updatedAppointment;
-  } catch (error) {
-    throw error;
-  }
 };
 
 // Cancelar cita
 export const cancelAppointment = async (appointmentId) => {
-  try {
     // Obtener la cita para tener acceso a google_event_id
     const appointmentResult = await query(
       'SELECT * FROM appointments WHERE id = $1',
@@ -400,9 +371,6 @@ export const cancelAppointment = async (appointmentId) => {
     }
 
     return result.rows[0];
-  } catch (error) {
-    throw error;
-  }
 };
 
 // Obtener citas del día (para el dashboard)
@@ -502,7 +470,7 @@ export const autoUpdatePastAppointments = async (doctorId) => {
     const now = new Date();
     const dateOptions = { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' };
     const currentDate = new Intl.DateTimeFormat('fr-CA', dateOptions).format(now);
-    
+
     const timeOptions = { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
     const currentTime = new Intl.DateTimeFormat('en-US', timeOptions).format(now);
 
@@ -513,13 +481,13 @@ export const autoUpdatePastAppointments = async (doctorId) => {
 
     // 1. Citas programadas pasadas -> Ausente ('absent')
     const resultAbsent = await query(`
-      UPDATE appointments 
+      UPDATE appointments
       SET status = 'absent', updated_at = CURRENT_TIMESTAMP
-      ${docClause} status = 'scheduled' 
+      ${docClause} status = 'scheduled'
         AND (
-          appointment_date < ${dateIdx}::date 
+          appointment_date < ${dateIdx}::date
           OR (
-            appointment_date = ${dateIdx}::date 
+            appointment_date = ${dateIdx}::date
             AND (appointment_time + (COALESCE(duration_minutes, 30) || ' minutes')::INTERVAL) < ${timeIdx}::time
           )
         )
@@ -528,13 +496,13 @@ export const autoUpdatePastAppointments = async (doctorId) => {
 
     // 2. Solicitudes de turno pasadas nunca respondidas -> Solicitud Vencida ('expired')
     const resultExpired = await query(`
-      UPDATE appointments 
+      UPDATE appointments
       SET status = 'expired', updated_at = CURRENT_TIMESTAMP
-      ${docClause} status IN ('pending', 'pending_payment') 
+      ${docClause} status IN ('pending', 'pending_payment')
         AND (
-          appointment_date < ${dateIdx}::date 
+          appointment_date < ${dateIdx}::date
           OR (
-            appointment_date = ${dateIdx}::date 
+            appointment_date = ${dateIdx}::date
             AND (appointment_time + (COALESCE(duration_minutes, 30) || ' minutes')::INTERVAL) < ${timeIdx}::time
           )
         )
@@ -551,4 +519,3 @@ export const autoUpdatePastAppointments = async (doctorId) => {
     console.error('Error en autoUpdatePastAppointments:', error);
   }
 };
-

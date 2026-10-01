@@ -23,6 +23,7 @@ export default function DashboardNewPage() {
   const { user } = useAuth();
   const { isConnected } = useWebSocketContext();
   const [loading, setLoading] = useState(true);
+  const [settlementMethod, setSettlementMethod] = useState('efectivo');
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
@@ -147,7 +148,7 @@ export default function DashboardNewPage() {
 
     try {
       const response = await appointmentAPI.updateAppointment(appointmentId, {
-        payment_status: 'paid'
+        payment_status: 'paid', settlement_method: settlementMethod
       });
 
       if (response.success) {
@@ -833,13 +834,16 @@ export default function DashboardNewPage() {
                 )}
 
                 {selectedAppointment.payment_status !== 'paid' && (
+                  <>
+                  <label>Medio de cobro <select value={settlementMethod} onChange={e => setSettlementMethod(e.target.value)}><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mercadopago">Mercado Pago</option></select></label>
                   <button 
                     onClick={() => handleMarkAsPaid(selectedAppointment.id)}
                     className={styles.payBtn}
                   >
                     <Icon name="wallet" size={20} />
-                    Marcar como Pagado
+                    Registrar saldo cobrado
                   </button>
+                  </>
                 )}
 
                 <button 

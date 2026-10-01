@@ -1,3 +1,4 @@
+import { query } from '../db/config.js';
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -11,6 +12,19 @@ const router = express.Router();
 router.use(verifyToken);
 router.use(verifyDoctorRole);
 router.use(checkSubscription);
+
+router.get('/file/:recordId', async (req, res) => {
+  try {
+    const record = (await query('SELECT file_path,file_type FROM patient_records WHERE id::text=$1 AND doctor_id=$2', [req.params.recordId, req.user.id])).rows[0];
+    if (!record?.file_path) return res.status(404).json({ message: 'Archivo no encontrado.' });
+    const filename = path.basename(record.file_path);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.sendFile(filename, { root: uploadsDir, dotfiles: 'deny' }, error => {
+      if (error && !res.headersSent) res.status(404).json({ message: 'Archivo no disponible.' });
+    });
+  } catch { res.status(500).json({ message: 'No pudimos abrir el archivo.' }); }
+});
 
 // Configuración de Multer
 const storage = multer.diskStorage({
@@ -42,7 +56,12 @@ const upload = multer({
 
 // Rutas protegidas
 router.get('/:patientId', verifyToken, verifyDoctorRole, patientRecordController.getRecords);
-router.post('/:patientId', verifyToken, verifyDoctorRole, upload.single('file'), patientRecordController.createRecord);
+router.post('/:patientId', verifyToken, verifyDoctorRole, async (req, res, next) => {
+  try {
+    if (!(await query('SELECT id FROM patients WHERE id::text=$1 AND doctor_id=$2', [req.params.patientId, req.user.id])).rowCount) return res.status(404).json({ message: 'Paciente no encontrado.' });
+    next();
+  } catch { res.status(500).json({ message: 'No pudimos verificar el paciente.' }); }
+}, upload.single('file'), patientRecordController.createRecord);
 router.delete('/:recordId', verifyToken, verifyDoctorRole, patientRecordController.deleteRecord);
 
 export default router;

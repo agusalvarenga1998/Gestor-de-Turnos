@@ -143,7 +143,7 @@ function AppContent() {
 
   // Redirigir al profesional a la configuración si es su primer ingreso o no completó su perfil
   const isProfileIncomplete = isAuthenticated && user && (!user.rubro || !user.specialization || !user.address);
-  if (isProfileIncomplete && location.pathname !== '/settings') {
+  if (isProfileIncomplete && !location.pathname.startsWith('/patient') && location.pathname !== '/settings') {
     return <Navigate to="/settings" replace />;
   }
 

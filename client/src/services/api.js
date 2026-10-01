@@ -13,7 +13,7 @@ const getApiBaseUrl = () => {
   return process.env.REACT_APP_API_BASE_URL || '';
 };
 
-const API_BASE_URL = getApiBaseUrl();
+export const API_BASE_URL = getApiBaseUrl();
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -44,7 +44,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !/\/auth\/(login|register|reset-password|forgot-password)/.test(error.config?.url || '')) {
       // Token expirado o inválido
       localStorage.removeItem('token');
       window.location.href = '/login';
@@ -63,8 +63,9 @@ apiClient.interceptors.response.use(
 
 // Servicios de Autenticación
 export const authAPI = {
+  verifySecondFactor: async (challengeToken, code) => (await axios.post(API_BASE_URL + '/api/auth/login/2fa', { challengeToken, code })).data,
   login: async (email, password) => {
-    const response = await apiClient.post('/api/auth/login', {
+    const response = await axios.post(API_BASE_URL + '/api/auth/login', {
       email,
       password
     });
@@ -77,7 +78,7 @@ export const authAPI = {
   },
 
   verify: async (token) => {
-    const response = await apiClient.get('/api/auth/verify', {
+    const response = await axios.get(API_BASE_URL + '/api/auth/verify', {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -145,6 +146,8 @@ export const doctorAPI = {
 
 // Servicios de Appointments (próximamente)
 export const appointmentAPI = {
+  getWorkingHours: async () => (await apiClient.get('/api/availability')).data,
+  verifyPublicPayment: async token => (await axios.post(`${API_BASE_URL}/api/appointments/public/verify-payment/${token}`)).data,
   getAppointments: async () => {
     const response = await apiClient.get('/api/appointments');
     return response.data;
@@ -220,8 +223,8 @@ export const appointmentAPI = {
     return response.data;
   },
 
-  getPublicPatientDetails: async (doctorId, documentNumber) => {
-    const response = await axios.get(`${API_BASE_URL}/api/appointments/public/patient-details/${doctorId}/${documentNumber}`);
+  getPublicPatientDetails: async (doctorId, documentNumber, accessToken) => {
+    const response = await axios.get(`${API_BASE_URL}/api/appointments/public/patient-details/${doctorId}/${encodeURIComponent(documentNumber)}`, { headers: { 'X-Patient-Access': accessToken } });
     return response.data;
   },
 
@@ -285,6 +288,7 @@ export const patientAPI = {
 
 // Servicios de Historial de Pacientes (Registros)
 export const patientRecordAPI = {
+  getFile: async id => (await apiClient.get(`/api/patient-records/file/${id}`, { responseType: 'blob' })).data,
   getRecords: async (patientId) => {
     const response = await apiClient.get(`/api/patient-records/${patientId}`);
     return response.data;
@@ -477,3 +481,8 @@ export const insuranceAPI = {
 };
 
 export default apiClient;
+
+export const patientAccessAPI = {
+ request: async data => (await axios.post(API_BASE_URL + '/api/patient-access/request', data)).data,
+ verify: async data => (await axios.post(API_BASE_URL + '/api/patient-access/verify', data)).data
+};

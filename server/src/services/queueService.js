@@ -59,6 +59,9 @@ export const addToQueue = async (doctorId, data) => {
   }
 
   return await transaction(async (client) => {
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['queue:' + doctorId]);
+    if (patientId && !(await client.query('SELECT id FROM patients WHERE id=$1 AND doctor_id=$2', [patientId, doctorId])).rowCount) throw new Error('Paciente no encontrado.');
+    if (serviceId && !(await client.query('SELECT id FROM services WHERE id=$1 AND doctor_id=$2', [serviceId, doctorId])).rowCount) throw new Error('Servicio no encontrado.');
     // Obtener número correlativo de ticket para hoy
     const ticketRes = await client.query(
       `SELECT COALESCE(MAX(ticket_number), 0) + 1 as next_num 
@@ -79,8 +82,8 @@ export const addToQueue = async (doctorId, data) => {
 
     const insertRes = await client.query(
       `INSERT INTO waiting_queue (
-        doctor_id, patient_id, ticket_number, ticket_code, patient_name, patient_phone, patient_email, service_id, service_name, notes, status
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'waiting')
+        doctor_id, patient_id, ticket_number, ticket_code, patient_name, patient_phone, patient_email, service_id, service_name, notes, status, queue_day
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'waiting', (CURRENT_TIMESTAMP AT TIME ZONE 'America/Argentina/Buenos_Aires')::date)
        RETURNING *`,
       [doctorId, patientId || null, nextTicketNum, ticketCode, patientName.trim(), patientPhone || null, patientEmail || null, serviceId || null, finalServiceName, notes || null]
     );
@@ -102,6 +105,8 @@ export const addToQueue = async (doctorId, data) => {
  * Llamar al siguiente paciente de la fila
  */
 export const callNextPatient = async (doctorId) => {
+  return await transaction(async (client) => {
+  await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['queue:' + doctorId]);
   const status = await getDoctorQueueStatus(doctorId);
   
   if (status.waitingList.length === 0) {
@@ -110,7 +115,7 @@ export const callNextPatient = async (doctorId) => {
 
   const nextPatient = status.waitingList[0];
 
-  return await transaction(async (client) => {
+
     // Si había alguien en atención, marcarlo completado
     if (status.inProgress) {
       await client.query(

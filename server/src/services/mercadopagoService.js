@@ -10,9 +10,9 @@ export const createMPPreference = async (appointmentData, doctorMPAccessToken) =
 
     const preference = new Preference(client);
 
-    const { total_amount, system_fee, appointmentId, doctorName } = appointmentData;
+    const { total_amount, system_fee, appointmentId, portalToken, doctorName } = appointmentData;
 
-    const baseReturnUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`;
+    const baseReturnUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${portalToken}`;
     const isLocalhost = baseReturnUrl.includes('localhost') || baseReturnUrl.includes('127.0.0.1');
     const bridgeUrl = (target) => `https://httpbin.org/redirect-to?url=${encodeURIComponent(target)}`;
 

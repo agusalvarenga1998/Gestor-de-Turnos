@@ -1,3 +1,4 @@
+import { query } from '../db/config.js';
 import { verifyAndDecodeToken } from '../middleware/auth.js';
 
 // Almacenar clientes conectados y sus suscripciones
@@ -13,27 +14,24 @@ export const setupWebSocket = (wss) => {
 
   wss.on('connection', (ws) => {
     let clientId = null;
-    let userId = null;
-    let userRole = null;
     const subscriptions = new Set();
 
     console.log(`✓ Nueva conexión WebSocket. Clientes conectados: ${wss.clients.size}`);
 
-    ws.on('message', (data) => {
+    ws.on('message', async (data) => {
       try {
         const message = JSON.parse(data);
 
         switch (message.type) {
           case 'auth':
-            handleAuth(ws, message, connectedClients, doctorClients, (id, role, uid) => {
+            if (clientId) break;
+            await handleAuth(ws, message, connectedClients, doctorClients, (id) => {
               clientId = id;
-              userRole = role;
-              userId = uid;
             });
             break;
 
           case 'subscribe_appointment':
-            handleSubscribeAppointment(clientId, message, appointmentSubscriptions, subscriptions, ws);
+            await handleSubscribeAppointment(clientId, message, appointmentSubscriptions, subscriptions, ws);
             break;
 
           case 'unsubscribe_appointment':
@@ -102,6 +100,13 @@ export const setupWebSocket = (wss) => {
 
   // Heartbeat para mantener conexiones vivas
   setInterval(() => {
+    connectedClients.forEach(async client => {
+      try {
+        const decoded = verifyAndDecodeToken(client.token);
+        const doctor = decoded && (await query('SELECT status,token_version FROM doctors WHERE id=$1', [client.userId])).rows[0];
+        if (!doctor || doctor.status !== 'approved' || doctor.token_version !== decoded.token_version) client.ws.close(1008, 'Sesión vencida');
+      } catch { client.ws.close(1011, 'No se pudo verificar la sesión'); }
+    });
     wss.clients.forEach((ws) => {
       if (ws.isAlive === false) {
         return ws.terminate();
@@ -115,7 +120,7 @@ export const setupWebSocket = (wss) => {
 };
 
 // Manejadores de eventos
-const handleAuth = (ws, message, connectedClients, doctorClients, setClientInfo) => {
+const handleAuth = async (ws, message, connectedClients, doctorClients, setClientInfo) => {
   const { token } = message;
 
   if (!token) {
@@ -128,7 +133,8 @@ const handleAuth = (ws, message, connectedClients, doctorClients, setClientInfo)
 
   const decoded = verifyAndDecodeToken(token);
 
-  if (!decoded) {
+  const doctor = decoded?.id && !decoded.purpose && decoded.role === 'doctor' ? (await query('SELECT status,token_version FROM doctors WHERE id=$1', [decoded.id])).rows[0] : null;
+  if (!doctor || doctor.status !== 'approved' || doctor.token_version !== decoded.token_version) {
     ws.send(JSON.stringify({
       type: 'auth_error',
       message: 'Token inválido o expirado'
@@ -146,6 +152,7 @@ const handleAuth = (ws, message, connectedClients, doctorClients, setClientInfo)
     role: decoded.role,
     ws: ws,
     subscriptions: new Set(),
+    token,
     connectedAt: new Date()
   };
 
@@ -169,7 +176,7 @@ const handleAuth = (ws, message, connectedClients, doctorClients, setClientInfo)
   console.log(`  Clientes totales conectados: ${connectedClients.size}`);
 };
 
-const handleSubscribeAppointment = (clientId, message, appointmentSubscriptions, subscriptions, ws) => {
+const handleSubscribeAppointment = async (clientId, message, appointmentSubscriptions, subscriptions, ws) => {
   const { appointmentId } = message;
 
   if (!clientId) {
@@ -188,6 +195,9 @@ const handleSubscribeAppointment = (clientId, message, appointmentSubscriptions,
     return;
   }
 
+  const client = connectedClients.get(clientId);
+  const owns = client && (await query('SELECT id FROM appointments WHERE id::text=$1 AND doctor_id=$2', [appointmentId, client.userId])).rowCount;
+  if (!owns) { ws.send(JSON.stringify({ type: 'error', message: 'Turno no disponible.' })); return; }
   if (!appointmentSubscriptions.has(appointmentId)) {
     appointmentSubscriptions.set(appointmentId, new Set());
   }
@@ -230,7 +240,7 @@ const handleSubscribeDoctor = (clientId, message, doctorClients, subscriptions, 
     return;
   }
 
-  if (!doctorId) {
+  if (!doctorId || connectedClients.get(clientId)?.userId !== doctorId) {
     ws.send(JSON.stringify({
       type: 'error',
       message: 'doctorId requerido'
@@ -280,9 +290,9 @@ export const notifyAppointmentUpdate = (wss, appointmentId, update) => {
     timestamp: new Date().toISOString()
   });
 
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) { // 1 = OPEN
-      client.send(message);
+  connectedClients.forEach((client) => {
+    if (appointmentSubscriptions.get(appointmentId)?.has(client.id) && client.ws.readyState === 1) {
+      client.ws.send(message);
     }
   });
 
@@ -299,9 +309,9 @@ export const notifyDoctorUpdate = (wss, doctorId, update) => {
     timestamp: new Date().toISOString()
   });
 
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) {
-      client.send(message);
+  connectedClients.forEach((client) => {
+    if (client.userId === doctorId && client.ws.readyState === 1) {
+      client.ws.send(message);
     }
   });
 
@@ -382,7 +392,7 @@ export const broadcastToAppointment = (appointmentIdOrToken, data) => {
     timestamp: new Date().toISOString()
   });
   connectedClients.forEach((client) => {
-    if (client.ws.readyState === 1) {
+    if (appointmentSubscriptions.get(appointmentIdOrToken)?.has(client.id) && client.ws.readyState === 1) {
       client.ws.send(message);
     }
   });

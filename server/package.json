@@ -11,8 +11,13 @@
     "db:init": "node src/db/init.js",
     "db:seed": "node src/db/seed.js",
     "db:reset": "npm run db:setup && npm run db:init && npm run db:seed",
-    "test": "jest --detectOpenHandles",
-    "lint": "eslint src/"
+    "test": "node --test test/*.test.js",
+    "lint": "eslint src/",
+    "db:stabilize": "node src/db/stabilize.js",
+    "db:migrate": "node src/db/migrate.js && node src/db/stabilize.js",
+    "test:integration": "node test/booking.integration.js",
+    "test:outbox": "node test/outbox.integration.js",
+    "integrations:check": "node src/check-integrations.js"
   },
   "keywords": [
     "medical",

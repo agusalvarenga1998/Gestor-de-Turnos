@@ -1,3 +1,4 @@
+import { sendVerificationEmail } from '../services/emailService.js';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,7 +10,11 @@ import { copyTemplateServicesToDoctor } from '../services/templateService.js';
 import { logAction } from '../services/auditService.js';
 import { generateSecret, verifyTOTP } from '../utils/totp.js';
 
+import { signPurposeToken, readPurposeToken, validPassword } from '../utils/security.js';
+import { loginLimit, recoveryLimit } from '../middleware/rateLimits.js';
 const router = express.Router();
+router.use(['/login', '/register'], loginLimit);
+router.use(['/forgot-password', '/reset-password'], recoveryLimit);
 
 // URL del frontend (puede ser localhost o ngrok)
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -23,7 +28,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
       d.status, d.subscription_status, d.trial_ends_at, d.subscription_expires_at, 
       d.mp_connected, d.plan_type, d.pricing_plan_id, d.commission_rate,
       d.notify_daily_summary_push, d.notify_advance_push, d.notify_advance_time, d.notify_email, d.notify_approval_push,
-      d.two_factor_enabled, d.email_verified, d.date_of_birth,
+      d.two_factor_enabled, d.email_verified, d.date_of_birth, d.token_version,
       p.name as plan_name, p.key as plan_key, p.allow_google_calendar, 
       p.allow_mercadopago, p.allow_telemedicine, p.allow_reminders, p.allow_insurance, p.allow_patient_booking,
       p.max_patients, p.max_appointments_monthly
@@ -37,6 +42,7 @@ export async function getDoctorProfileWithPlan(doctorId) {
   const row = result.rows[0];
   return {
     id: row.id,
+    token_version: row.token_version,
     email: row.email,
     name: row.name,
     specialization: row.specialization,
@@ -93,6 +99,7 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    if (!validPassword(password)) return res.status(400).json({ success: false, message: 'Usa una contraseña de entre 10 y 72 caracteres.' });
     const normalizedEmail = email.trim().toLowerCase();
 
     // Verificar que el email no exista
@@ -234,6 +241,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    if (doctor.two_factor_enabled) return res.json({ success: true, requires2FA: true, challengeToken: signPurposeToken({ id: doctor.id, token_version: doctor.token_version }, 'login-2fa', '5m') });
     // Verificar suscripción
     const now = new Date();
     let subscriptionStatus = doctor.subscription_status;
@@ -586,6 +594,10 @@ router.get('/google/callback', async (req, res) => {
       console.log('⏳ Suscripción expirada, emitiendo JWT para permitir renovación/solicitud de plan...');
     }
 
+    if (doctor.two_factor_enabled) {
+      const challenge = signPurposeToken({ id: doctor.id, token_version: doctor.token_version }, 'login-2fa', '5m');
+      return res.redirect(FRONTEND_URL + '/login#challenge=' + encodeURIComponent(challenge));
+    }
     // Generar JWT
     const token = generateToken(doctor);
     console.log('✓ JWT generado');
@@ -618,17 +630,12 @@ router.get('/google/callback', async (req, res) => {
 // Login Step 2: Verificar 2FA
 router.post('/login/2fa', async (req, res) => {
   try {
-    const { doctorId, code } = req.body;
-    if (!doctorId || !code) {
-      return res.status(400).json({ success: false, message: 'ID de doctor y código son requeridos' });
-    }
-
-    const result = await query('SELECT * FROM doctors WHERE id = $1', [doctorId]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Doctor no encontrado' });
-    }
-
+    const { challengeToken, code } = req.body;
+    const challenge = readPurposeToken(challengeToken, 'login-2fa');
+    if (!challenge || !/^\d{6}$/.test(code || '')) return res.status(401).json({ success: false, message: 'Ingresa el código de seis dígitos o vuelve a iniciar sesión.' });
+    const result = await query('SELECT * FROM doctors WHERE id = $1', [challenge.id]);
     const doctor = result.rows[0];
+    if (!doctor || doctor.status !== 'approved' || !doctor.two_factor_enabled || doctor.token_version !== challenge.token_version) return res.status(401).json({ success: false, message: 'La sesión de verificación venció. Vuelve a ingresar.' });
 
     if (!verifyTOTP(doctor.two_factor_secret, code)) {
       await logAction(doctor.id, 'login_2fa_failed', 'Intento de 2FA fallido (código inválido)', req.ip);
@@ -652,95 +659,22 @@ router.post('/login/2fa', async (req, res) => {
   }
 });
 
-// Recuperar contraseña - Paso 1: Enviar correo/token
-router.post('/forgot-password', async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'El email es requerido' });
-    }
-
-    const result = await query('SELECT id, name FROM doctors WHERE email = $1', [email.trim().toLowerCase()]);
-    if (result.rows.length === 0) {
-      // Por seguridad, retornamos éxito simulado para evitar escaneo de cuentas
-      return res.json({ success: true, message: 'Si el correo existe, se enviará un enlace de recuperación.' });
-    }
-
-    const doctor = result.rows[0];
-    const resetToken = uuidv4();
-
-    // Guardar token en base de datos
-    await query('UPDATE doctors SET verification_token = $1 WHERE id = $2', [resetToken, doctor.id]);
-
-    // Auditoría
-    await logAction(doctor.id, 'forgot_password', { token: resetToken }, req.ip);
-
-    // Nota: Aquí se enviaría el correo real mediante nodemailer. 
-    // Para simulaciones y desarrollo local, retornamos el token en la respuesta para facilitar la prueba
-    res.json({
-      success: true,
-      message: 'Se ha generado el token de recuperación.',
-      resetToken, // En producción real esto no se retornaría en el JSON sino solo en el email
-      simulatedEmailSent: true
-    });
-  } catch (error) {
-    console.error('Error en forgot-password:', error);
-    res.status(500).json({ success: false, message: 'Error interno del servidor' });
-  }
-});
-
-// Recuperar contraseña - Paso 2: Reseteo
-router.post('/reset-password', async (req, res) => {
-  try {
-    const { token, password } = req.body;
-    if (!token || !password) {
-      return res.status(400).json({ success: false, message: 'Token y contraseña nueva son requeridos' });
-    }
-
-    const result = await query('SELECT id FROM doctors WHERE verification_token = $1', [token]);
-    if (result.rows.length === 0) {
-      return res.status(400).json({ success: false, message: 'Token inválido o expirado' });
-    }
-
-    const doctor = result.rows[0];
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Actualizar contraseña e invalidar token de recuperación e invalidar sesiones previas incrementando token_version
-    await query(
-      `UPDATE doctors 
-       SET password_hash = $1, 
-           verification_token = NULL,
-           token_version = token_version + 1
-       WHERE id = $2`, 
-      [hashedPassword, doctor.id]
-    );
-
-    await logAction(doctor.id, 'reset_password', 'Contraseña restablecida correctamente', req.ip);
-
-    res.json({
-      success: true,
-      message: 'Contraseña restablecida exitosamente. Por favor, inicia sesión con tu nueva contraseña.'
-    });
-  } catch (error) {
-    console.error('Error en reset-password:', error);
-    res.status(500).json({ success: false, message: 'Error al restablecer contraseña' });
-  }
-});
-
 // Enviar verificación de email (Protegida)
-router.post('/profile/send-verification', verifyToken, async (req, res) => {
+router.post('/profile/send-verification', verifyToken, recoveryLimit, async (req, res) => {
   try {
     const doctorId = req.user.id;
     const verificationToken = uuidv4();
 
     await query('UPDATE doctors SET verification_token = $1 WHERE id = $2', [verificationToken, doctorId]);
-    await logAction(doctorId, 'send_verification', { token: verificationToken }, req.ip);
+    const doctor = (await query('SELECT email FROM doctors WHERE id=$1', [doctorId])).rows[0];
+    const signedToken = signPurposeToken({ id: doctorId, nonce: verificationToken }, 'verify-email', '1h');
+    const baseUrl = process.env.BACKEND_URL || process.env.API_URL || (process.env.NODE_ENV === 'production' ? 'https://api.turnohub.com.ar' : 'http://localhost:5002');
+    await sendVerificationEmail(doctor.email, baseUrl + '/api/auth/verify-email?token=' + encodeURIComponent(signedToken));
+    await logAction(doctorId, 'send_verification', 'Email de verificación enviado', req.ip);
 
     res.json({
       success: true,
-      message: 'Código de verificación generado.',
-      verificationToken, // Retornado para fines de simulación local
-      simulatedEmailSent: true
+      message: 'Revisa tu email para verificarlo.'
     });
   } catch (error) {
     console.error('Error al enviar verificación:', error);
@@ -756,7 +690,9 @@ router.get('/verify-email', async (req, res) => {
       return res.status(400).send('<h1>Error</h1><p>Falta el token de verificación</p>');
     }
 
-    const result = await query('SELECT id FROM doctors WHERE verification_token = $1', [token]);
+    const verification = readPurposeToken(token, 'verify-email');
+    if (!verification) return res.status(400).send('El enlace venció. Solicita uno nuevo.');
+    const result = await query('SELECT id FROM doctors WHERE verification_token = $1 AND id=$2', [verification.nonce, verification.id]);
     if (result.rows.length === 0) {
       return res.status(400).send('<h1>Error</h1><p>Token inválido o expirado</p>');
     }
@@ -977,7 +913,9 @@ router.post('/forgot-password', async (req, res) => {
 // Restablecer contraseña con token (Pública)
 router.post('/reset-password', async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const { token } = req.body;
+    const newPassword = req.body.newPassword || req.body.password;
+    if (!validPassword(newPassword)) return res.status(400).json({ success: false, message: 'Usa una contraseña de entre 10 y 72 caracteres.' });
     if (!token || !newPassword) {
       return res.status(400).json({ success: false, message: 'El token y la nueva contraseña son requeridos.' });
     }

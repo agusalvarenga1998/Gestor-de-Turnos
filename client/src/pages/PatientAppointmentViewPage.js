@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { appointmentAPI } from '../services/api';
 import Icon from '../components/Icon';
 import styles from './PatientAppointmentViewPage.module.css';
-import axios from 'axios';
+
 
 export default function PatientAppointmentViewPage() {
   const { appointmentCode } = useParams();
@@ -26,11 +26,10 @@ export default function PatientAppointmentViewPage() {
   const verifyPaymentLocally = async (paymentId = null) => {
     try {
       setLoading(true);
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
-      const response = await axios.post(`${apiUrl}/appointments/public/verify-payment/${appointment.id}`);
+      const response = { data: await appointmentAPI.verifyPublicPayment(appointment.id) };
       
       if (response.data.success) {
-        if (!paymentId) alert('¡Excelente! Verificamos tu pago con Mercado Pago y tu turno fue confirmado en este instante.');
+        if (!paymentId) alert('Pago recibido. El profesional confirmará tu turno.');
         fetchAppointment();
       } else {
         if (!paymentId) alert(response.data.message || 'El pago aún registra como pendiente. Intenta nuevamente en unos segundos.');
@@ -52,7 +51,7 @@ export default function PatientAppointmentViewPage() {
 
     const interval = setInterval(() => {
       if (appointment.status === 'scheduled') {
-        const apptTime = new Date(`${appointment.appointment_date}T${appointment.appointment_time}`);
+        const apptTime = new Date(`${appointment.appointment_date}T${appointment.appointment_time}-03:00`);
         const now = new Date();
         const diff = apptTime - now;
 
@@ -110,18 +109,6 @@ export default function PatientAppointmentViewPage() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      scheduled: { label: 'Confirmado', class: styles.statusScheduled },
-      completed: { label: 'Completado', class: styles.statusCompleted },
-      cancelled: { label: 'Cancelado', class: styles.statusCancelled },
-      absent: { label: 'Ausente', class: styles.statusAbsent },
-      expired: { label: 'Solicitud Vencida', class: styles.statusExpired }
-    };
-    const badge = badges[status] || badges.scheduled;
-    return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
-  };
-
   if (loading) {
     return (
       <div className={styles.container}>
@@ -173,11 +160,11 @@ export default function PatientAppointmentViewPage() {
             <div className={styles.brandRow}>
               <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
               <div className={styles.statusGroup}>
-                <div className={`${styles.badge} ${styles['badge' + appointment.status]}`}>
-                  {appointment.status === 'scheduled' ? 'CONFIRMADO' : appointment.status.toUpperCase()}
+                <div className={`${styles.badge} ${styles['badge' + appointment.status.toUpperCase()]}`}>
+                  {{scheduled:'CONFIRMADO',pending:'ESPERANDO CONFIRMACIÓN',pending_payment:'PAGO PENDIENTE',completed:'FINALIZADO',cancelled:'CANCELADO',rejected:'NO ACEPTADO',absent:'AUSENTE',expired:'VENCIDO'}[appointment.status] || 'EN REVISIÓN'}
                 </div>
                 <div className={styles.shortCode}>
-                  Código: <strong>{appointment.appointment_code}</strong>
+                  Enlace privado de tu turno
                 </div>
               </div>
             </div>
@@ -185,6 +172,7 @@ export default function PatientAppointmentViewPage() {
             <div className={styles.statusAnnouncement}>
               {appointment.status === 'scheduled' && <h1>Tu cita está lista</h1>}
               {appointment.status === 'pending_payment' && <h1 style={{ color: '#f59e0b' }}>Pago en Proceso</h1>}
+              {appointment.status === 'pending' && <h1>Solicitud recibida</h1>}
               {appointment.status === 'completed' && <h1>Cita Concluida</h1>}
               {appointment.status === 'cancelled' && <h1>Cita Cancelada</h1>}
               {appointment.status === 'absent' && <h1 style={{ color: '#ea580c' }}>Ausente / No asististe</h1>}
@@ -282,8 +270,8 @@ export default function PatientAppointmentViewPage() {
               </div>
               <div className={styles.doctorText}>
                 <label>PROFESIONAL A CARGO</label>
-                <h3>Dr. {appointment.doctor_name}</h3>
-                <p>{appointment.specialization}</p>
+                <h3>{appointment.doctor_name}</h3>
+                <p>{appointment.doctor_specialization}</p>
               </div>
             </div>
 
@@ -364,9 +352,9 @@ export default function PatientAppointmentViewPage() {
 
             {/* Código QR / Alfanumérico */}
             <div className={styles.codeContainer}>
-              <p>MUESTRA ESTE CÓDIGO AL LLEGAR</p>
+              <p>CÓDIGO PRIVADO PARA CONSULTAR TU TURNO</p>
               <div className={styles.bookingCode}>
-                {appointmentCode.substring(0, 10).toUpperCase()}
+                {appointmentCode.toUpperCase()}
               </div>
               <button 
                 className={styles.copyLink}
@@ -385,9 +373,9 @@ export default function PatientAppointmentViewPage() {
               <Icon name="refresh" size={18} /> Actualizar Turno
             </button>
             <div className={styles.btnGroup}>
-              <a href="tel:+56912345678" className={styles.btnSecondary}>
+              {appointment.doctor_phone && <a href={`tel:${appointment.doctor_phone}`} className={styles.btnSecondary}>
                 <Icon name="phone" size={16} /> Clínica
-              </a>
+              </a>}
               {(appointment.status === 'scheduled' || appointment.status === 'pending') && (
                 <button className={styles.btnDanger} onClick={handleCancelAppointment}>
                   <Icon name="close" size={16} /> Cancelar

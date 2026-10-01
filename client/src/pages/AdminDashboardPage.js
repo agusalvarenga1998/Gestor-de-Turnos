@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import AdminLayout from '../components/AdminLayout';
 import axios from 'axios';
 import styles from './AdminDashboardPage.module.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+import { API_BASE_URL } from '../services/api';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const { admin, token } = useAdminAuth();
-  const [doctors, setDoctors] = useState([]);
+  const [systemStatus, setSystemStatus] = useState(null);
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/api/admin/system-status`, { headers: { Authorization: `Bearer ${token}` } }).then(r => setSystemStatus(r.data)).catch(() => setSystemStatus({ database: 'unavailable', smtp: 'unavailable' }));
+  }, [token]);
   const [tickets, setTickets] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -21,14 +24,7 @@ export default function AdminDashboardPage() {
     trial: 0,
     expiringTrial: 0
   });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  const fetchDashboardData = useCallback(async () => {
     try {
       // 1. Obtener lista de doctores
       const docsRes = await axios.get(`${API_BASE_URL}/api/admin/doctors`, {
@@ -37,7 +33,6 @@ export default function AdminDashboardPage() {
 
       if (docsRes.data.success && docsRes.data.doctors) {
         const docList = docsRes.data.doctors;
-        setDoctors(docList);
 
         const now = new Date();
         const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
@@ -97,10 +92,12 @@ export default function AdminDashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching admin dashboard data:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const pendingTickets = tickets.filter(t => t.status === 'pending');
 
@@ -287,12 +284,12 @@ export default function AdminDashboardPage() {
           <div className={styles.systemStatusCard}>
             <div className={styles.statusHeader}>
               <h3>🛠️ Estado del Sistema TurnoHub</h3>
-              <span className={styles.statusBadgeOk}>● OPERATIVO</span>
+              <span className={styles.statusBadgeOk}>{systemStatus?.database === 'ready' && systemStatus?.smtp === 'ready' && systemStatus?.emailQueue?.workerEnabled && !systemStatus.emailQueue.failed && !systemStatus.emailQueue.expired ? '● OPERATIVO' : '● REVISAR SERVICIOS'}</span>
             </div>
             <div className={styles.statusDetails}>
               <div className={styles.statusItem}>
                 <span className={styles.statusLabel}>Servidor de Correos SMTP:</span>
-                <span className={styles.statusVal}>Verificado (Notificaciones automáticas a admin.turnohub@gmail.com activadas)</span>
+                <span className={styles.statusVal}>{systemStatus?.smtp === 'ready' ? 'Conexión verificada al iniciar' : 'Sin conexión verificada'}</span>
               </div>
               <div className={styles.statusItem}>
                 <span className={styles.statusLabel}>Cron de Pruebas Gratis:</span>
@@ -300,7 +297,13 @@ export default function AdminDashboardPage() {
               </div>
               <div className={styles.statusItem}>
                 <span className={styles.statusLabel}>Base de Datos PostgreSQL:</span>
-                <span className={styles.statusVal}>Conectado correctamente</span>
+                <span className={styles.statusVal}>{systemStatus?.database === 'ready' ? 'Conexión verificada' : 'No disponible'}</span>
+              </div>
+              <div className={styles.statusItem}>
+                <span className={styles.statusLabel}>Avisos de turnos por correo:</span>
+                <span className={styles.statusVal}>{systemStatus?.emailQueue
+                  ? `${systemStatus.emailQueue.pending} pendientes · ${systemStatus.emailQueue.failed} fallidos · ${systemStatus.emailQueue.expired} vencidos${systemStatus.emailQueue.workerEnabled ? '' : ' · Envío pausado en este servidor'}`
+                  : 'Estado no disponible'}</span>
               </div>
             </div>
           </div>

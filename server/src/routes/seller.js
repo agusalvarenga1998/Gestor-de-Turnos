@@ -1,3 +1,4 @@
+import { loginLimit } from '../middleware/rateLimits.js';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -5,7 +6,8 @@ import { query } from '../db/config.js';
 import { getDoctorProfileWithPlan } from './auth.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+router.use('/login', loginLimit);
+import { jwtSecret as JWT_SECRET } from '../utils/security.js';
 
 // Middleware para verificar que el usuario sea Vendedor
 export const verifySeller = (req, res, next) => {
@@ -377,6 +379,7 @@ router.post('/launch-plan-demo/:planKey', verifySeller, async (req, res) => {
         role: 'doctor',
         status: doctorProfile.status || 'approved',
         subscription_status: doctorProfile.subscription_status || 'active',
+        token_version: doctorProfile.token_version,
         isDemoMode: true,
         sellerId: req.seller.id,
         sellerName: req.seller.name
@@ -391,6 +394,7 @@ router.post('/launch-plan-demo/:planKey', verifySeller, async (req, res) => {
       token,
       doctor: {
         ...doctorProfile,
+        token_version: doctorProfile.token_version,
         isDemoMode: true,
         sellerName: req.seller.name
       }
@@ -412,6 +416,7 @@ router.post('/impersonate/:doctorId', verifySeller, async (req, res) => {
       return res.status(404).json({ error: 'Profesional no encontrado' });
     }
 
+    if (!['demo.mensual@turnohub.com','demo.odontologia@turnohub.com','demo.filavirtual@turnohub.com','demo.comision@turnohub.com'].includes(doctorProfile.email)) return res.status(403).json({ error: 'Las demostraciones solo están disponibles con cuentas de prueba.' });
     // Generar un token con flag de isDemoMode y sellerId
     const token = jwt.sign(
       {
@@ -421,6 +426,7 @@ router.post('/impersonate/:doctorId', verifySeller, async (req, res) => {
         role: 'doctor',
         status: doctorProfile.status || 'approved',
         subscription_status: doctorProfile.subscription_status || 'active',
+        token_version: doctorProfile.token_version,
         isDemoMode: true,
         sellerId: req.seller.id,
         sellerName: req.seller.name
@@ -435,6 +441,7 @@ router.post('/impersonate/:doctorId', verifySeller, async (req, res) => {
       token,
       doctor: {
         ...doctorProfile,
+        token_version: doctorProfile.token_version,
         isDemoMode: true,
         sellerName: req.seller.name
       }

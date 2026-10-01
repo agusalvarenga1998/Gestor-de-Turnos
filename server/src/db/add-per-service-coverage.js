@@ -1,7 +1,6 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 import dotenv from 'dotenv';
-import { v4 as uuidv4 } from 'uuid';
 
 import path from 'path';
 import { fileURLToPath } from 'url';

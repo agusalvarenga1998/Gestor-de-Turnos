@@ -7,7 +7,7 @@ import { logAction } from '../services/auditService.js';
 export const createAppointment = async (req, res) => {
   try {
     console.log('\n🔵 === POST /api/appointments ===');
-    console.log('Body:', req.body);
+
 
     const {
       patientId,
@@ -31,6 +31,9 @@ export const createAppointment = async (req, res) => {
         message: 'patientId, appointment_date y appointment_time son requeridos'
       });
     }
+
+    const patient = await query('SELECT id FROM patients WHERE id=$1 AND doctor_id=$2', [patientId, doctorId]);
+    if (!patient.rowCount) return res.status(404).json({ success: false, message: 'Paciente no encontrado en tu consultorio.' });
 
     // Verificar si el plan del doctor restringe el número de turnos mensuales
     const planRes = await query(
@@ -73,6 +76,7 @@ export const createAppointment = async (req, res) => {
         'SELECT duration_minutes, price FROM services WHERE id = $1 AND doctor_id = $2',
         [serviceId, doctorId]
       );
+      if (!serviceResult.rowCount) return res.status(400).json({ success: false, message: 'Servicio no disponible para este profesional.' });
       if (serviceResult.rows.length > 0) {
         duration = serviceResult.rows[0].duration_minutes;
         servicePrice = parseFloat(serviceResult.rows[0].price);
@@ -124,7 +128,7 @@ export const createAppointment = async (req, res) => {
   } catch (error) {
     console.error('\n❌ Error creando cita:', error.message);
     console.error('Stack:', error.stack, '\n');
-    res.status(500).json({
+    res.status(error.status || (error.code === '23P01' ? 409 : 500)).json({
       success: false,
       message: error.message || 'Error al crear la cita'
     });
@@ -220,6 +224,9 @@ export const updateAppointment = async (req, res) => {
     const { appointmentId } = req.params;
     const doctorId = req.user.id;
     const updateData = req.body;
+    if (updateData.payment_status && !['pending','partial','paid'].includes(updateData.payment_status)) return res.status(400).json({ success: false, message: 'Estado de pago inválido.' });
+    if (updateData.settlement_method && !['efectivo','transferencia','mercadopago'].includes(updateData.settlement_method)) return res.status(400).json({ success: false, message: 'Método de cobro inválido.' });
+    if (updateData.status && !['scheduled','pending','completed','cancelled','rejected','absent'].includes(updateData.status)) return res.status(400).json({ success: false, message: 'Estado del turno inválido.' });
 
     // Verificar que la cita exista y pertenezca al doctor
     const appointment = await appointmentService.getAppointmentById(appointmentId);
@@ -238,12 +245,15 @@ export const updateAppointment = async (req, res) => {
       });
     }
 
+    if (appointment.payment_status === 'paid' && updateData.payment_status && updateData.payment_status !== 'paid') return res.status(409).json({ success: false, message: 'El cobro ya está registrado. Registra una devolución en Caja si corresponde.' });
+    if (updateData.delay_minutes !== undefined && (!Number.isInteger(Number(updateData.delay_minutes)) || Number(updateData.delay_minutes) < 0 || Number(updateData.delay_minutes) > 480)) return res.status(400).json({ success: false, message: 'La demora debe estar entre 0 y 480 minutos.' });
+    if (updateData.insurance_company_id && !(await query('SELECT id FROM insurance_companies WHERE id=$1 AND doctor_id=$2', [updateData.insurance_company_id, doctorId])).rowCount) return res.status(400).json({ success: false, message: 'Cobertura no disponible.' });
     // Si se actualiza la fecha/hora, verificar disponibilidad
     if (updateData.appointment_date || updateData.appointment_time) {
       const newDate = updateData.appointment_date || appointment.appointment_date;
       const newTime = updateData.appointment_time || appointment.appointment_time;
 
-      const availability = await availabilityService.isAvailableAt(doctorId, newDate, newTime);
+      const availability = await availabilityService.isAvailableAt(doctorId, newDate, newTime, appointment.duration_minutes || 30, appointmentId);
 
       if (!availability.available) {
         return res.status(400).json({

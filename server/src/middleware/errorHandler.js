@@ -2,6 +2,7 @@ import { sendErrorLogEmail } from '../services/emailService.js';
 
 // Manejador centralizado de errores
 export const errorHandler = (err, req, res, next) => {
+  if (res.headersSent) return next(err);
   console.error('❌ Error capturado en errorHandler:', err);
 
   // Errores de validación

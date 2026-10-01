@@ -43,22 +43,15 @@ export default function PatientHistoryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
-  const getAbsoluteUrl = (fileUrl) => {
-    if (!fileUrl) return '';
-    if (fileUrl.startsWith('http')) return fileUrl;
-    
-    // Si estamos en producción (Render/Dominio Propio), necesitamos apuntar al backend explícitamente
-    const apiBase = process.env.REACT_APP_API_BASE_URL || 
-                    (window.location.hostname.includes('onrender.com') || window.location.hostname.includes('turnohub.com.ar')
-                      ? 'https://api.turnohub.com.ar' 
-                      : '');
-    
-    return `${apiBase}${fileUrl}`;
-  };
-
-  const openViewer = (fileUrl, type) => {
-    const absoluteUrl = getAbsoluteUrl(fileUrl);
-    setViewerModal({ show: true, file: absoluteUrl, type });
+  useEffect(() => () => { if (viewerModal.file) URL.revokeObjectURL(viewerModal.file); }, [viewerModal.file]);
+  const openViewer = async (recordId, type, downloadName) => {
+    try {
+      const file = URL.createObjectURL(await patientRecordAPI.getFile(recordId));
+      if (downloadName) {
+        const link = document.createElement('a'); link.href = file; link.download = downloadName; link.click();
+        setTimeout(() => URL.revokeObjectURL(file), 1000);
+      } else setViewerModal({ show: true, file, type });
+    } catch { setError('No pudimos abrir el archivo. Intenta nuevamente.'); }
   };
 
   const fetchData = async () => {
@@ -291,13 +284,7 @@ export default function PatientHistoryPage() {
                     <div className={styles.fileAttachment}>
                       {record.type === 'image' ? (
                         <div className={styles.imagePreview}>
-                          <img 
-                            src={getAbsoluteUrl(record.file_path)} 
-                            alt={record.file_name} 
-                            onClick={() => openViewer(record.file_path, 'image')}
-                            style={{ cursor: 'zoom-in' }}
-                          />
-                          <button onClick={() => openViewer(record.file_path, 'image')} className={styles.viewBtn}>
+                          <button onClick={() => openViewer(record.id, 'image')} className={styles.viewBtn}>
                             Ver imagen completa
                           </button>
                         </div>
@@ -305,12 +292,10 @@ export default function PatientHistoryPage() {
                         <div className={styles.fileBox}>
                           <Icon name="file" size={20} />
                           <span>{record.file_name}</span>
-                          <button onClick={() => openViewer(record.file_path, record.file_type)} className={styles.viewBtn}>
+                          <button onClick={() => openViewer(record.id, record.file_type)} className={styles.viewBtn}>
                             Ver documento
                           </button>
-                          <a href={getAbsoluteUrl(record.file_path)} download={record.file_name} className={styles.downloadLink}>
-                            Descargar
-                          </a>
+                          <button onClick={() => openViewer(record.id, record.file_type, record.file_name)} className={styles.downloadLink}>Descargar</button>
                         </div>
                       )}
                     </div>

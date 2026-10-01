@@ -94,7 +94,6 @@ async function seedDatabase() {
 
     // Crear disponibilidades (Lunes a Viernes, 09:00 a 17:00)
     const days = [1, 2, 3, 4, 5]; // Lunes a Viernes
-    const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
     for (let i = 0; i < days.length; i++) {
       await query(

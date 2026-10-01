@@ -1,46 +1,24 @@
+import { transactionalRoute } from '../middleware/transactionalRoute.js';
+import { publicLimit } from '../middleware/rateLimits.js';
+import { requireUuid } from '../utils/validation.js';
+import { applyApprovedPayment } from '../services/paymentService.js';
+import { randomUUID } from 'node:crypto';
+import { patientAccess } from './patientAccess.js';
 import express from 'express';
 import { verifyToken, verifyDoctorRole, checkSubscription, verifyApiKey } from '../middleware/auth.js';
 import * as appointmentController from '../controllers/appointmentController.js';
-import { query } from '../db/config.js';
+import { query, afterCommit } from '../db/config.js';
 import { notifyDoctor } from '../websocket/server.js';
 import { sendDelayNotification, sendAppointmentConfirmation, sendAppointmentRejectionEmail, sendNewAppointmentNotificationToDoctor } from '../services/emailService.js';
 import * as availabilityService from '../services/availabilityService.js';
 import * as mpService from '../services/mercadopagoService.js';
 import axios from 'axios';
-import * as wss from '../websocket/server.js';
 import { sendPushToDoctor } from '../cron/reminderCron.js';
 import { sendWhatsAppConfirmationServer } from '../services/whatsappService.js';
 
 const router = express.Router();
-const generateAppointmentCode = (doctorName, doctorId, appointmentDate, appointmentTime) => {
-  const getInitials = (name) => {
-    if (!name) return 'TH';
-    const cleanName = name.replace(/^(dr|dra|lic|prof|ing|escr|cont|profesor|abogado)\.?\s+/i, '');
-    const words = cleanName.trim().split(/\s+/);
-    return words
-      .map(w => w.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 3);
-  };
-
-  const initials = getInitials(doctorName);
-  const partialId = String(doctorId || '').substring(0, 4);
-  
-  let cleanDate = '';
-  if (appointmentDate instanceof Date) {
-    const yyyy = appointmentDate.getFullYear();
-    const mm = String(appointmentDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(appointmentDate.getDate()).padStart(2, '0');
-    cleanDate = `${yyyy}${mm}${dd}`;
-  } else {
-    cleanDate = String(appointmentDate || '').substring(0, 10).replace(/-/g, '');
-  }
-
-  const cleanTime = String(appointmentTime || '').substring(0, 5).replace(/:/g, '');
-
-  return `${initials}${partialId}-${cleanDate}${cleanTime}`;
-};
+router.use('/public', publicLimit);
+const generateAppointmentCode = () => randomUUID();
 
 // Obtener rubros disponibles
 router.get('/public/rubros', async (req, res) => {
@@ -159,8 +137,8 @@ router.get('/public/doctors/:specialization', async (req, res) => {
        AND COALESCE(p.allow_patient_booking, true) = true
        AND (
          TRIM(LOWER(d.specialization)) = TRIM(LOWER($1))
-         OR 
-         REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(d.specialization), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u') = 
+         OR
+         REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(d.specialization), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u') =
          REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER($1), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u')
        )
        ORDER BY d.name ASC`,
@@ -189,7 +167,7 @@ router.get('/public/doctor/:doctorId/availability', async (req, res) => {
 
     // Verificar si el plan del doctor permite auto-agendamiento
     const planCheck = await query(
-      `SELECT p.allow_patient_booking 
+      `SELECT p.allow_patient_booking
        FROM doctors d
        LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
        WHERE d.id = $1`,
@@ -198,17 +176,17 @@ router.get('/public/doctor/:doctorId/availability', async (req, res) => {
     if (planCheck.rows.length > 0 && planCheck.rows[0].allow_patient_booking === false) {
       return res.status(403).json({ success: false, message: 'Online booking is disabled for this professional' });
     }
-    
+
     // Obtener días de atención
     const workingDaysResult = await query(
-      `SELECT DISTINCT day_of_week FROM doctor_availability 
+      `SELECT DISTINCT day_of_week FROM doctor_availability
        WHERE doctor_id = $1 AND is_available = true`,
       [doctorId]
     );
-    
+
     // Obtener vacaciones próximas
     const vacationsResult = await query(
-      `SELECT start_date, end_date FROM doctor_vacation 
+      `SELECT start_date, end_date FROM doctor_vacation
        WHERE doctor_id = $1 AND (end_date >= CURRENT_DATE OR start_date >= CURRENT_DATE)`,
       [doctorId]
     );
@@ -232,7 +210,7 @@ router.get('/public/available-slots/:doctorId/:date', async (req, res) => {
 
     // Verificar si el plan del doctor permite auto-agendamiento
     const planCheck = await query(
-      `SELECT p.allow_patient_booking 
+      `SELECT p.allow_patient_booking
        FROM doctors d
        LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
        WHERE d.id = $1`,
@@ -264,7 +242,8 @@ router.get('/public/patient-details/:doctorId/:documentNumber', async (req, res)
   try {
     const { doctorId, documentNumber } = req.params;
 
-    console.log(`🔓 Buscando datos de paciente por DNI: ${documentNumber} y Doctor: ${doctorId}`);
+    if (!patientAccess(req, doctorId, documentNumber)) return res.status(403).json({ success: false, message: 'Verifica tu email para recuperar tus datos.' });
+    res.setHeader('Cache-Control', 'no-store');
 
     const result = await query(
       `SELECT name, email, phone, document_number, document_type, date_of_birth, gender, address, locality, province, insurance_company_id, insurance_plan_id, insurance_policy_number
@@ -314,7 +293,7 @@ router.get('/public/patient-details/:doctorId/:documentNumber', async (req, res)
 // ===== RUTAS PÚBLICAS ADICIONALES =====
 
 // Ruta pública para crear una cita (sin autenticación)
-router.post('/public/create', async (req, res) => {
+router.post('/public/create', transactionalRoute(async (req, res) => {
   try {
     const {
       doctorId,
@@ -338,7 +317,10 @@ router.post('/public/create', async (req, res) => {
       insurancePolicyNumber
     } = req.body;
 
-    console.log('📝 Creating public appointment for Doctor ID:', doctorId);
+    requireUuid(doctorId);
+    if (!patientName?.trim() || !patientDocumentNumber?.trim() || !['cash','online'].includes(paymentMethod)) return res.status(400).json({ success: false, message: 'Completa nombre, documento y método de pago.' });
+    if (insuranceId && !(await query('SELECT id FROM insurance_companies WHERE id=$1 AND doctor_id=$2', [insuranceId, doctorId])).rowCount) return res.status(400).json({ success: false, message: 'Selecciona una cobertura de este profesional.' });
+    if (insurancePlanId && !(await query('SELECT id FROM insurance_plans WHERE id=$1 AND insurance_company_id=$2', [insurancePlanId, insuranceId])).rowCount) return res.status(400).json({ success: false, message: 'Selecciona un plan de tu cobertura.' });
 
     // ... (validaciones iguales)
     if (!doctorId || !appointmentDate || !appointmentTime) {
@@ -349,15 +331,15 @@ router.post('/public/create', async (req, res) => {
 
     // Verificar si ya existe una cita en ese horario
     const duplicateCheck = await query(
-      `SELECT id FROM appointments 
+      `SELECT id FROM appointments
        WHERE doctor_id = $1 AND appointment_date = $2 AND appointment_time = $3 AND status != 'cancelled'`,
       [doctorId, appointmentDate, appointmentTime]
     );
 
     if (duplicateCheck.rows.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'El horario seleccionado ya no está disponible. Por favor elige otro.' 
+      return res.status(400).json({
+        success: false,
+        message: 'El horario seleccionado ya no está disponible. Por favor elige otro.'
       });
     }
 
@@ -372,6 +354,7 @@ router.post('/public/create', async (req, res) => {
         'SELECT duration_minutes, price, booking_fee, is_online FROM services WHERE id = $1 AND doctor_id = $2',
         [serviceId, doctorId]
       );
+      if (!serviceResult.rowCount) return res.status(400).json({ success: false, message: 'Selecciona un servicio de este profesional.' });
       if (serviceResult.rows.length > 0) {
         serviceDuration = serviceResult.rows[0].duration_minutes;
         fullPrice = parseFloat(serviceResult.rows[0].price);
@@ -380,10 +363,13 @@ router.post('/public/create', async (req, res) => {
       }
     }
 
+    const availability = await availabilityService.isAvailableAt(doctorId, appointmentDate, appointmentTime, serviceDuration);
+    if (!availability.available) return res.status(409).json({ success: false, message: availability.reason });
+
     // Verificar doctor y obtener sus límites de plan comercial
     const doctorCheck = await query(
-      `SELECT d.id, d.name, d.email, d.booking_fee, d.appointment_price, d.accumulated_debt, d.plan_type, d.commission_rate, p.max_appointments_monthly, p.allow_patient_booking
-       FROM doctors d 
+      `SELECT d.id, d.name, d.email, d.clinic_name, d.address, d.booking_fee, d.appointment_price, d.accumulated_debt, d.plan_type, d.commission_rate, p.max_appointments_monthly, p.allow_patient_booking
+       FROM doctors d
        LEFT JOIN pricing_plans p ON d.pricing_plan_id = p.id
        WHERE d.id = $1 AND d.status = 'approved' AND d.subscription_status IN ('active', 'trial')`,
       [doctorId]
@@ -403,10 +389,10 @@ router.post('/public/create', async (req, res) => {
     // Verificar si el plan del doctor restringe el número de turnos mensuales
     if (doctor.max_appointments_monthly !== null && doctor.max_appointments_monthly !== undefined) {
       const countRes = await query(
-        `SELECT COUNT(*) as count 
-         FROM appointments 
-         WHERE doctor_id = $1 
-           AND status != 'cancelled' 
+        `SELECT COUNT(*) as count
+         FROM appointments
+         WHERE doctor_id = $1
+           AND status != 'cancelled'
            AND EXTRACT(MONTH FROM appointment_date) = EXTRACT(MONTH FROM CURRENT_DATE)
            AND EXTRACT(YEAR FROM appointment_date) = EXTRACT(YEAR FROM CURRENT_DATE)`,
         [doctorId]
@@ -424,7 +410,7 @@ router.post('/public/create', async (req, res) => {
 
     if (!serviceId) fullPrice = parseFloat(doctor.appointment_price) || 0;
     const bookingFee = serviceBookingFee !== null ? serviceBookingFee : (parseFloat(doctor.booking_fee) || 0);
-    
+
     let insuranceDiscount = 0;
     if (insuranceId) {
       if (insurancePlanId) {
@@ -449,7 +435,7 @@ router.post('/public/create', async (req, res) => {
             'SELECT coverage_type, coverage_value FROM insurance_service_coverage WHERE insurance_company_id = $1 AND service_id = $2 AND is_active = TRUE',
             [insuranceId, serviceId]
           );
-          
+
           if (serviceCoverageCheck.rows.length > 0) {
             const coverage = serviceCoverageCheck.rows[0];
             if (coverage.coverage_type === 'percentage') {
@@ -480,8 +466,8 @@ router.post('/public/create', async (req, res) => {
       }
     }
 
-    const systemFee = doctor.plan_type === 'commission' 
-      ? (fullPrice * (parseFloat(doctor.commission_rate || 3) / 100)) 
+    const systemFee = doctor.plan_type === 'commission'
+      ? (fullPrice * (parseFloat(doctor.commission_rate || 3) / 100))
       : 0;
     let totalToPayNow = (bookingFee + systemFee);
     let isCash = paymentMethod === 'cash';
@@ -490,6 +476,8 @@ router.post('/public/create', async (req, res) => {
     if (isCash || insuranceDiscount >= fullPrice) {
       totalToPayNow = 0;
     }
+
+    if (totalToPayNow > 0 && !(await query('SELECT id FROM doctors WHERE id=$1 AND mp_access_token IS NOT NULL AND length(mp_access_token) > 0', [doctorId])).rowCount) return res.status(400).json({ success: false, message: 'El pago online no está disponible. Elige pagar en el consultorio.' });
 
     console.log(`🏦 Método: ${paymentMethod} | Deuda a sumar: $${systemFee}`);
 
@@ -519,11 +507,11 @@ router.post('/public/create', async (req, res) => {
 
     if (patientCheck.rows.length > 0) {
       patientId = patientCheck.rows[0].id;
-      // Actualizar datos del paciente si existen cambios
-      await query(
+      // Solo el titular verificado puede actualizar una ficha existente.
+      if (patientAccess(req, doctorId, patientDocumentNumber)) await query(
         `UPDATE patients
-         SET name = $1, 
-             phone = COALESCE($2, phone), 
+         SET name = $1,
+             phone = COALESCE($2, phone),
              email = COALESCE($3, email),
              document_type = COALESCE($5, document_type),
              date_of_birth = COALESCE($6, date_of_birth),
@@ -599,10 +587,10 @@ router.post('/public/create', async (req, res) => {
         coverage_amount,
         service_id,
         duration_minutes,
-        fee_charged
+        fee_charged, booking_contact
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-      RETURNING id, appointment_date, appointment_time, total_amount, appointment_code`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      RETURNING id, portal_token, appointment_date, appointment_time, total_amount, appointment_code`,
       [
         doctorId,
         patientId,
@@ -613,14 +601,15 @@ router.post('/public/create', async (req, res) => {
         insurancePlanId || null,
         totalToPayNow,
         systemFee,
-        (isCash || totalToPayNow > 0) ? 'pending' : 'paid',
+        fullPrice - insuranceDiscount > 0 ? 'pending' : 'paid',
         generateAppointmentCode(doctor?.name, doctorId, appointmentDate, appointmentTime),
         fullPrice,
-        (isCash || totalToPayNow > 0) ? 0 : bookingFee,
+        0,
         insuranceDiscount,
         serviceId || null,
         serviceDuration,
-        isCash ? true : false
+        isCash ? true : false,
+        JSON.stringify({ name: `${patientName} ${patientLastName || ''}`.trim(), phone: patientPhone || '', documentNumber: patientDocumentNumber || '' })
       ]
     );
 
@@ -628,6 +617,7 @@ router.post('/public/create', async (req, res) => {
 
     console.log('✓ Cita pendiente creada:', appointment.id);
 
+    afterCommit(async () => {
     // Si el pago es 0 (Cobertura Total), notificamos al médico de inmediato para que apruebe
     if (totalToPayNow === 0) {
       try {
@@ -703,7 +693,7 @@ router.post('/public/create', async (req, res) => {
         appointmentDate: appointmentDate,
         appointmentTime: appointmentTime,
         appointmentCode: appointment.appointment_code,
-        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointment.id}`,
+        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointment.portal_token}`,
         meetLink: meetLink,
         status: 'pending'
       }).catch(err => console.error("Error asíncrono enviando email al paciente:", err));
@@ -719,6 +709,7 @@ router.post('/public/create', async (req, res) => {
     }
 
     // Generar Preferencia de Mercado Pago si hay montos a cobrar
+    });
     let initPoint = null;
     if (totalToPayNow > 0) {
       const doctorTokens = await query('SELECT mp_access_token FROM doctors WHERE id = $1', [doctorId]);
@@ -728,6 +719,7 @@ router.post('/public/create', async (req, res) => {
         try {
           const mpPreference = await mpService.createMPPreference({
             appointmentId: appointment.id,
+            portalToken: appointment.portal_token,
             total_amount: totalToPayNow,
             system_fee: systemFee,
             doctorName: doctor.name
@@ -736,7 +728,7 @@ router.post('/public/create', async (req, res) => {
           console.log('💳 Preferencia MP creada:', mpPreference.id);
         } catch (mpError) {
           console.error('⚠️ Error creando preferencia MP:', mpError.message);
-          
+
           // ROLLBACK MANUALLY: Eliminar el turno "fantasma" que se atoró
           try {
             await query('DELETE FROM appointments WHERE id = $1', [appointment.id]);
@@ -753,6 +745,7 @@ router.post('/public/create', async (req, res) => {
       }
     }
 
+    afterCommit(() => {
     // Notificar al doctor via WebSocket (para todos los casos que no fueron Cobertura 100%)
     if (totalToPayNow > 0) {
       try {
@@ -768,11 +761,12 @@ router.post('/public/create', async (req, res) => {
       }
     }
 
+    });
     res.json({
       success: true,
       message: totalToPayNow === 0 ? '¡Turno agendado exitosamente!' : (initPoint ? 'Turno reservado. Redirigiendo a pago...' : 'Turno reservado. Pendiente de pago.'),
       appointment: {
-        id: appointment.id,
+        id: appointment.portal_token,
         appointmentDate: appointment.appointment_date,
         appointmentTime: appointment.appointment_time,
         totalAmount: appointment.total_amount,
@@ -788,67 +782,27 @@ router.post('/public/create', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creando cita pública:', error);
-    res.status(500).json({
+    res.status(error.status || (['23505','23P01'].includes(error.code) ? 409 : 500)).json({
       success: false,
-      message: 'Error al agendar el turno'
+      message: error.status ? error.message : 'No pudimos reservar ese horario. Actualiza los horarios e intenta nuevamente.'
     });
   }
-});
+}));
 
 // Ruta pública para buscar por datos del paciente (sin autenticación)
 router.post('/public/search', async (req, res) => {
   try {
-    const { name, lastName, documentNumber, doctorId } = req.body;
-
-    // Validar doctorId (ahora requerido para precisión)
-    if (!doctorId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Debes seleccionar el profesional / local'
-      });
-    }
-
-    // Validar que al menos un dato del paciente esté completo
-    if ((!name || name.length < 2) && (!lastName || lastName.length < 2) && !documentNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Debes ingresar al menos un dato: nombre, apellido o documento'
-      });
-    }
-
-    console.log('🔓 Búsqueda pública de cita por:', { name, lastName, documentNumber, doctorId });
-
-    let params = [doctorId];
-    let paramIndex = 2;
-    let patientConditions = [];
-    if (name && name.length >= 2) {
-      patientConditions.push(`LOWER(p.name) LIKE LOWER($${paramIndex})`);
-      params.push(`%${name}%`);
-      paramIndex++;
-    }
-
-    if (lastName && lastName.length >= 2) {
-      patientConditions.push(`LOWER(p.name) LIKE LOWER($${paramIndex})`);
-      params.push(`%${lastName}%`);
-      paramIndex++;
-    }
-
-    if (documentNumber && documentNumber.length > 0) {
-      patientConditions.push(`LOWER(p.document_number) LIKE LOWER($${paramIndex})`);
-      params.push(`%${documentNumber}%`);
-      paramIndex++;
-    }
-
-    const patientClause = patientConditions.length > 0
-      ? `AND (${patientConditions.join(' AND ')})`
-      : '';
-
-    console.log('🔓 Ejecutando búsqueda SQL con params:', params);
+    const { documentNumber, doctorId } = req.body;
+    const access = patientAccess(req, doctorId, documentNumber);
+    if (!access) return res.status(403).json({ success: false, message: 'Verifica tu email para consultar tus turnos.' });
+    res.setHeader('Cache-Control', 'no-store');
+    const params = [doctorId, access.patientId];
+    const patientClause = 'AND p.id = $2';
 
     // Buscar citas programadas o recientes del paciente
     const result = await query(
       `SELECT
-        a.id,
+        a.portal_token as id,
         a.doctor_id,
         a.appointment_date,
         a.appointment_time,
@@ -861,6 +815,7 @@ router.post('/public/search', async (req, res) => {
         p.phone as patient_phone,
         p.email as patient_email,
         d.name as doctor_name,
+        d.phone as doctor_phone,
         d.specialization as doctor_specialization,
         s.is_online,
         ic.name as insurance_name,
@@ -873,13 +828,13 @@ router.post('/public/search', async (req, res) => {
       LEFT JOIN insurance_plans ip ON a.insurance_plan_id = ip.id
       WHERE a.doctor_id = $1 ${patientClause}
       AND a.status IN ('scheduled', 'pending', 'pending_payment', 'completed')
-      ORDER BY 
-        CASE 
+      ORDER BY
+        CASE
           WHEN a.appointment_date = CURRENT_DATE THEN 0
           WHEN a.appointment_date > CURRENT_DATE THEN 1
           ELSE 2
         END ASC,
-        CASE 
+        CASE
           WHEN a.appointment_date >= CURRENT_DATE THEN (a.appointment_date - CURRENT_DATE)
           ELSE (CURRENT_DATE - a.appointment_date)
         END ASC,
@@ -901,10 +856,10 @@ router.post('/public/search', async (req, res) => {
 
     // Obtener todos los turnos activos del médico para ese día
     const queueResult = await query(
-      `SELECT id, appointment_time, status, delay_minutes 
-       FROM appointments 
-       WHERE doctor_id = $1 
-       AND appointment_date = $2 
+      `SELECT id, appointment_time, status, delay_minutes
+       FROM appointments
+       WHERE doctor_id = $1
+       AND appointment_date = $2
        AND status IN ('scheduled', 'pending', 'pending_payment')
        ORDER BY appointment_time ASC`,
       [appointment.doctor_id, appointment.appointment_date]
@@ -915,7 +870,7 @@ router.post('/public/search', async (req, res) => {
     const appointmentsBeforeMe = queueList.filter(app => app.appointment_time < myTime);
 
     appointment.appointments_before = appointmentsBeforeMe.length;
-    appointment.queue_before = appointmentsBeforeMe;
+    appointment.queue_before = appointmentsBeforeMe.map(({ appointment_time, status, delay_minutes }, index) => ({ id: index, appointment_time, status, delay_minutes }));
 
     res.json({
       success: true,
@@ -933,14 +888,15 @@ router.post('/public/search', async (req, res) => {
 // Ruta pública para verificación activa de pago manual (fallback si ngrok está offline)
 router.post('/public/verify-payment/:appointmentId', async (req, res) => {
   try {
-    const { appointmentId } = req.params;
-    
+    const token = req.params.appointmentId;
+
     // 1. Obtener la cita
-    const appointmentResult = await query('SELECT doctor_id, status FROM appointments WHERE id = $1', [appointmentId]);
+    const appointmentResult = await query('SELECT id,doctor_id,status,total_amount,portal_token FROM appointments WHERE portal_token::text = lower($1)', [token]);
     if (appointmentResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Turno no encontrado' });
     }
     const appointment = appointmentResult.rows[0];
+    const appointmentId = appointment.id;
     if (appointment.status !== 'pending_payment') {
       return res.json({ success: true, status: appointment.status, message: 'El turno ya fue procesado o confirmado previamente.' });
     }
@@ -948,7 +904,6 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
     // 2. Obtener el token de Mercado Pago y datos del médico
     const doctorResult = await query('SELECT name, email, mp_access_token FROM doctors WHERE id = $1', [appointment.doctor_id]);
     const mpToken = doctorResult.rows[0]?.mp_access_token;
-    const doctor = doctorResult.rows[0];
     if (!mpToken) {
       return res.status(400).json({ success: false, message: 'El doctor no tiene Mercado Pago configurado.' });
     }
@@ -957,81 +912,16 @@ router.post('/public/verify-payment/:appointmentId', async (req, res) => {
 
     // 3. Buscar pagos en Mercado Pago asociados a esta referencia externa
     const response = await axios.get(`https://api.mercadopago.com/v1/payments/search?external_reference=${appointmentId}`, {
+      timeout: 5000,
       headers: { Authorization: `Bearer ${mpToken}` }
     });
 
     const payments = response.data.results || [];
-    const approvedPayment = payments.find(p => p.status === 'approved');
+    const approvedPayment = payments.find(p => p.status === 'approved' && p.external_reference === appointmentId && p.currency_id === 'ARS' && Number(p.transaction_amount) === Number(appointment.total_amount));
 
     if (approvedPayment) {
-      console.log('✅ Pago encontrado aprobado en la revisión manual. Confirmando cita...', approvedPayment.id);
-      
-      // Actualizar a pagado y notificar
-      await query(
-        `UPDATE appointments 
-         SET status = 'pending', payment_status = 'paid', booking_fee_paid = (total_amount - system_fee), updated_at = NOW() 
-         WHERE id = $1`,
-        [appointmentId]
-      );
-      
-      // Notificar al médico por WebSocket
-      wss.notifyDoctor(appointment.doctor_id, {
-        type: 'NEW_APPOINTMENT',
-        message: '¡Cita Pagada (Verificación Activa)! Tienes un nuevo turno confirmado.',
-        appointmentId: appointmentId
-      });
-
-      // NOTIFICAR POR EMAIL (Pago Verificado Manualmente)
-      const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointments`;
-      
-      // Obtener datos del turno y paciente para el email
-      const apptDataResult = await query(
-        `SELECT a.appointment_date, a.appointment_time, a.appointment_code, p.name as patient_name, p.email as patient_email, s.name as service_name
-         FROM appointments a
-         JOIN patients p ON a.patient_id = p.id
-         LEFT JOIN services s ON a.service_id = s.id
-         WHERE a.id = $1`,
-        [appointmentId]
-      );
-
-      if (apptDataResult.rows.length > 0) {
-        const ad = apptDataResult.rows[0];
-        sendNewAppointmentNotificationToDoctor({
-          to: doctor.email,
-          doctorName: doctor.name,
-          patientName: ad.patient_name,
-          appointmentDate: ad.appointment_date,
-          appointmentTime: ad.appointment_time,
-          serviceName: ad.service_name || 'Consulta General',
-          dashboardUrl: dashboardUrl
-        }).catch(err => console.error("Error asíncrono email doctor:", err));
-
-        // NOTIFICAR AL DOCTOR POR PUSH NOTIFICATION (Verificación manual de pago)
-        try {
-          const formattedDate = new Date(ad.appointment_date).toLocaleDateString('es-ES');
-          sendPushToDoctor(appointment.doctor_id, {
-            title: 'Nueva Solicitud de Turno 📅',
-            body: `El pago fue verificado. El paciente ${ad.patient_name} solicitó un turno para el ${formattedDate} a las ${ad.appointment_time} hs.`,
-            url: '/appointments'
-          }).catch(err => console.error("Error enviando push al doctor en verificación manual:", err.message));
-        } catch (pushErr) {
-          console.error("Error al preparar notificación push en verificación manual:", pushErr.message);
-        }
-
-        // Notificar al paciente por Email (Pago Verificado)
-        sendAppointmentConfirmation({
-          to: ad.patient_email,
-          patientName: ad.patient_name,
-          doctorName: doctor.name,
-          doctorSpecialty: doctor.specialization,
-          appointmentDate: ad.appointment_date,
-          appointmentTime: ad.appointment_time,
-          appointmentCode: ad.appointment_code,
-          confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`
-        }).catch(err => console.error("Error asíncrono email paciente:", err));
-      }
-
-      return res.json({ success: true, status: 'pending', message: '¡Pago verificado y turno confirmado exitosamente!' });
+      await applyApprovedPayment(approvedPayment, appointmentId, 'appointment');
+      return res.json({ success: true, status: 'pending', message: 'Pago recibido. El profesional confirmará tu turno.' });
     } else {
       console.log('⏳ Aún no se registra el pago aprobado en MP para el turno:', appointmentId);
       return res.json({ success: false, message: 'El pago aún no se ha reflejado. Intenta de nuevo en unos segundos.' });
@@ -1052,7 +942,7 @@ router.get('/public/:token', async (req, res) => {
 
     const result = await query(
       `SELECT
-        a.id,
+        a.portal_token as id,
         a.doctor_id,
         a.appointment_date,
         a.appointment_time,
@@ -1061,10 +951,11 @@ router.get('/public/:token', async (req, res) => {
         a.delay_minutes,
         a.delay_reason,
         a.meet_link,
-        p.name as patient_name,
-        p.phone as patient_phone,
-        p.document_number as patient_dni,
+        CASE WHEN a.booking_contact IS NULL THEN p.name ELSE a.booking_contact->>'name' END as patient_name,
+        CASE WHEN a.booking_contact IS NULL THEN p.phone ELSE a.booking_contact->>'phone' END as patient_phone,
+        CASE WHEN a.booking_contact IS NULL THEN p.document_number ELSE a.booking_contact->>'documentNumber' END as patient_dni,
         d.name as doctor_name,
+        d.phone as doctor_phone,
         d.specialization as doctor_specialization,
         s.is_online,
         ic.name as insurance_name,
@@ -1075,7 +966,7 @@ router.get('/public/:token', async (req, res) => {
       LEFT JOIN services s ON a.service_id = s.id
       LEFT JOIN insurance_companies ic ON a.insurance_company_id = ic.id
       LEFT JOIN insurance_plans ip ON a.insurance_plan_id = ip.id
-      WHERE a.confirmation_token::text = $1 OR a.id::text = $1 OR a.appointment_code = $1`,
+      WHERE a.confirmation_token::text = lower($1) OR a.portal_token::text = lower($1) OR (a.appointment_code ~* '^[0-9a-f-]{36}$' AND lower(a.appointment_code) = lower($1))`,
       [token]
     );
 
@@ -1087,14 +978,14 @@ router.get('/public/:token', async (req, res) => {
     }
 
     const appointment = result.rows[0];
-    console.log('✓ Cita encontrada:', appointment.patient_name);
+    res.setHeader('Cache-Control', 'private, no-store');
 
     // Obtener todos los turnos activos del médico para ese día
     const queueResult = await query(
-      `SELECT id, appointment_time, status, delay_minutes 
-       FROM appointments 
-       WHERE doctor_id = $1 
-       AND appointment_date = $2 
+      `SELECT id, appointment_time, status, delay_minutes
+       FROM appointments
+       WHERE doctor_id = $1
+       AND appointment_date = $2
        AND status IN ('scheduled', 'pending', 'pending_payment')
        ORDER BY appointment_time ASC`,
       [appointment.doctor_id, appointment.appointment_date]
@@ -1105,7 +996,7 @@ router.get('/public/:token', async (req, res) => {
     const appointmentsBeforeMe = queueList.filter(app => app.appointment_time < myTime);
 
     appointment.appointments_before = appointmentsBeforeMe.length;
-    appointment.queue_before = appointmentsBeforeMe;
+    appointment.queue_before = appointmentsBeforeMe.map(({ appointment_time, status, delay_minutes }, index) => ({ id: index, appointment_time, status, delay_minutes }));
 
     res.json({
       success: true,
@@ -1126,18 +1017,81 @@ router.get('/system/next-day', verifyApiKey, appointmentController.getNextDayApp
 // ===== RUTAS PROTEGIDAS PARA DOCTORES =====
 
 // Todas las rutas de este router requieren token de doctor y suscripción activa
+// Cancelar cita por parte del paciente (público) - Límite 24hs antes
+router.post('/public/:token/cancel', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    console.log('🔓 Solicitud de cancelación pública para token:', token.substring(0, 8) + '...');
+
+    // Buscar la cita y obtener fecha/hora
+    const result = await query(
+      `SELECT id, appointment_date, appointment_time, status, doctor_id
+       FROM appointments
+       WHERE confirmation_token::text = lower($1) OR portal_token::text = lower($1) OR (appointment_code ~* '^[0-9a-f-]{36}$' AND lower(appointment_code)=lower($1))`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Cita no encontrada' });
+    }
+
+    const appointment = result.rows[0];
+
+    if (appointment.status !== 'scheduled' && appointment.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Esta cita no puede ser cancelada porque ya está en estado: ' + appointment.status
+      });
+    }
+
+    // Validar límite de 24 horas
+    const apptDateTime = new Date(`${appointment.appointment_date}T${appointment.appointment_time}-03:00`);
+    const now = new Date();
+    const diffHours = (apptDateTime - now) / (1000 * 60 * 60);
+
+    if (diffHours < 24) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se puede cancelar el turno con menos de 24 horas de antelación. Por favor, comunícate directamente con la clínica.'
+      });
+    }
+
+    // Cancelar la cita
+    await query(
+      `UPDATE appointments
+       SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [appointment.id]
+    );
+
+    console.log('✓ Cita cancelada por el paciente:', appointment.id);
+
+    res.json({
+      success: true,
+      message: 'Tu turno ha sido cancelado exitosamente.'
+    });
+  } catch (error) {
+    console.error('Error cancelando cita pública:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al procesar la cancelación'
+    });
+  }
+});
+
 router.use(verifyToken);
 router.use(verifyDoctorRole);
 router.use(checkSubscription);
 
-router.post('/', appointmentController.createAppointment);
+router.post('/', transactionalRoute(appointmentController.createAppointment));
 router.get('/', appointmentController.getAppointments);
 router.get('/today', appointmentController.getTodayAppointments);
 router.get('/available-slots', appointmentController.getAvailableSlots);
 router.get('/statistics', appointmentController.getStatistics);
 router.get('/proximos', appointmentController.getProximosTurnos);
 router.get('/:appointmentId', appointmentController.getAppointment);
-router.patch('/:appointmentId', appointmentController.updateAppointment);
+router.patch('/:appointmentId', transactionalRoute(appointmentController.updateAppointment));
 router.delete('/:appointmentId', appointmentController.cancelAppointment);
 
 // Aceptar una cita pendiente (doctor aprueba la solicitud)
@@ -1150,7 +1104,8 @@ router.patch('/:appointmentId/accept', async (req, res) => {
     const appointmentCheck = await query(
       `SELECT a.status, a.doctor_id, a.appointment_date, a.appointment_time,
               p.name as patient_name, p.email as patient_email, p.phone as patient_phone,
-              d.name as doctor_name, d.specialization as doctor_specialization, d.clinic_address,
+              d.name as doctor_name,
+        d.phone as doctor_phone, d.specialization as doctor_specialization, d.clinic_address,
               a.appointment_code, a.patient_id, a.meet_link,
               s.is_online, s.name as service_name
        FROM appointments a
@@ -1237,7 +1192,7 @@ router.patch('/:appointmentId/accept', async (req, res) => {
         appointmentDate: appointmentData.appointment_date,
         appointmentTime: appointmentData.appointment_time,
         appointmentCode: appointmentData.appointment_code,
-        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentId}`,
+        confirmUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/patient/appointment/${appointmentData.portal_token}`,
         meetLink: meetLink,
         status: 'scheduled'
       }).catch(err => console.error('Error asíncrono enviando confirmación:', err));
@@ -1448,67 +1403,5 @@ router.patch('/:appointmentId/delay', async (req, res) => {
   }
 });
 
-// Cancelar cita por parte del paciente (público) - Límite 24hs antes
-router.post('/public/:token/cancel', async (req, res) => {
-  try {
-    const { token } = req.params;
-
-    console.log('🔓 Solicitud de cancelación pública para token:', token.substring(0, 8) + '...');
-
-    // Buscar la cita y obtener fecha/hora
-    const result = await query(
-      `SELECT id, appointment_date, appointment_time, status, doctor_id
-       FROM appointments 
-       WHERE confirmation_token::text = $1 OR id::text = $1`,
-      [token]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Cita no encontrada' });
-    }
-
-    const appointment = result.rows[0];
-
-    if (appointment.status !== 'scheduled' && appointment.status !== 'pending') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Esta cita no puede ser cancelada porque ya está en estado: ' + appointment.status 
-      });
-    }
-
-    // Validar límite de 24 horas
-    const apptDateTime = new Date(`${appointment.appointment_date}T${appointment.appointment_time}`);
-    const now = new Date();
-    const diffHours = (apptDateTime - now) / (1000 * 60 * 60);
-
-    if (diffHours < 24) {
-      return res.status(400).json({
-        success: false,
-        message: 'No se puede cancelar el turno con menos de 24 horas de antelación. Por favor, comunícate directamente con la clínica.'
-      });
-    }
-
-    // Cancelar la cita
-    await query(
-      `UPDATE appointments 
-       SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $1`,
-      [appointment.id]
-    );
-
-    console.log('✓ Cita cancelada por el paciente:', appointment.id);
-
-    res.json({
-      success: true,
-      message: 'Tu turno ha sido cancelado exitosamente.'
-    });
-  } catch (error) {
-    console.error('Error cancelando cita pública:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al procesar la cancelación'
-    });
-  }
-});
 
 export default router;

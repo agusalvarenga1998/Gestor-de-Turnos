@@ -19,16 +19,16 @@ const getPlatformToken = async () => {
   } catch (error) {
     console.error('Error fetching admin token from database:', error);
   }
-  return process.env.MP_ACCESS_TOKEN || 'APP_USR-3334296268871714-041414-dcbc9a327d0a87b9e037764d80e95f57-161301647';
+  return process.env.MP_ACCESS_TOKEN;
 };
 
 const getClientId = async () => {
   const token = await getPlatformToken();
-  return process.env.MP_CLIENT_ID || (token.includes('-') ? token.split('-')[1] : '') || '3334296268871714';
+  return process.env.MP_CLIENT_ID || (token?.includes('-') ? token.split('-')[1] : '') || '';
 };
 
 const getClientSecret = () => {
-  return process.env.MP_CLIENT_SECRET || 'OB3Ug95wFOdoRxF6f4xdqU3dXy8xlkZe';
+  return process.env.MP_CLIENT_SECRET;
 };
 
 const getRedirectUri = (req) => {
@@ -42,7 +42,7 @@ const verifyAdmin = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token provided' });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (decoded.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
     req.admin = decoded;
     next();
@@ -131,7 +131,7 @@ router.get('/oauth/admin/auth', async (req, res) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (jwtError) {
       console.error('Error verificado JWT:', jwtError.message);
       return res.status(401).json({

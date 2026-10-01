@@ -24,6 +24,14 @@ async function migrate() {
   let client;
   try {
     client = await pool.connect();
+    await client.query('BEGIN');
+    await client.query("SELECT pg_advisory_xact_lock(hashtextextended('turnohub:migrations',0))");
+    await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+    if ((await client.query("SELECT 1 FROM schema_migrations WHERE version='001_legacy_schema'")).rowCount) {
+      await client.query('COMMIT');
+      console.log('Migración 001 ya aplicada.');
+      return;
+    }
     console.log('🔄 Ejecutando migraciones maestras para Google Calendar...\n');
 
     // 1. Tabla Doctors: Asegurar todas las columnas de Google
@@ -71,11 +79,15 @@ async function migrate() {
 
     // 6. Tabla Coberturas por Servicio
     console.log('➕ Verificando tabla insurance_service_coverage...');
+    // Instalaciones históricas usan UUID; las actuales, integer. No convertir IDs.
+    const serviceType = (await client.query("SELECT data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='services' AND column_name='id'")).rows[0]?.data_type;
+    const allowedTypes = new Set(['uuid', 'integer', 'bigint']);
+    if (!allowedTypes.has(serviceType)) throw new Error('Tipo de identificador de servicio no soportado: ' + serviceType);
     await client.query(`
       CREATE TABLE IF NOT EXISTS insurance_service_coverage (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         insurance_company_id UUID NOT NULL REFERENCES insurance_companies(id) ON DELETE CASCADE,
-        service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+        service_id ${serviceType} NOT NULL REFERENCES services(id) ON DELETE CASCADE,
         coverage_type VARCHAR(20) NOT NULL DEFAULT 'fixed_amount',
         coverage_value DECIMAL(10,2) NOT NULL DEFAULT 0,
         is_active BOOLEAN DEFAULT true,
@@ -254,11 +266,13 @@ async function migrate() {
     `);
     console.log('✓ Tabla doctors actualizada.\n');
 
+    await client.query("INSERT INTO schema_migrations(version) VALUES('001_legacy_schema')");
+    await client.query('COMMIT');
     console.log('✅ Base de datos sincronizada exitosamente!');
-    process.exit(0);
   } catch (error) {
+    if (client) await client.query('ROLLBACK');
     console.error('❌ Error crítico en migración:', error.message);
-    process.exit(1);
+    process.exitCode = 1;
   } finally {
     if (client) client.release();
     await pool.end();

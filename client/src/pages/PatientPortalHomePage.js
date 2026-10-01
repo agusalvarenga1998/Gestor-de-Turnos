@@ -1,3 +1,4 @@
+import PatientAccess from '../components/PatientAccess';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { appointmentAPI, insuranceAPI } from '../services/api';
@@ -16,6 +17,7 @@ export default function PatientPortalHomePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(null);
   const [showSplash, setShowSplash] = useState(true);
+  const [patientAccessToken, setPatientAccessToken] = useState('');
   const [searchType, setSearchType] = useState('data');
   const [formData, setFormData] = useState({ name: '', lastName: '', documentNumber: '', doctorId: '', specialization: '' });
   const [appointmentCode, setAppointmentCode] = useState('');
@@ -260,61 +262,12 @@ export default function PatientPortalHomePage() {
 
   useEffect(() => {
     if (selectedDoctor && appointmentDate && selectedService) {
+      setSelectedSlot('');
       loadAvailableSlots(selectedDoctor, appointmentDate, selectedService.duration_minutes);
     }
   }, [selectedDoctor, appointmentDate, selectedService]);
 
-  useEffect(() => {
-    const fetchPatientDataByDni = async () => {
-      const dni = patientData.documentNumber?.trim();
-      if (!isExistingCustomer || !selectedDoctor || !dni || dni.length < 7 || dni.length > 10) {
-        return;
-      }
-
-      try {
-        console.log(`Buscando datos del paciente para DNI: ${dni}`);
-        const response = await appointmentAPI.getPublicPatientDetails(selectedDoctor, dni);
-        if (response.success && response.patient) {
-          console.log('Paciente encontrado, autocompletando datos:', response.patient);
-          setPatientData(prev => ({
-            ...prev,
-            name: response.patient.name,
-            lastName: response.patient.lastName || '',
-            email: response.patient.email || '',
-            phone: response.patient.phone || '',
-            documentType: response.patient.documentType || 'DNI',
-            dateOfBirth: response.patient.dateOfBirth || '',
-            gender: response.patient.gender || 'Masculino',
-            address: response.patient.address || '',
-            locality: response.patient.locality || '',
-            province: response.patient.province || '',
-            insuranceId: response.patient.insuranceId || '',
-            insurancePlanId: response.patient.insurancePlanId || '',
-            insurancePolicyNumber: response.patient.insurancePolicyNumber || ''
-          }));
-
-          if (response.patient.insuranceId) {
-            const selectedIns = doctorInsurances.find(i => i.id === response.patient.insuranceId);
-            setSelectedInsurancePlans(selectedIns?.plans || []);
-          } else {
-            setSelectedInsurancePlans([]);
-          }
-
-          setAutofilledSuccess(true);
-        }
-      } catch (err) {
-        console.error('Error al autocompletar datos de paciente:', err);
-      }
-    };
-
-    const delayDebounceFn = setTimeout(() => {
-      fetchPatientDataByDni();
-    }, 600); // Debounce de 600ms para esperar que termine de escribir
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [patientData.documentNumber, selectedDoctor, isExistingCustomer, doctorInsurances]);
-
-  const handleDniSearch = async () => {
+  const handleDniSearch = async (accessToken) => {
     const dni = patientData.documentNumber?.trim();
     if (!selectedDoctor) {
       setBookingError('Por favor selecciona un profesional primero');
@@ -328,10 +281,9 @@ export default function PatientPortalHomePage() {
     setBookingLoading(true);
     setBookingError('');
     try {
-      console.log(`Buscando datos del paciente para DNI: ${dni}`);
-      const response = await appointmentAPI.getPublicPatientDetails(selectedDoctor, dni);
+      const response = await appointmentAPI.getPublicPatientDetails(selectedDoctor, dni, accessToken);
       if (response.success && response.patient) {
-        console.log('Paciente encontrado, autocompletando datos:', response.patient);
+        setPatientAccessToken(accessToken);
         setPatientData(prev => ({
           ...prev,
           name: response.patient.name,
@@ -451,7 +403,7 @@ export default function PatientPortalHomePage() {
 
   const handleBookAppointment = async (e) => {
     e.preventDefault();
-    if (!patientData.name || !patientData.documentType || !patientData.documentNumber || !patientData.dateOfBirth || !selectedSlot) {
+    if (!patientData.name || !patientData.documentNumber || !selectedSlot) {
       setBookingError('Por favor completa todos los campos requeridos (*)');
       return;
     }
@@ -470,8 +422,9 @@ export default function PatientPortalHomePage() {
         insuranceId: patientData.insuranceId,
         insurancePlanId: patientData.insurancePlanId,
         paymentMethod: patientData.paymentMethod,
-        documentType: patientData.documentType,
-        dateOfBirth: patientData.dateOfBirth,
+        documentType: patientData.documentType || 'DNI',
+        dateOfBirth: patientData.dateOfBirth || null,
+        patientAccessToken,
         gender: patientData.gender,
         address: patientData.address,
         locality: patientData.locality,
@@ -510,8 +463,9 @@ export default function PatientPortalHomePage() {
     setAutofilledSuccess(false);
   };
 
-  const handleSubmitSearch = async (e) => {
-    e.preventDefault();
+  const handleSubmitSearch = async (e, accessToken) => {
+    e?.preventDefault();
+    if (searchType === 'data' && !accessToken) return;
     setLoading(true);
     try {
       if (searchType === 'data') {
@@ -520,7 +474,7 @@ export default function PatientPortalHomePage() {
           setLoading(false);
           return;
         }
-        const response = await appointmentAPI.searchByPatientData(formData);
+        const response = await appointmentAPI.searchByPatientData({ ...formData, patientAccessToken: accessToken });
         if (response.success && response.appointment) {
           navigate(`/patient/appointment/${response.appointment.id}`);
         }
@@ -587,13 +541,12 @@ export default function PatientPortalHomePage() {
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label>Fecha de nac. *</label>
+              <label>Fecha de nacimiento (opcional)</label>
               <input 
                 type="date" 
                 name="dateOfBirth" 
                 value={patientData.dateOfBirth || ''} 
                 onChange={handlePatientDataChange}
-                required
                 disabled={isDisabled}
               />
             </div>
@@ -693,8 +646,8 @@ export default function PatientPortalHomePage() {
         </div>
 
         {/* Tarjeta 4: Domicilio */}
-        <div className={styles.formCardBox}>
-          <h3 className={styles.cardBoxTitle}>Domicilio</h3>
+        <details className={styles.formCardBox}>
+          <summary className={styles.cardBoxTitle}>Agregar domicilio (opcional)</summary>
           <p className={styles.cardBoxSub}>Dirección de residencia actual.</p>
 
           <div className={styles.formGroup}>
@@ -730,7 +683,7 @@ export default function PatientPortalHomePage() {
               />
             </div>
           </div>
-        </div>
+        </details>
       </div>
     );
   };
@@ -870,8 +823,9 @@ export default function PatientPortalHomePage() {
                     ) : (
                       <div className={styles.formGroup}><label>CÓDIGO</label><input type="text" value={appointmentCode} onChange={(e) => setAppointmentCode(e.target.value)} required /></div>
                     )}
+                    {searchType === 'data' && <PatientAccess key={formData.doctorId + formData.documentNumber} doctorId={formData.doctorId} documentNumber={formData.documentNumber} onVerified={token => handleSubmitSearch(null, token)} />}
                     {error && <p className={styles.errorMsg}>{error}</p>}
-                    <button type="submit" className={styles.submitBtn} disabled={loading}>{loading ? 'BUSCANDO...' : 'BUSCAR TURNO'}</button>
+                    {searchType === 'code' && <button type="submit" className={styles.submitBtn} disabled={loading}>{loading ? 'BUSCANDO...' : 'BUSCAR TURNO'}</button>}
                   </form>
                 </div>
               )}
@@ -884,7 +838,8 @@ export default function PatientPortalHomePage() {
                         <div className={styles.successMessage}>
                           <div className={styles.successIcon}>✓</div>
                           <h2>¡Turno solicitado!</h2>
-                          <p>Recibirás un email con la confirmación.</p>
+                          <p>Guarda el enlace de tu turno para consultarlo o cancelarlo.</p>
+                          <a href={`/patient/appointment/${bookingSuccess.id}`}>Ver mi turno</a>
                           
                           <div className={styles.successDetails}>
                             <div className={styles.detailItem}>
@@ -1011,7 +966,7 @@ export default function PatientPortalHomePage() {
                               <div className={styles.sectionTitle}>2. Servicio</div>
                               <div className={styles.servicesList}>
                                 {services.map(s => (
-                                  <div 
+                                  <button type="button"
                                     key={s.id} 
                                     className={`${styles.serviceOption} ${selectedService?.id === s.id ? styles.serviceSelected : ''}`}
                                     onClick={() => setSelectedService(s)}
@@ -1023,13 +978,39 @@ export default function PatientPortalHomePage() {
                                     <div className={styles.serviceCheck}>
                                       {selectedService?.id === s.id ? '✓' : ''}
                                     </div>
-                                  </div>
+                                  </button>
                                 ))}
                                 {services.length === 0 && <p className={styles.emptyMsg}>Este profesional no tiene servicios configurados.</p>}
                               </div>
                             </>
                           )}
-                          <div className={styles.sectionTitle}>{selectedDoctor ? '3' : '2'}. Tus Datos</div>
+                          <div className={styles.sectionTitle}>{selectedDoctor ? '3' : '2'}. Fecha y Hora</div>
+                          <div className={styles.formGrid}>
+                            <div className={styles.formGroup}>
+                              <label>FECHA</label>
+                              <DatePicker
+                                selected={appointmentDate ? new Date(appointmentDate + 'T12:00:00') : null}
+                                onChange={(date) => setAppointmentDate(date ? `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}` : '')}
+                                filterDate={(date) => doctorAvailability.workingDays.includes(date.getDay())}
+                                minDate={new Date()}
+                                className={styles.datePickerInput}
+                                dateFormat="dd/MM/yyyy"
+                                locale="es"
+                                disabled={!selectedDoctor || !selectedService}
+                                placeholderText={!selectedService ? "Primero elige un servicio" : "Elige fecha"}
+                              />
+                            </div>
+                            <div className={styles.formGroup}>
+                              <label>HORA</label>
+                              <select value={selectedSlot} onChange={(e) => setSelectedSlot(e.target.value)} disabled={!appointmentDate || !selectedService} required>
+                                <option value="">Selecciona...</option>
+                                {availableSlots.map(s => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </div>
+                          </div>
+
+                          {selectedSlot && <>
+                          <div className={styles.sectionTitle}>{selectedDoctor ? '4' : '3'}. Tus Datos</div>
                           <div className={styles.formGrid}>
                             <div className={styles.customerTypeToggle}>
                               <button
@@ -1041,7 +1022,7 @@ export default function PatientPortalHomePage() {
                                   setPatientData({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
                                 }}
                               >
-                                Soy Cliente Nuevo
+                                Completar mis datos
                               </button>
                               <button
                                 type="button"
@@ -1052,7 +1033,7 @@ export default function PatientPortalHomePage() {
                                   setPatientData({ name: '', lastName: '', email: '', documentNumber: '', phone: '', insuranceId: '', paymentMethod: 'online' });
                                 }}
                               >
-                                Ya soy Cliente (Cargar por DNI)
+                                Recuperar mis datos
                               </button>
                             </div>
 
@@ -1070,13 +1051,7 @@ export default function PatientPortalHomePage() {
                                       required
                                     />
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={handleDniSearch}
-                                    className={styles.dniSearchBtn}
-                                  >
-                                    Buscar Datos
-                                  </button>
+                                  <PatientAccess key={selectedDoctor + patientData.documentNumber} doctorId={selectedDoctor} documentNumber={patientData.documentNumber} onVerified={handleDniSearch} />
                                 </div>
 
                                 {autofilledSuccess && (
@@ -1101,31 +1076,7 @@ export default function PatientPortalHomePage() {
                             </div>
                           </div>
 
-                          <div className={styles.sectionTitle}>{selectedDoctor ? '4' : '3'}. Fecha y Hora</div>
-                          <div className={styles.formGrid}>
-                            <div className={styles.formGroup}>
-                              <label>FECHA</label>
-                              <DatePicker
-                                selected={appointmentDate ? new Date(appointmentDate + 'T12:00:00') : null}
-                                onChange={(date) => setAppointmentDate(date?.toISOString().split('T')[0] || '')}
-                                filterDate={(date) => doctorAvailability.workingDays.includes(date.getDay())}
-                                minDate={new Date()}
-                                className={styles.datePickerInput}
-                                dateFormat="dd/MM/yyyy"
-                                locale="es"
-                                disabled={!selectedDoctor || !selectedService}
-                                placeholderText={!selectedService ? "Primero elige un servicio" : "Elige fecha"}
-                              />
-                            </div>
-                            <div className={styles.formGroup}>
-                              <label>HORA</label>
-                              <select onChange={(e) => setSelectedSlot(e.target.value)} disabled={!appointmentDate || !selectedService} required>
-                                <option value="">Selecciona...</option>
-                                {availableSlots.map(s => <option key={s} value={s}>{s}</option>)}
-                              </select>
-                            </div>
-                          </div>
-
+                          </>}
                           {selectedDoctor && selectedService && selectedSlot && (
                             <div className={styles.paymentSummary}>
                               <h4>Resumen de Reserva</h4>

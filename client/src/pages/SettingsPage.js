@@ -183,7 +183,7 @@ export default function SettingsPage() {
     try {
       const response = await apiClient.post('/api/auth/profile/send-verification');
       if (response.data.success) {
-        setSecuritySuccess('Código de verificación generado: ' + response.data.verificationToken);
+        setSecuritySuccess(response.data.message || 'Revisa tu email para verificarlo.');
       }
     } catch (err) {
       setSecurityError('Error al enviar código de verificación.');

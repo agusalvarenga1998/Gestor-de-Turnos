@@ -130,7 +130,7 @@ router.get('/public/track/:token', async (req, res) => {
 router.post('/public/self-register/:doctorId', async (req, res) => {
   try {
     const { doctorId } = req.params;
-    const docRes = await query(`SELECT allow_self_queue FROM doctors WHERE id = $1`, [doctorId]);
+    const docRes = await query(`SELECT allow_self_queue FROM doctors WHERE id = $1 AND status='approved' AND subscription_status IN ('active','trial')`, [doctorId]);
     if (!docRes.rows[0] || !docRes.rows[0].allow_self_queue) {
       return res.status(403).json({
         success: false,
@@ -154,6 +154,10 @@ router.post('/public/self-register/:doctorId', async (req, res) => {
 router.get('/public/board/:doctorId', async (req, res) => {
   try {
     const queueStatus = await queueService.getDoctorQueueStatus(req.params.doctorId);
+    const ticket = entry => entry ? { ticket_number: entry.ticket_number, ticket_code: entry.ticket_code, status: entry.status, position: entry.position, estimated_wait_minutes: entry.estimated_wait_minutes } : null;
+    queueStatus.inProgress = ticket(queueStatus.inProgress);
+    queueStatus.waitingList = queueStatus.waitingList.map(ticket);
+    res.setHeader('Cache-Control', 'no-store');
     res.json({
       success: true,
       ...queueStatus

@@ -17,7 +17,7 @@ const poolConfig = process.env.DATABASE_URL
       port: process.env.DB_PORT || 5432,
       database: process.env.DB_NAME || 'consultorio_medico',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'Agusagusbmx15$',
+      password: process.env.DB_PASSWORD,
     };
 
 const pool = new Pool(poolConfig);
@@ -26,6 +26,13 @@ async function initDatabase(retries = 3) {
   let client;
   try {
     client = await pool.connect();
+    if ((await client.query("SELECT to_regclass('public.schema_migrations') AS migrations")).rows[0].migrations) {
+      console.log('Esta base ya usa migraciones versionadas. Se omite db:init sin modificar datos; utiliza npm run db:migrate.');
+      client.release();
+      client = null;
+      await pool.end();
+      return;
+    }
     console.log('📊 Inicializando base de datos...\n');
     
     // ... (resto del código de las tablas)
@@ -519,6 +526,7 @@ async function initDatabase(retries = 3) {
     process.exit(1);
   } finally {
     if (client) client.release();
+    if (process.exitCode === 1) await pool.end();
   }
 }
 
