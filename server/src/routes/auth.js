@@ -944,7 +944,12 @@ router.post('/reset-password', async (req, res) => {
        SET password_hash = $1, 
            reset_password_token = NULL, 
            reset_password_expires = NULL,
-           token_version = token_version + 1
+           token_version = token_version + 1,
+           activated_at = COALESCE(activated_at, CURRENT_TIMESTAMP),
+           commercial_status = CASE
+             WHEN registered_by_seller_id IS NOT NULL AND commercial_status = 'lead' THEN 'active'
+             ELSE commercial_status
+           END
        WHERE id = $2`,
       [passwordHash, doctor.id]
     );

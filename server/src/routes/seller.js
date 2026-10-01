@@ -2,12 +2,37 @@ import { loginLimit } from '../middleware/rateLimits.js';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
 import { query } from '../db/config.js';
 import { getDoctorProfileWithPlan } from './auth.js';
 
 const router = express.Router();
 router.use('/login', loginLimit);
 import { jwtSecret as JWT_SECRET } from '../utils/security.js';
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+function buildActivationUrl(token) {
+  return `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
+}
+
+async function createActivationToken(doctorId) {
+  const token = randomUUID();
+  const expires = new Date();
+  expires.setDate(expires.getDate() + 7);
+  await query(`
+    UPDATE doctors
+    SET reset_password_token = $1,
+        reset_password_expires = $2
+    WHERE id = $3
+  `, [token, expires, doctorId]);
+  return { token, expires, activationUrl: buildActivationUrl(token) };
+}
+
+async function sendActivationEmail({ email, name, activationUrl }) {
+  const { sendProfessionalInvitationEmail } = await import('../services/emailService.js');
+  return sendProfessionalInvitationEmail({ to: email, doctorName: name, activationUrl });
+}
 
 // Middleware para verificar que el usuario sea Vendedor
 export const verifySeller = (req, res, next) => {
@@ -140,6 +165,8 @@ router.get('/doctors', verifySeller, async (req, res) => {
         d.subscription_expires_at,
         d.trial_ends_at,
         d.seller_notes,
+        d.reset_password_expires,
+        (d.reset_password_token IS NOT NULL AND d.reset_password_expires > CURRENT_TIMESTAMP) as activation_pending,
         d.created_at,
         p.name as plan_name,
         p.key as plan_key,
@@ -197,6 +224,8 @@ router.get('/doctors', verifySeller, async (req, res) => {
         plan_name: doc.plan_name || 'Plan Estándar',
         plan_key: doc.plan_key || 'mensual_pro',
         seller_notes: doc.seller_notes || '',
+        activation_pending: doc.activation_pending || false,
+        activation_expires_at: doc.reset_password_expires || null,
         expiration_date: expirationDate,
         days_remaining: daysRemaining,
         expiration_status: expirationStatus,
@@ -214,6 +243,40 @@ router.get('/doctors', verifySeller, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener profesionales para vendedor:', error);
     res.status(500).json({ error: 'Error al obtener la lista de profesionales' });
+  }
+});
+
+// Reenviar enlace de activación para un profesional cargado por el vendedor
+router.post('/doctors/:doctorId/invite', verifySeller, async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const result = await query(
+      `SELECT id, name, email FROM doctors WHERE id = $1 AND registered_by_seller_id = $2`,
+      [doctorId, req.seller.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Profesional no encontrado para este vendedor' });
+    }
+
+    const doctor = result.rows[0];
+    const activation = await createActivationToken(doctor.id);
+    const emailResult = await sendActivationEmail({
+      email: doctor.email,
+      name: doctor.name,
+      activationUrl: activation.activationUrl
+    });
+
+    res.json({
+      success: true,
+      message: emailResult.sent ? 'Invitación enviada correctamente' : 'Enlace generado. No se pudo enviar el email automáticamente.',
+      activation_url: activation.activationUrl,
+      activation_expires_at: activation.expires,
+      email_sent: emailResult.sent
+    });
+  } catch (error) {
+    console.error('Error al reenviar invitación de profesional:', error);
+    res.status(500).json({ error: 'Error al generar invitación' });
   }
 });
 
@@ -456,24 +519,54 @@ router.post('/impersonate/:doctorId', verifySeller, async (req, res) => {
 router.post('/doctors', verifySeller, async (req, res) => {
   try {
     const { name, email, phone, specialization, rubro, notes } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!name || !normalizedEmail || !phone) {
+      return res.status(400).json({ error: 'Nombre, email y teléfono son requeridos' });
+    }
     
     // Check if doctor exists
-    const existing = await query('SELECT id FROM doctors WHERE email = $1', [email]);
+    const existing = await query('SELECT id FROM doctors WHERE email = $1', [normalizedEmail]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Ya existe un profesional con este email' });
     }
 
+    const activationToken = randomUUID();
+    const activationExpires = new Date();
+    activationExpires.setDate(activationExpires.getDate() + 7);
+    const temporaryPasswordHash = await bcrypt.hash(randomUUID(), 10);
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+    const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key IN ('monthly', 'mensual_pro') ORDER BY CASE WHEN key='monthly' THEN 0 ELSE 1 END LIMIT 1");
+    const defaultPlanId = defaultPlanResult.rows[0]?.id || null;
+
     // Insert new doctor
     const result = await query(`
       INSERT INTO doctors (
-        name, email, phone, specialization, rubro, 
-        registered_by_seller_id, commercial_status, seller_notes, is_active
+        name, email, phone, specialization, rubro, password_hash,
+        registered_by_seller_id, commercial_status, seller_notes, is_active,
+        status, subscription_status, trial_ends_at, subscription_expires_at, approved_at,
+        pricing_plan_id, plan_type, reset_password_token, reset_password_expires
       )
-      VALUES ($1, $2, $3, $4, $5, $6, 'lead', $7, false)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'lead', $8, true,
+        'approved', 'trial', $9, $9, CURRENT_TIMESTAMP, $10, 'monthly', $11, $12)
       RETURNING id, name, email, commercial_status, created_at
-    `, [name, email, phone, specialization, rubro, req.seller.id, notes || '']);
+    `, [
+      name,
+      normalizedEmail,
+      phone,
+      specialization,
+      rubro,
+      temporaryPasswordHash,
+      req.seller.id,
+      notes || '',
+      trialEndsAt,
+      defaultPlanId,
+      activationToken,
+      activationExpires
+    ]);
 
     const newDoctor = result.rows[0];
+    const activationUrl = buildActivationUrl(activationToken);
 
     // Optionally add note to seller_notes table
     if (notes) {
@@ -483,10 +576,26 @@ router.post('/doctors', verifySeller, async (req, res) => {
       `, [req.seller.id, newDoctor.id, notes]);
     }
 
+    let emailResult = { sent: false };
+    try {
+      emailResult = await sendActivationEmail({
+        email: newDoctor.email,
+        name: newDoctor.name,
+        activationUrl
+      });
+    } catch (emailError) {
+      console.error('Error enviando invitación al profesional:', emailError);
+    }
+
     res.status(201).json({
       success: true,
-      message: 'Profesional registrado correctamente',
-      doctor: newDoctor
+      message: emailResult.sent
+        ? 'Profesional registrado correctamente. Le enviamos el enlace de activación por email.'
+        : 'Profesional registrado correctamente. No se pudo enviar el email automático; comparte el enlace de activación.',
+      doctor: newDoctor,
+      activation_url: activationUrl,
+      activation_expires_at: activationExpires,
+      email_sent: emailResult.sent
     });
   } catch (error) {
     console.error('Error al registrar profesional:', error);

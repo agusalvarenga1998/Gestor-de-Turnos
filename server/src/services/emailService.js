@@ -946,6 +946,59 @@ export async function sendPasswordResetEmail({ to, doctorName, resetUrl }) {
   }
 }
 
+export async function sendProfessionalInvitationEmail({ to, doctorName, activationUrl }) {
+  try {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8fafc; padding: 20px; }
+          .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+          .header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 20px; }
+          .header h2 { color: #2563eb; margin: 0; }
+          .btn-container { text-align: center; margin: 35px 0; }
+          .btn { background-color: #2563eb; color: white !important; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+          .footer { font-size: 12px; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>TurnoHub - Activa tu cuenta profesional</h2>
+          </div>
+          <p>Hola, <strong>${doctorName}</strong>.</p>
+          <p>Un asesor comercial de TurnoHub creó tu cuenta profesional para que puedas comenzar a configurar tus turnos.</p>
+          <p>Haz clic en el siguiente botón para crear tu contraseña. El enlace vence en 7 días.</p>
+          <div class="btn-container">
+            <a href="${activationUrl}" class="btn" target="_blank">Crear mi contraseña</a>
+          </div>
+          <p>Después de crearla, podrás ingresar desde la pantalla de profesionales con tu email.</p>
+          <div class="footer">
+            <p>Este es un correo automático. Por favor, no respondas a este mensaje.</p>
+            <p>© 2026 TurnoHub. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: `"TurnoHub" <${process.env.SMTP_USER}>`,
+      to,
+      subject: 'Activa tu cuenta profesional - TurnoHub',
+      html: htmlContent
+    });
+    console.log('✓ Invitación de profesional enviada:', info.messageId);
+    return { sent: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error enviando invitación de profesional:', error);
+    return { sent: false, error: error.message };
+  }
+}
+
 // Enviar reporte de soporte / problema al administrador (admin.turnohub@gmail.com)
 export async function sendSupportReportEmail({
   doctorName,

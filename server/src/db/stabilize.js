@@ -31,7 +31,9 @@ async function stabilizeSellersModule(client) {
     ADD COLUMN IF NOT EXISTS commercial_status VARCHAR(50) DEFAULT 'lead',
     ADD COLUMN IF NOT EXISTS seller_notes TEXT,
     ADD COLUMN IF NOT EXISTS activated_at TIMESTAMP,
-    ADD COLUMN IF NOT EXISTS first_payment_at TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS first_payment_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP;
   `);
 
   await client.query(`

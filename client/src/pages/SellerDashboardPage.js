@@ -29,6 +29,8 @@ const SellerDashboardPage = () => {
   const [creatingLead, setCreatingLead] = useState(false);
   const [leadError, setLeadError] = useState(null);
   const [leadSuccess, setLeadSuccess] = useState(null);
+  const [activationLink, setActivationLink] = useState('');
+  const [resendingInviteId, setResendingInviteId] = useState(null);
 
   // Datos de Pestaña Demos por Plan
   const [planDemos, setPlanDemos] = useState([]);
@@ -41,24 +43,54 @@ const SellerDashboardPage = () => {
     setCreatingLead(true);
     setLeadError(null);
     setLeadSuccess(null);
+    setActivationLink('');
     try {
       const response = await axios.post(`${API_BASE_URL}/api/seller/doctors`, newLeadData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
-        setLeadSuccess('Profesional registrado correctamente.');
+        setLeadSuccess(response.data.message || 'Profesional registrado correctamente.');
+        setActivationLink(response.data.activation_url || '');
         setNewLeadData({ name: '', email: '', phone: '', specialization: '', rubro: '', notes: '' });
         fetchDoctors(); // Recargar la lista
-        setTimeout(() => {
-          setShowNewLeadForm(false);
-          setLeadSuccess(null);
-        }, 2000);
       }
     } catch (err) {
       console.error('Error al registrar profesional:', err);
       setLeadError(err.response?.data?.error || 'Error al registrar profesional.');
     } finally {
       setCreatingLead(false);
+    }
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Enlace copiado');
+    } catch (error) {
+      window.prompt('Copia este enlace de activación:', text);
+    }
+  };
+
+  const handleResendInvite = async (doctorId) => {
+    setResendingInviteId(doctorId);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/seller/doctors/${doctorId}/invite`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        await fetchDoctors();
+        if (response.data.activation_url) {
+          await copyToClipboard(response.data.activation_url);
+        }
+        alert(response.data.message || 'Invitación generada correctamente');
+      }
+    } catch (err) {
+      console.error('Error al reenviar invitación:', err);
+      alert(err.response?.data?.error || 'No se pudo generar la invitación');
+    } finally {
+      setResendingInviteId(null);
     }
   };
 
@@ -248,6 +280,20 @@ const SellerDashboardPage = () => {
                 <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Registrar Nuevo Profesional</h3>
                 {leadError && <div style={{ color: 'var(--danger-color)', marginBottom: '16px' }}>{leadError}</div>}
                 {leadSuccess && <div style={{ color: 'var(--success-color)', marginBottom: '16px' }}>{leadSuccess}</div>}
+                {activationLink && (
+                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '12px', marginBottom: '16px' }}>
+                    <strong style={{ display: 'block', marginBottom: '8px', color: '#1d4ed8' }}>Enlace de activación del profesional</strong>
+                    <p style={{ margin: '0 0 10px', color: '#334155' }}>
+                      El profesional debe abrir este enlace, crear su contraseña y luego ingresar desde la pantalla de profesionales.
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input readOnly value={activationLink} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #bfdbfe' }} />
+                      <button type="button" onClick={() => copyToClipboard(activationLink)} style={{ background: '#2563eb', color: 'white', padding: '8px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <form onSubmit={handleCreateLead} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Nombre completo *</label>
@@ -459,14 +505,27 @@ const SellerDashboardPage = () => {
                         </td>
 
                         <td>
-                          <button
-                            onClick={() => handleStartDoctorDemo(doc.id)}
-                            className={styles.demoBtn}
-                            title="Ingresar a la pantalla de este profesional"
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>preview</span>
-                            Ver Pantalla
-                          </button>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {doc.activation_pending && (
+                              <button
+                                onClick={() => handleResendInvite(doc.id)}
+                                disabled={resendingInviteId === doc.id}
+                                className={styles.demoBtn}
+                                title="Generar y reenviar enlace para que cree su contraseña"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>outgoing_mail</span>
+                                {resendingInviteId === doc.id ? 'Generando...' : 'Reenviar activación'}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleStartDoctorDemo(doc.id)}
+                              className={styles.demoBtn}
+                              title="Ingresar a la pantalla de este profesional"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>preview</span>
+                              Ver Pantalla
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
