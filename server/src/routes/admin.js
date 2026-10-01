@@ -1213,6 +1213,51 @@ router.get('/sellers', verifyAdmin, async (req, res) => {
   }
 });
 
+// GET /sellers/:id/doctors - List professionals registered by a seller
+router.get('/sellers/:id/doctors', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const seller = await query('SELECT id, name, email FROM sellers WHERE id = $1', [id]);
+    if (seller.rows.length === 0) {
+      return res.status(404).json({ error: 'Vendedor no encontrado' });
+    }
+
+    const result = await query(`
+      SELECT
+        d.id,
+        d.name,
+        d.email,
+        d.phone,
+        d.specialization,
+        d.rubro,
+        d.clinic_name,
+        d.status,
+        d.commercial_status,
+        d.subscription_status,
+        d.created_at,
+        d.activated_at,
+        d.first_payment_at,
+        d.seller_notes,
+        p.name as plan_name,
+        (SELECT COUNT(*) FROM appointments a WHERE a.doctor_id = d.id) as total_appointments,
+        (SELECT COUNT(*) FROM patients pat WHERE pat.doctor_id = d.id AND pat.is_active = true) as total_patients
+      FROM doctors d
+      LEFT JOIN pricing_plans p ON p.id = d.pricing_plan_id
+      WHERE d.registered_by_seller_id = $1
+      ORDER BY d.created_at DESC
+    `, [id]);
+
+    res.json({
+      success: true,
+      seller: seller.rows[0],
+      doctors: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching seller doctors:', error);
+    res.status(500).json({ error: 'Error al obtener profesionales del vendedor' });
+  }
+});
+
 // POST /sellers - Create a new seller
 router.post('/sellers', verifyAdmin, async (req, res) => {
   try {

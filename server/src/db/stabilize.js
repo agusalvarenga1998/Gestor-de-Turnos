@@ -29,6 +29,7 @@ async function stabilizeSellersModule(client) {
     ALTER TABLE doctors
     ADD COLUMN IF NOT EXISTS registered_by_seller_id UUID REFERENCES sellers(id),
     ADD COLUMN IF NOT EXISTS commercial_status VARCHAR(50) DEFAULT 'lead',
+    ADD COLUMN IF NOT EXISTS seller_notes TEXT,
     ADD COLUMN IF NOT EXISTS activated_at TIMESTAMP,
     ADD COLUMN IF NOT EXISTS first_payment_at TIMESTAMP;
   `);

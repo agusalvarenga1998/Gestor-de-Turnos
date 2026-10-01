@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import styles from './AdminSellersPage.module.css';
@@ -14,12 +14,11 @@ const AdminSellersPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', commission_type: 'fixed', commission_value: 0 });
   const [isEditing, setIsEditing] = useState(null);
+  const [expandedSellerId, setExpandedSellerId] = useState(null);
+  const [sellerDoctors, setSellerDoctors] = useState({});
+  const [loadingDoctors, setLoadingDoctors] = useState(null);
 
-  useEffect(() => {
-    fetchSellers();
-  }, []);
-
-  const fetchSellers = async () => {
+  const fetchSellers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/api/admin/sellers`, {
@@ -33,7 +32,11 @@ const AdminSellersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [adminToken]);
+
+  useEffect(() => {
+    fetchSellers();
+  }, [fetchSellers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,6 +71,36 @@ const AdminSellersPage = () => {
     setShowModal(true);
   };
 
+  const toggleSellerDoctors = async (seller) => {
+    if (expandedSellerId === seller.id) {
+      setExpandedSellerId(null);
+      return;
+    }
+
+    setExpandedSellerId(seller.id);
+    if (sellerDoctors[seller.id]) return;
+
+    setLoadingDoctors(seller.id);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/sellers/${seller.id}/doctors`, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      if (response.data.success) {
+        setSellerDoctors(prev => ({ ...prev, [seller.id]: response.data.doctors }));
+      }
+    } catch (err) {
+      setSellerDoctors(prev => ({ ...prev, [seller.id]: [] }));
+      alert('Error al cargar profesionales: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoadingDoctors(null);
+    }
+  };
+
+  const formatDate = (value) => {
+    if (!value) return '-';
+    return new Date(value).toLocaleDateString('es-AR');
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -96,20 +129,67 @@ const AdminSellersPage = () => {
             </thead>
             <tbody>
               {sellers.map(seller => (
-                <tr key={seller.id}>
-                  <td>{seller.name}</td>
-                  <td>{seller.email}</td>
-                  <td>
-                    <span className={seller.is_active ? styles.badgeActive : styles.badgeInactive}>
-                      {seller.is_active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td>{seller.commission_type === 'percentage' ? `${seller.commission_value}%` : `$${seller.commission_value}`}</td>
-                  <td>{seller.total_leads} / {seller.total_paying}</td>
-                  <td>
-                    <button className={styles.editBtn} onClick={() => openEdit(seller)}>Editar</button>
-                  </td>
-                </tr>
+                <React.Fragment key={seller.id}>
+                  <tr>
+                    <td>{seller.name}</td>
+                    <td>{seller.email}</td>
+                    <td>
+                      <span className={seller.is_active ? styles.badgeActive : styles.badgeInactive}>
+                        {seller.is_active ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td>{seller.commission_type === 'percentage' ? `${seller.commission_value}%` : `$${seller.commission_value}`}</td>
+                    <td>{seller.total_leads} / {seller.total_paying}</td>
+                    <td>
+                      <div className={styles.actions}>
+                        <button className={styles.viewBtn} onClick={() => toggleSellerDoctors(seller)}>
+                          {expandedSellerId === seller.id ? 'Ocultar' : 'Ver profesionales'}
+                        </button>
+                        <button className={styles.editBtn} onClick={() => openEdit(seller)}>Editar</button>
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedSellerId === seller.id && (
+                    <tr className={styles.detailRow}>
+                      <td colSpan="6">
+                        <div className={styles.detailPanel}>
+                          <div className={styles.detailHeader}>
+                            <h3>Profesionales traídos por {seller.name}</h3>
+                            <span>{seller.total_leads || 0} registrados</span>
+                          </div>
+                          {loadingDoctors === seller.id ? (
+                            <p className={styles.muted}>Cargando profesionales...</p>
+                          ) : (sellerDoctors[seller.id] || []).length === 0 ? (
+                            <p className={styles.muted}>Este vendedor todavía no registró profesionales.</p>
+                          ) : (
+                            <div className={styles.doctorsGrid}>
+                              {(sellerDoctors[seller.id] || []).map(doctor => (
+                                <div key={doctor.id} className={styles.doctorCard}>
+                                  <div className={styles.doctorCardHeader}>
+                                    <div>
+                                      <h4>{doctor.name}</h4>
+                                      <p>{doctor.email}</p>
+                                    </div>
+                                    <span className={styles.statusPill}>{doctor.commercial_status || 'lead'}</span>
+                                  </div>
+                                  <div className={styles.doctorMeta}>
+                                    <span>{doctor.rubro || 'Sin rubro'}</span>
+                                    <span>{doctor.specialization || 'Sin especialidad'}</span>
+                                    <span>{doctor.phone || 'Sin teléfono'}</span>
+                                    <span>Alta: {formatDate(doctor.created_at)}</span>
+                                    <span>Plan: {doctor.plan_name || 'Sin plan'}</span>
+                                    <span>Turnos: {doctor.total_appointments || 0}</span>
+                                  </div>
+                                  {doctor.seller_notes && <p className={styles.notes}>{doctor.seller_notes}</p>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

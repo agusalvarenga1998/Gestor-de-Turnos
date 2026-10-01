@@ -78,6 +78,110 @@
   cursor: pointer;
 }
 
+.viewBtn {
+  background-color: var(--primary-color, #2563eb);
+  color: white;
+  border: 1px solid var(--primary-color, #2563eb);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detailRow td {
+  background: #f8fafc;
+  padding: 0;
+}
+
+.detailPanel {
+  padding: 20px;
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detailHeader h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.detailHeader span,
+.muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.doctorsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.doctorCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.doctorCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.doctorCardHeader h4 {
+  margin: 0 0 4px;
+  color: #111827;
+}
+
+.doctorCardHeader p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.statusPill {
+  background: #e0f2fe;
+  color: #075985;
+  border-radius: 9999px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.doctorMeta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  color: #374151;
+  font-size: 0.85rem;
+}
+
+.notes {
+  margin: 12px 0 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
 .modalOverlay {
   position: fixed;
   top: 0;
