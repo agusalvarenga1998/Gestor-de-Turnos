@@ -7,6 +7,7 @@ import Icon from '../components/Icon';
 import SplashLoader from '../components/SplashLoader';
 import Loading from '../components/Loading';
 import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { es } from 'date-fns/locale';
 import { RUBROS_ESPECIALIDADES } from '../constants/categories';
 import styles from './PatientPortalHomePage.module.css';
