@@ -1502,3 +1502,63 @@
 :global([data-theme="dark"]) .statItem {
   background-color: rgba(255, 255, 255, 0.05);
 }
+
+/* Mobile layout: keep every control inside the viewport. */
+@media (max-width: 640px) {
+  .shareCard,
+  .downloadAppBanner {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .shareCardHeader,
+  .downloadAppBannerLeft {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .shareCardText,
+  .downloadAppBannerText {
+    min-width: 0;
+  }
+
+  .shareCardText h3,
+  .downloadAppBannerText h3 {
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  .shareCardText p,
+  .downloadAppBannerText p {
+    line-height: 1.45;
+  }
+
+  .shareInputGroup,
+  .shareActions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .shareInputWrapper,
+  .copyLinkBtn,
+  .viewPortalBtn,
+  .downloadAppBannerBtn {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .shareInput {
+    min-width: 0;
+    font-size: 0.8rem;
+  }
+
+  .downloadAppBanner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .downloadAppBannerBtn { white-space: normal; }
+}

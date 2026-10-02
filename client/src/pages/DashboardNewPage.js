@@ -634,7 +634,7 @@ export default function DashboardNewPage() {
                 <span className="material-symbols-outlined">install_mobile</span>
               </div>
               <div className={styles.downloadAppBannerText}>
-                <h3>Lleva TurnoHub en tu celular 📱</h3>
+                <h3>Lleva TurnoHub en tu celular</h3>
                 <p>Instala la aplicación para acceder en un toque y recibir alertas al instante.</p>
               </div>
             </div>
