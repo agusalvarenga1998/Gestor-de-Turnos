@@ -30,6 +30,10 @@ const ALL_APP_FEATURES = [
   'Soporte Técnico Preferencial y Asistencia Directa por WhatsApp'
 ];
 
+// Estos son los planes comerciales principales. Los planes históricos/especializados
+// se conservan en la base para compatibilidad, pero no se publican en este panel.
+const PRIMARY_PLAN_KEYS = new Set(['basico', 'mensual_pro', 'clinica', 'commission']);
+
 export default function AdminPlansPage() {
   const { token } = useAdminAuth();
   const [plans, setPlans] = useState([]);
@@ -56,6 +60,7 @@ export default function AdminPlansPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const visiblePlans = plans.filter((plan) => PRIMARY_PLAN_KEYS.has(plan.key));
 
   useEffect(() => {
     fetchPlans();
@@ -294,7 +299,7 @@ export default function AdminPlansPage() {
           <div className={`${styles.layout} ${selectedPlan ? styles.hasSelection : ''}`}>
             {/* Grid de Planes */}
             <div className={styles.plansGrid}>
-              {plans.map((plan) => (
+              {visiblePlans.map((plan) => (
                 <div 
                   key={plan.id} 
                   className={`${styles.planCard} ${plan.is_popular ? styles.popular : ''} ${!plan.is_enabled ? styles.disabled : ''}`}

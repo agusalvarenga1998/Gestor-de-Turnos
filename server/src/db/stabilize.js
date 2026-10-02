@@ -95,6 +95,15 @@ async function ensureBasicTrialPlan(client) {
     )
   `);
   await client.query(`
+    UPDATE pricing_plans
+    SET is_enabled = false, is_popular = false
+    WHERE key IN ('monthly', 'odontologia', 'orden_llegada')
+  `);
+  await client.query(`
+    UPDATE pricing_plans SET price = '3%', price_period = 'por turno efectivo'
+    WHERE key = 'commission'
+  `);
+  await client.query(`
     INSERT INTO pricing_plans (
       key, name, description, price, price_period, features,
       is_popular, is_enabled, allow_google_calendar, allow_mercadopago,
