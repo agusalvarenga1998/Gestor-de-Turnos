@@ -1181,12 +1181,16 @@
   border: 1px solid rgba(37, 99, 235, 0.25);
   border-radius: 12px;
   margin-bottom: 2rem;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .onboardingBannerLeft {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .onboardingBannerIcon {
@@ -1205,6 +1209,7 @@
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary, #1e3a8a);
+  overflow-wrap: anywhere;
 }
 
 .onboardingBannerText p {
@@ -1227,6 +1232,8 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .onboardingBannerBtn:hover {
@@ -1534,6 +1541,20 @@
 }
 
 @media (max-width: 640px) {
+  .onboardingBanner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .onboardingBannerLeft { align-items: flex-start; }
+  .onboardingBannerBtn {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+  }
+
   .shareCard,
   .downloadAppBanner {
     padding: 1rem;
