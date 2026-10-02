@@ -41,7 +41,11 @@ export default function SubscriptionExpiredPage() {
       setLoading(true);
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5002'}/api/admin/public/plans`);
       if (res.data.success) {
-        setPlans(res.data.plans);
+        const preferredOrder = { basico: 1, commission: 2, mensual_pro: 3, clinica: 4 };
+        const ordered = [...(res.data.plans || [])].sort((a, b) =>
+          (preferredOrder[a.key] || 99) - (preferredOrder[b.key] || 99)
+        );
+        setPlans(ordered);
       }
     } catch (e) {
       console.error('Error fetching plans:', e);
@@ -147,9 +151,10 @@ export default function SubscriptionExpiredPage() {
             <div className={styles.plansGrid}>
               {plans.map(p => {
                 const featureList = getPlanFeatures(p);
+                const isRecommended = p.key === 'mensual_pro' || p.is_popular;
                 return (
-                  <div key={p.id} className={`${styles.planCard} ${p.is_popular ? styles.popular : ''}`}>
-                    {p.is_popular && <span className={styles.popularLabel}>Recomendado</span>}
+                  <div key={p.id} className={`${styles.planCard} ${isRecommended ? styles.popular : ''}`}>
+                    {isRecommended && <span className={styles.popularLabel}>Más elegido</span>}
                     <h3>{p.name}</h3>
                     <div className={styles.price}>
                       <span className={styles.amount}>
@@ -182,7 +187,7 @@ export default function SubscriptionExpiredPage() {
 
                     <div className={styles.planActions}>
                       <button
-                        className={styles.payBtn}
+                        className={`${styles.payBtn} ${isRecommended ? styles.primaryPayBtn : ''}`}
                         onClick={() => handlePayPlan(p.id)}
                         disabled={submitting}
                       >
