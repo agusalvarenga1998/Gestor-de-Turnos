@@ -6,12 +6,12 @@
   bottom: 0;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   z-index: 9999;
-  background: radial-gradient(circle at 50% 0%, #dbeafe 0%, rgba(15, 23, 42, 0.72) 58%);
+  background: #eef2f6;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  padding: var(--spacing-md);
+  padding: clamp(1rem, 3vh, 2.5rem) clamp(0.75rem, 3vw, 2.5rem);
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -31,7 +31,7 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
-  max-height: 90vh;
+  max-height: calc(100vh - 2 * clamp(1rem, 3vh, 2.5rem));
   box-sizing: border-box;
 }
 
@@ -45,8 +45,14 @@
 }
 
 .icon {
-  font-size: 2.75rem;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
@@ -74,12 +80,12 @@
 .highlight {
   font-size: var(--font-size-lg);
   font-weight: 700;
-  color: #ef4444; /* Rojo más moderno */
-  background: #fef2f2;
+  color: #475569;
+  background: #f8fafc;
   padding: var(--spacing-md);
   border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-lg) !important;
-  border: 1px solid #fee2e2;
+  border: 1px solid #e2e8f0;
 }
 
 .alertSuccess {
@@ -142,8 +148,8 @@
 
 .planCard.popular {
   border: 2px solid #2563eb;
-  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 42%);
-  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.18);
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
   transform: translateY(-6px);
 }
 
@@ -389,7 +395,7 @@
 @media (max-width: 640px) {
   .card {
     padding: var(--spacing-xl);
-    margin: var(--spacing-md);
+    margin: 0;
     width: 95%;
   }
 
@@ -400,6 +406,8 @@
   .title {
     font-size: var(--font-size-xl);
   }
+
+  .plansGrid { grid-template-columns: 1fr; }
 
   .planCard.popular { transform: none; }
 

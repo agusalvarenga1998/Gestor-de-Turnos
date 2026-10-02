@@ -65,7 +65,7 @@ export default function SubscriptionExpiredPage() {
       const response = await apiClient.post('/api/doctor/subscriptions/request', { pricing_plan_id: planId });
       if (response.data.success) {
         setRequestSent(true);
-        alert('✓ Solicitud enviada correctamente. Tu cuenta se activará en cuanto el administrador la apruebe.');
+        alert('Solicitud enviada correctamente. Tu cuenta se activará en cuanto el administrador la apruebe.');
       }
     } catch (err) {
       console.error('Error al solicitar plan:', err);
@@ -123,7 +123,7 @@ export default function SubscriptionExpiredPage() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.iconWrapper}>
-          <div className={styles.icon}>⚠️</div>
+          <div className={styles.icon}><Icon name="lock" size={30} color="#64748b" /></div>
         </div>
 
         <h1 className={styles.title}>Tu Cuenta ha Expirado</h1>
@@ -177,7 +177,7 @@ export default function SubscriptionExpiredPage() {
                         <ul className={styles.featuresList}>
                           {featureList.map((f, i) => (
                             <li key={i}>
-                              <span className={styles.checkIcon}>✓</span>
+                              <span className={styles.checkIcon} aria-hidden="true">•</span>
                               <span>{f}</span>
                             </li>
                           ))}
