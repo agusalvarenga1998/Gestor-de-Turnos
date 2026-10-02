@@ -199,6 +199,8 @@ router.patch('/doctors/:id/approve', verifyAdmin, async (req, res) => {
            subscription_status = 'trial',
            trial_ends_at = $1,
            subscription_expires_at = $1,
+           pricing_plan_id = COALESCE((SELECT id FROM pricing_plans WHERE key = 'basico' LIMIT 1), pricing_plan_id),
+           plan_type = 'monthly',
            approved_at = CURRENT_TIMESTAMP
        WHERE id = $2
        RETURNING id, email, name, status, subscription_status, trial_ends_at`,

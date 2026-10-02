@@ -536,7 +536,7 @@ router.post('/doctors', verifySeller, async (req, res) => {
     const temporaryPasswordHash = await bcrypt.hash(randomUUID(), 10);
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + 30);
-    const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key IN ('monthly', 'mensual_pro') ORDER BY CASE WHEN key='monthly' THEN 0 ELSE 1 END LIMIT 1");
+    const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key IN ('basico', 'monthly') ORDER BY CASE WHEN key='basico' THEN 0 ELSE 1 END LIMIT 1");
     const defaultPlanId = defaultPlanResult.rows[0]?.id || null;
 
     // Insert new doctor

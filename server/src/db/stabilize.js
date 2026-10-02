@@ -70,10 +70,72 @@ async function stabilizeSellersModule(client) {
   `);
 }
 
+async function ensureBasicTrialPlan(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS pricing_plans (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      key VARCHAR(50) UNIQUE NOT NULL,
+      name VARCHAR(100) NOT NULL,
+      description TEXT,
+      price VARCHAR(50) NOT NULL,
+      price_period VARCHAR(50),
+      features TEXT[] DEFAULT '{}',
+      is_popular BOOLEAN DEFAULT false,
+      is_enabled BOOLEAN DEFAULT true,
+      allow_google_calendar BOOLEAN DEFAULT true,
+      allow_mercadopago BOOLEAN DEFAULT true,
+      allow_telemedicine BOOLEAN DEFAULT true,
+      allow_reminders BOOLEAN DEFAULT true,
+      allow_insurance BOOLEAN DEFAULT true,
+      allow_patient_booking BOOLEAN DEFAULT true,
+      max_patients INTEGER,
+      max_appointments_monthly INTEGER,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await client.query(`
+    INSERT INTO pricing_plans (
+      key, name, description, price, price_period, features,
+      is_popular, is_enabled, allow_google_calendar, allow_mercadopago,
+      allow_telemedicine, allow_reminders, allow_insurance, allow_patient_booking,
+      max_patients, max_appointments_monthly
+    ) VALUES (
+      'basico', 'Plan Básico',
+      'Herramientas esenciales para comenzar a gestionar tu consultorio.',
+      '$9.999', 'mes fijo',
+      ARRAY[
+        'Agenda y gestión de turnos',
+        'Historia clínica y pacientes',
+        'Recordatorios por email',
+        'Portal de reservas para pacientes',
+        'Aplicación web y móvil instalable'
+      ],
+      false, true, false, false, false, true, true, true, 50, 200
+    )
+    ON CONFLICT (key) DO UPDATE SET
+      name = EXCLUDED.name,
+      description = EXCLUDED.description,
+      price = EXCLUDED.price,
+      price_period = EXCLUDED.price_period,
+      features = EXCLUDED.features,
+      is_enabled = true,
+      allow_google_calendar = EXCLUDED.allow_google_calendar,
+      allow_mercadopago = EXCLUDED.allow_mercadopago,
+      allow_telemedicine = EXCLUDED.allow_telemedicine,
+      allow_reminders = EXCLUDED.allow_reminders,
+      allow_insurance = EXCLUDED.allow_insurance,
+      allow_patient_booking = EXCLUDED.allow_patient_booking,
+      max_patients = EXCLUDED.max_patients,
+      max_appointments_monthly = EXCLUDED.max_appointments_monthly
+  `);
+}
+
 export async function stabilizeSchema() {
   await transaction(async client => {
     await client.query("SELECT pg_advisory_xact_lock(hashtextextended('turnohub:migrations',0))");
     await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+    await ensureBasicTrialPlan(client);
     await stabilizeSellersModule(client);
     if ((await client.query("SELECT 1 FROM schema_migrations WHERE version='002_stabilization'")).rowCount) return;
     await client.query(`

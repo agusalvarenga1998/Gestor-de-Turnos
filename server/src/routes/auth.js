@@ -123,7 +123,7 @@ router.post('/register', async (req, res) => {
     trialEndsAt.setDate(trialEndsAt.getDate() + 30);
 
     // Buscar ID del plan mensual por defecto
-    const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key = 'monthly' LIMIT 1");
+    const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key IN ('basico', 'monthly') ORDER BY CASE WHEN key='basico' THEN 0 ELSE 1 END LIMIT 1");
     const defaultPlanId = defaultPlanResult.rows[0]?.id || null;
 
     // Crear doctor auto-aprobado con 30 días de prueba gratis
@@ -528,7 +528,7 @@ router.get('/google/callback', async (req, res) => {
       }
     } else {
       // Buscar ID del plan mensual por defecto
-      const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key = 'monthly' LIMIT 1");
+      const defaultPlanResult = await query("SELECT id FROM pricing_plans WHERE key IN ('basico', 'monthly') ORDER BY CASE WHEN key='basico' THEN 0 ELSE 1 END LIMIT 1");
       const defaultPlanId = defaultPlanResult.rows[0]?.id || null;
 
       // Crear nuevo doctor auto-aprobado con 30 días de prueba
