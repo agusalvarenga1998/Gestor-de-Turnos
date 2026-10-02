@@ -129,6 +129,41 @@ async function ensureBasicTrialPlan(client) {
       max_patients = EXCLUDED.max_patients,
       max_appointments_monthly = EXCLUDED.max_appointments_monthly
   `);
+  await client.query(`
+    INSERT INTO pricing_plans (
+      key, name, description, price, price_period, features, is_popular, is_enabled,
+      allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders,
+      allow_insurance, allow_patient_booking, max_patients, max_appointments_monthly
+    ) VALUES (
+      'mensual_pro', 'Plan Profesional',
+      'Para profesionales que necesitan automatizar su agenda y cobrar online.',
+      '$24.999', 'mes fijo',
+      ARRAY['Todo lo del Plan Básico', 'Google Calendar', 'Mercado Pago', 'Recordatorios avanzados', 'Estadísticas y exportación', 'Gestión de obras sociales'],
+      true, true, true, true, false, true, true, true, NULL, NULL
+    ) ON CONFLICT (key) DO UPDATE SET
+      name = EXCLUDED.name, description = EXCLUDED.description, features = EXCLUDED.features,
+      is_popular = true, is_enabled = true, allow_google_calendar = true,
+      allow_mercadopago = true, allow_telemedicine = false, allow_reminders = true,
+      allow_insurance = true, allow_patient_booking = true, max_patients = NULL,
+      max_appointments_monthly = NULL
+  `);
+  await client.query(`
+    INSERT INTO pricing_plans (
+      key, name, description, price, price_period, features, is_popular, is_enabled,
+      allow_google_calendar, allow_mercadopago, allow_telemedicine, allow_reminders,
+      allow_insurance, allow_patient_booking, max_patients, max_appointments_monthly
+    ) VALUES (
+      'clinica', 'Plan Clínica',
+      'Para consultorios y equipos que trabajan con varios profesionales.',
+      '$49.999', 'mes fijo',
+      ARRAY['Todo lo del Plan Profesional', 'Telemedicina', 'Múltiples profesionales', 'Roles y permisos', 'Agenda compartida', 'Reportes por profesional', 'Soporte prioritario'],
+      false, true, true, true, true, true, true, true, NULL, NULL
+    ) ON CONFLICT (key) DO UPDATE SET
+      name = EXCLUDED.name, description = EXCLUDED.description, features = EXCLUDED.features,
+      is_enabled = true, allow_google_calendar = true, allow_mercadopago = true,
+      allow_telemedicine = true, allow_reminders = true, allow_insurance = true,
+      allow_patient_booking = true, max_patients = NULL, max_appointments_monthly = NULL
+  `);
 }
 
 export async function stabilizeSchema() {
