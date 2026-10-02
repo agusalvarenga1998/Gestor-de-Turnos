@@ -558,7 +558,7 @@ export default function DashboardNewPage() {
           </aside>
         </div>
 
-        {user?.plan?.allow_patient_booking !== false && (
+        {user?.plan?.allow_patient_booking !== false ? (
           <div className={styles.shareCard} style={{ marginTop: '2.5rem', marginBottom: 0 }}>
             <div className={styles.shareCardHeader}>
               <div className={styles.shareCardIcon}>
@@ -609,6 +609,21 @@ export default function DashboardNewPage() {
                 </a>
               </div>
             </div>
+          </div>
+        ) : (
+          <div className={styles.shareCard} style={{ marginTop: '2.5rem', marginBottom: 0, opacity: 0.78 }}>
+            <div className={styles.shareCardHeader}>
+              <div className={styles.shareCardIcon}>
+                <span className="material-symbols-outlined">lock</span>
+              </div>
+              <div className={styles.shareCardText}>
+                <h3>Portal de Reservas Online <span style={{ fontSize: '0.72em', color: '#b45309' }}>🔒 Bloqueado</span></h3>
+                <p>Esta funcionalidad requiere un plan superior al {user?.plan?.name || 'Plan Básico'}. Actualizá tu plan para permitir que tus pacientes reserven turnos solos.</p>
+              </div>
+            </div>
+            <button type="button" className={styles.copyLinkBtn} onClick={() => window.location.assign('/settings?tab=subscription')}>
+              Ver planes disponibles
+            </button>
           </div>
         )}
 

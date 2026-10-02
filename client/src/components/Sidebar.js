@@ -12,6 +12,7 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [lockedFeature, setLockedFeature] = useState('');
   const [isOnboardingPending, setIsOnboardingPending] = useState(false);
 
   useEffect(() => {
@@ -93,7 +94,10 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
         {/* Menu items */}
         <nav className={styles.nav}>
           {menuItems.map(item => {
-            const isLocked = item.path === '/insurance' && user?.plan && user.plan.allow_insurance === false;
+            const itemLockedFeature = item.path === '/insurance' && user?.plan?.allow_insurance === false
+              ? 'Convenios y Obras Sociales'
+              : null;
+            const isLocked = Boolean(itemLockedFeature);
             return (
               <NavLink
                 key={item.path}
@@ -105,6 +109,7 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
                 onClick={(e) => {
                   if (isLocked) {
                     e.preventDefault();
+                    setLockedFeature(itemLockedFeature);
                     setShowUpgradeModal(true);
                   } else if (isOpen) {
                     onClose();
@@ -170,7 +175,7 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
               <h3>Funcionalidad Exclusiva</h3>
             </div>
             <div className={styles.modalBody}>
-              <p>El acceso al módulo de <strong>Convenios y Obras Sociales</strong> no está habilitado en tu plan actual (<strong>{user?.plan?.name || 'Plan Básico'}</strong>).</p>
+              <p>El acceso al módulo de <strong>{lockedFeature || 'esta funcionalidad'}</strong> no está habilitado en tu plan actual (<strong>{user?.plan?.name || 'Plan Básico'}</strong>).</p>
               <p className={styles.modalInstruction}>Contacta al administrador del sistema para solicitar un ascenso de plan.</p>
             </div>
             <div className={styles.modalActions}>
