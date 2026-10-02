@@ -1,8 +1,14 @@
 /* DashboardNewPage.module.css - Adaptado 100% a Modo Claro y Oscuro con Variables CSS */
+:global(body) { overflow-x: hidden; }
+
 .container {
   padding: 2.5rem;
   max-width: 1400px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
+  min-width: 0;
+  overflow-x: hidden;
   min-height: 100vh;
   background-color: var(--bg-primary, #f8fafc);
   color: var(--text-primary, #0f172a);
@@ -74,6 +80,7 @@
   grid-template-columns: 2fr 1fr;
   gap: 2.5rem;
   align-items: start;
+  min-width: 0;
 }
 
 /* Agenda Column (Main) */
@@ -81,6 +88,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  min-width: 0;
 }
 
 .cardHeader {
@@ -1011,6 +1019,9 @@
   margin-bottom: 2.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   display: flex;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   flex-direction: column;
   gap: 1.25rem;
 }
@@ -1019,6 +1030,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .shareCardIcon {
@@ -1088,6 +1100,8 @@
 .shareActions {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .copyLinkBtn, .viewPortalBtn {
@@ -1230,12 +1244,16 @@
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .downloadAppBannerLeft {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .downloadAppBannerIcon {
@@ -1255,6 +1273,7 @@
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary, #14532d);
+  overflow-wrap: anywhere;
 }
 
 .downloadAppBannerText p {
@@ -1280,6 +1299,8 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .downloadAppBannerBtn:hover {
@@ -1504,6 +1525,14 @@
 }
 
 /* Mobile layout: keep every control inside the viewport. */
+@media (max-width: 900px) {
+  .container { padding: 1.25rem; }
+  .dashboardGrid { grid-template-columns: minmax(0, 1fr); }
+  .mainHeader { align-items: flex-start; flex-direction: column; gap: 1rem; }
+  .headerActions { width: 100%; flex-wrap: wrap; }
+  .apptCard { flex-wrap: wrap; gap: 1rem; }
+}
+
 @media (max-width: 640px) {
   .shareCard,
   .downloadAppBanner {
