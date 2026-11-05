@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Icon from '../components/Icon';
 import ThemeToggle from '../components/ThemeToggle';
 import styles from './LandingPage.module.css';
 
@@ -8,7 +7,6 @@ const rubrosData = [
   {
     id: 'medicina',
     label: 'Salud & Médicos',
-    icon: 'stethoscope',
     badge: 'Historial Clínico Integrado',
     title: 'Gestión médica integral y turnos de consultorio',
     description: 'Centraliza las fichas de tus pacientes, registros de evolución, orden de atención y recepción con fila virtual en tiempo real.',
@@ -23,7 +21,6 @@ const rubrosData = [
   {
     id: 'odontologia',
     label: 'Odontología',
-    icon: 'smile',
     badge: 'Odontograma Digital',
     title: 'Control gráfico de tratamientos y piezas dentales',
     description: 'Lleva el control de cada pieza dental con un odontograma visual interactivo, registro de prestaciones y liquidación de señas.',
@@ -38,7 +35,6 @@ const rubrosData = [
   {
     id: 'estetica',
     label: 'Estética & Spa',
-    icon: 'sparkles',
     badge: 'Cobro de Señas Antiacusentismo',
     title: 'Reserva de gabinetes, servicios y señas online',
     description: 'Evita espacios vacíos cobrando una seña por Mercado Pago al momento de reservar. Organiza profesionales y aparatología.',
@@ -53,7 +49,6 @@ const rubrosData = [
   {
     id: 'barberia',
     label: 'Barberías & Salones',
-    icon: 'scissors',
     badge: 'Multi-Profesional 24/7',
     title: 'Agendamiento por barbero y sillón sin llamadas',
     description: 'Permite que tus clientes elijan a su profesional preferido y el horario que más les convenga desde su celular.',
@@ -68,7 +63,6 @@ const rubrosData = [
   {
     id: 'kinesiologia',
     label: 'Kinesiología & Salud',
-    icon: 'activity',
     badge: 'Control de Sesiones',
     title: 'Planificación de sesiones y seguimiento corporal',
     description: 'Registra la evolución de tratamientos kinesiologicos, fisioterapia y entrenamientos personalizados en cada sesión.',
@@ -105,26 +99,12 @@ const faqs = [
   }
 ];
 
-const heroBackgrounds = [
-  '/hero_doctor.png',
-  '/hero_barber.png',
-  '/hero_manicurist.png',
-  '/hero_dashboard.png'
-];
-
 export default function LandingPage() {
   const [plans, setPlans] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeRubro, setActiveRubro] = useState(rubrosData[0]);
   const [openFaq, setOpenFaq] = useState(null);
-  const [currentBg, setCurrentBg] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentBg(prev => (prev + 1) % heroBackgrounds.length);
-    }, 5500);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const fallbackPlans = [
@@ -198,38 +178,28 @@ export default function LandingPage() {
             <a href="#fila-virtual" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Fila Virtual</a>
             <a href="#planes" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Planes</a>
             <Link to="/patient" className={styles.navLinkHighlight} onClick={() => setIsMenuOpen(false)}>
-              <Icon name="users" size={18} />
               Soy Paciente
             </Link>
             <Link to="/login" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Acceso Profesional</Link>
             <ThemeToggle showLabel />
             <Link to="/register" className={styles.primaryBtn} onClick={() => setIsMenuOpen(false)}>
-              <Icon name="sparkles" size={18} />
               Prueba Gratis
             </Link>
           </div>
           
           <button className={styles.mobileMenuBtn} onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Menú">
-            <Icon name={isMenuOpen ? "x" : "menu"} size={26} color="#0f172a" />
+            <span className={styles.controlSymbol} aria-hidden="true">{isMenuOpen ? '×' : '☰'}</span>
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
       <header className={styles.hero}>
-        <div 
-          className={styles.heroBgImage} 
-          style={{ backgroundImage: `url('${heroBackgrounds[currentBg]}')` }}
-        />
-        <div className={styles.heroOverlay}></div>
-        <div className={styles.heroGlowLeft}></div>
-        <div className={styles.heroGlowRight}></div>
         
         <div className={styles.heroContentGrid}>
           <div className={styles.heroText}>
             <div className={styles.pillBadge}>
               <span className={styles.pillDot}></span>
-              <Icon name="zap" size={16} color="#60a5fa" />
               <span>PLATAFORMA DE GESTIÓN DE TURNOS TODO EN UNO</span>
             </div>
             
@@ -247,25 +217,24 @@ export default function LandingPage() {
             <div className={styles.ctaGroup}>
               <Link to="/register" className={styles.heroPrimaryBtn}>
                 <span>Comenzar prueba gratis</span>
-                <Icon name="arrowRight" size={20} />
+                <span className={styles.directionMark} aria-hidden="true">→</span>
               </Link>
               <a href="#fila-virtual" className={styles.heroSecondaryBtn}>
-                <Icon name="clock" size={20} color="#38bdf8" />
                 <span>Ver Fila Virtual en vivo</span>
               </a>
             </div>
 
             <div className={styles.trustRow}>
               <div className={styles.trustBadge}>
-                <Icon name="check" size={16} color="#10b981" />
+                <span className={styles.listMark} aria-hidden="true" />
                 <span>30 días de prueba <strong>sin costo</strong></span>
               </div>
               <div className={styles.trustBadge}>
-                <Icon name="check" size={16} color="#10b981" />
+                <span className={styles.listMark} aria-hidden="true" />
                 <span>Sin tarjeta de crédito</span>
               </div>
               <div className={styles.trustBadge}>
-                <Icon name="check" size={16} color="#10b981" />
+                <span className={styles.listMark} aria-hidden="true" />
                 <span>Configuración en 2 minutos</span>
               </div>
             </div>
@@ -287,9 +256,6 @@ export default function LandingPage() {
               <div className={styles.widgetBody}>
                 {/* Feature Chip 1: Google Calendar */}
                 <div className={styles.featureChip}>
-                  <div className={`${styles.chipIcon} ${styles.chipCalendar}`}>
-                    <Icon name="calendar" size={20} color="#3b82f6" />
-                  </div>
                   <div className={styles.chipText}>
                     <strong>Google Calendar Sincronizado</strong>
                     <span>Actualización bidireccional inmediata</span>
@@ -299,9 +265,6 @@ export default function LandingPage() {
 
                 {/* Feature Chip 2: Mercado Pago */}
                 <div className={styles.featureChip}>
-                  <div className={`${styles.chipIcon} ${styles.chipPayment}`}>
-                    <Icon name="creditCard" size={20} color="#10b981" />
-                  </div>
                   <div className={styles.chipText}>
                     <strong>Seña por Mercado Pago</strong>
                     <span>Reserva confirmada con seña de $5.000</span>
@@ -311,9 +274,6 @@ export default function LandingPage() {
 
                 {/* Feature Chip 3: Live Queue Tracker */}
                 <div className={styles.featureChip}>
-                  <div className={`${styles.chipIcon} ${styles.chipQueue}`}>
-                    <Icon name="clock" size={20} color="#f59e0b" />
-                  </div>
                   <div className={styles.chipText}>
                     <strong>Fila Virtual en Tiempo Real</strong>
                     <span>Turno #04 en atención • Espera: ~5 min</span>
@@ -323,14 +283,11 @@ export default function LandingPage() {
 
                 {/* Feature Chip 4: Whatsapp / Email Notification */}
                 <div className={styles.featureChip}>
-                  <div className={`${styles.chipIcon} ${styles.chipNotify}`}>
-                    <Icon name="whatsapp" size={20} color="#25d366" />
-                  </div>
                   <div className={styles.chipText}>
                     <strong>Recordatorio Automático Enviado</strong>
                     <span>WhatsApp previo 2 hs antes del turno</span>
                   </div>
-                  <Icon name="check" size={18} color="#10b981" />
+                  <span className={styles.listMark} aria-hidden="true" />
                 </div>
               </div>
 
@@ -366,9 +323,6 @@ export default function LandingPage() {
         <div className={styles.bentoGrid}>
           {/* Card 1: Google Calendar */}
           <div className={`${styles.bentoCard} ${styles.bentoCardLarge}`}>
-            <div className={styles.bentoIconWrapper}>
-              <Icon name="calendar" size={32} color="#2563eb" />
-            </div>
             <span className={styles.bentoTag}>CONEXIÓN DIRECTA</span>
             <h3>Sincronización 2-Way con Google Calendar</h3>
             <p>
@@ -376,11 +330,11 @@ export default function LandingPage() {
             </p>
             <div className={styles.bentoPreviewMock}>
               <div className={styles.gCalRow}>
-                <Icon name="check" size={18} color="#10b981" />
+                <span className={styles.listMark} aria-hidden="true" />
                 <span>Turnos sincronizados en ambas direcciones</span>
               </div>
               <div className={styles.gCalRow}>
-                <Icon name="check" size={18} color="#10b981" />
+                <span className={styles.listMark} aria-hidden="true" />
                 <span>Sin descargas extras ni configuraciones complejas</span>
               </div>
             </div>
@@ -388,9 +342,6 @@ export default function LandingPage() {
 
           {/* Card 2: Mercado Pago */}
           <div className={styles.bentoCard}>
-            <div className={styles.bentoIconWrapper}>
-              <Icon name="creditCard" size={32} color="#10b981" />
-            </div>
             <span className={styles.bentoTagGreen}>PAGOS EN LÍNEA</span>
             <h3>Señas por Mercado Pago</h3>
             <p>
@@ -400,9 +351,6 @@ export default function LandingPage() {
 
           {/* Card 3: Fila Virtual */}
           <div className={styles.bentoCard}>
-            <div className={styles.bentoIconWrapper}>
-              <Icon name="clock" size={32} color="#f59e0b" />
-            </div>
             <span className={styles.bentoTagOrange}>TIEMPO REAL</span>
             <h3>Fila Virtual para Pacientes</h3>
             <p>
@@ -412,9 +360,6 @@ export default function LandingPage() {
 
           {/* Card 4: Patients Self Booking 24/7 */}
           <div className={styles.bentoCard}>
-            <div className={styles.bentoIconWrapper}>
-              <Icon name="users" size={32} color="#8b5cf6" />
-            </div>
             <span className={styles.bentoTagPurple}>AUTONOMÍA TOTAL</span>
             <h3>Portal de Pacientes 24/7</h3>
             <p>
@@ -424,9 +369,6 @@ export default function LandingPage() {
 
           {/* Card 5: Automated Notifications */}
           <div className={styles.bentoCard}>
-            <div className={styles.bentoIconWrapper}>
-              <Icon name="bell" size={32} color="#ec4899" />
-            </div>
             <span className={styles.bentoTagPink}>SIN FALTAS</span>
             <h3>Recordatorios Automatizados</h3>
             <p>
@@ -436,9 +378,6 @@ export default function LandingPage() {
 
           {/* Card 6: App Móvil PWA */}
           <div className={`${styles.bentoCard} ${styles.bentoCardFullWidth}`}>
-            <div className={styles.bentoIconWrapper}>
-              <Icon name="smartphone" size={32} color="#0284c7" />
-            </div>
             <div className={styles.bentoContentFlex}>
               <div>
                 <span className={styles.bentoTagBlue}>ACCESO INSTANTÁNEO</span>
@@ -449,11 +388,11 @@ export default function LandingPage() {
               </div>
               <div className={styles.pwaBadgeGroup}>
                 <div className={styles.pwaBadgeItem}>
-                  <Icon name="check" size={18} color="#10b981" />
+                  <span className={styles.listMark} aria-hidden="true" />
                   <span>Sin ocupar memoria en el celular</span>
                 </div>
                 <div className={styles.pwaBadgeItem}>
-                  <Icon name="check" size={18} color="#10b981" />
+                  <span className={styles.listMark} aria-hidden="true" />
                   <span>Acceso en 1 tap</span>
                 </div>
               </div>
@@ -479,7 +418,6 @@ export default function LandingPage() {
                 className={`${styles.rubroTabBtn} ${activeRubro.id === rubro.id ? styles.rubroTabActive : ''}`}
                 onClick={() => setActiveRubro(rubro)}
               >
-                <Icon name={rubro.icon} size={20} />
                 <span>{rubro.label}</span>
               </button>
             ))}
@@ -495,7 +433,7 @@ export default function LandingPage() {
               <ul className={styles.rubroList}>
                 {activeRubro.features.map((feat, idx) => (
                   <li key={idx}>
-                    <Icon name="check" size={18} color="#10b981" />
+                    <span className={styles.listMark} aria-hidden="true" />
                     <span>{feat}</span>
                   </li>
                 ))}
@@ -503,13 +441,12 @@ export default function LandingPage() {
 
               <Link to="/register" className={styles.rubroCtaBtn}>
                 Probar TurnoHub para {activeRubro.label}
-                <Icon name="arrowRight" size={18} />
+                <span className={styles.directionMark} aria-hidden="true">→</span>
               </Link>
             </div>
 
             <div className={styles.rubroVisualCard}>
               <div className={styles.rubroCardHeader}>
-                <Icon name={activeRubro.icon} size={28} color="#2563eb" />
                 <div>
                   <strong>{activeRubro.label}</strong>
                   <span className={styles.rubroCardSub}>{activeRubro.highlightText}</span>
@@ -518,7 +455,7 @@ export default function LandingPage() {
               <div className={styles.rubroMockBox}>
                 <div className={styles.mockBar}>
                   <span>Horarios disponibles hoy</span>
-                  <span className={styles.mockStatus}>🟢 En línea</span>
+                  <span className={styles.mockStatus}>En línea</span>
                 </div>
                 <div className={styles.mockSlots}>
                   <div className={styles.mockSlot}>09:00 HS</div>
@@ -598,9 +535,6 @@ export default function LandingPage() {
               {plan.is_popular && <span className={styles.popularRibbon}>MÁS ELEGIDO</span>}
               
               <div className={styles.pricingHeader}>
-                <div className={styles.pricingIconBg}>
-                  <Icon name={plan.key === 'commission' ? 'percent' : 'calendar'} size={24} color="#2563eb" />
-                </div>
                 <h3>{plan.name}</h3>
                 <p>{plan.description}</p>
               </div>
@@ -613,7 +547,7 @@ export default function LandingPage() {
               <ul className={styles.pricingFeatures}>
                 {(plan.features || []).map((feat, index) => (
                   <li key={index}>
-                    <Icon name="check" size={18} color="#10b981" />
+                    <span className={styles.listMark} aria-hidden="true" />
                     <span>{feat}</span>
                   </li>
                 ))}
@@ -646,7 +580,7 @@ export default function LandingPage() {
             >
               <div className={styles.faqQuestion}>
                 <h3>{faq.q}</h3>
-                <Icon name={openFaq === index ? "x" : "plus"} size={20} color="#64748b" />
+                <span className={styles.controlSymbol} aria-hidden="true">{openFaq === index ? '−' : '+'}</span>
               </div>
               {openFaq === index && (
                 <div className={styles.faqAnswer}>
@@ -665,7 +599,7 @@ export default function LandingPage() {
           <p>Comienza hoy mismo tu prueba gratuita de 30 días. Sin compromisos ni requerimiento de tarjeta de crédito.</p>
           <Link to="/register" className={styles.ctaBannerBtn}>
             <span>Crear mi cuenta gratis en 2 min</span>
-            <Icon name="arrowRight" size={20} />
+            <span className={styles.directionMark} aria-hidden="true">→</span>
           </Link>
         </div>
       </section>
