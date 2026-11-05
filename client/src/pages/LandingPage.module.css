@@ -1547,3 +1547,190 @@
     text-align: center;
   }
 }
+
+/* Muted accents apply only to dark mode; light styles stay unchanged. */
+:global([data-theme="dark"]) .heroGlowLeft,
+:global([data-theme="dark"]) .heroGlowRight {
+  display: none;
+}
+
+:global([data-theme="dark"]) .heroBgImage {
+  opacity: .12; filter: brightness(.55) saturate(.45);
+}
+
+:global([data-theme="dark"]) .gradientText {
+  background: none; color: #9eafc8; -webkit-text-fill-color: currentColor;
+}
+
+:global([data-theme="dark"]) .logoIconBg,
+:global([data-theme="dark"]) .primaryBtn,
+:global([data-theme="dark"]) .heroPrimaryBtn,
+:global([data-theme="dark"]) .rubroCtaBtn,
+:global([data-theme="dark"]) .pricingBtnPrimary,
+:global([data-theme="dark"]) .popularRibbon {
+  background: #3d5578; box-shadow: none; color: #eef1f5;
+}
+
+:global([data-theme="dark"]) .primaryBtn:hover,
+:global([data-theme="dark"]) .heroPrimaryBtn:hover,
+:global([data-theme="dark"]) .rubroCtaBtn:hover,
+:global([data-theme="dark"]) .pricingBtnPrimary:hover {
+  background: #496184; box-shadow: none;
+}
+
+:global([data-theme="dark"]) .logoAccent,
+:global([data-theme="dark"]) .navLinkHighlight,
+:global([data-theme="dark"]) .metricVal,
+:global([data-theme="dark"]) .subHeaderBadge,
+:global([data-theme="dark"]) .mockSlot {
+  color: #9eafc8;
+}
+
+:global([data-theme="dark"]) .navLinkHighlight {
+  background: #202d40; border-color: #35435a;
+}
+
+:global([data-theme="dark"]) .navLinkHighlight:hover {
+  background: #28364a; color: #b4c1d5;
+}
+
+:global([data-theme="dark"]) .heroCardGlass {
+  box-shadow: 0 16px 36px rgba(0,0,0,.2); border-color: #2a3545;
+}
+
+:global([data-theme="dark"]) .pillDot,
+:global([data-theme="dark"]) .queueAppDot {
+  background: #829bbc; box-shadow: none; animation: none;
+}
+
+:global([data-theme="dark"]) .dotRed,
+:global([data-theme="dark"]) .dotYellow,
+:global([data-theme="dark"]) .dotGreen {
+  background: #68788d;
+}
+
+:global([data-theme="dark"]) .heroPrimaryBtn,
+:global([data-theme="dark"]) .primaryBtn {
+  border-color: #526683;
+}
+
+:global([data-theme="dark"]) .liveTag,
+:global([data-theme="dark"]) .chipBadgeLive,
+:global([data-theme="dark"]) .bentoTagOrange,
+:global([data-theme="dark"]) .queueBadge,
+:global([data-theme="dark"]) .qTurnNum {
+  background: #302d29; color: #c2b191; border-color: #494237;
+}
+
+:global([data-theme="dark"]) .chipBadgeSuccess,
+:global([data-theme="dark"]) .rubroCardSub,
+:global([data-theme="dark"]) .mockStatus,
+:global([data-theme="dark"]) .bentoTagGreen {
+  color: #a0b7aa;
+}
+
+:global([data-theme="dark"]) .chipBadgeSuccess,
+:global([data-theme="dark"]) .bentoTagGreen {
+  background: #23352e;
+}
+
+:global([data-theme="dark"]) .chipBadgeAmount,
+:global([data-theme="dark"]) .bentoTag,
+:global([data-theme="dark"]) .bentoTagBlue,
+:global([data-theme="dark"]) .rubroBadge {
+  background: #233147; color: #a6b8d2;
+}
+
+:global([data-theme="dark"]) .bentoTagPurple {
+  background: #302c3d; color: #b4acc7;
+}
+
+:global([data-theme="dark"]) .bentoTagPink {
+  background: #382d36; color: #c2a6b7;
+}
+
+:global([data-theme="dark"]) .bentoIconWrapper,
+:global([data-theme="dark"]) .pricingIconBg,
+:global([data-theme="dark"]) .chipCalendar {
+  background: #223047; color: #9eafc8;
+}
+
+:global([data-theme="dark"]) .chipPayment,
+:global([data-theme="dark"]) .chipNotify {
+  background: #23352e; color: #a0b7aa;
+}
+
+:global([data-theme="dark"]) .chipQueue {
+  background: #302d29; color: #c2b191;
+}
+
+:global([data-theme="dark"]) .bentoIconWrapper svg,
+:global([data-theme="dark"]) .pricingIconBg svg,
+:global([data-theme="dark"]) .chipIcon svg {
+  stroke: currentColor;
+}
+
+:global([data-theme="dark"]) .trustBadge svg,
+:global([data-theme="dark"]) .gCalRow svg,
+:global([data-theme="dark"]) .pwaBadgeItem svg,
+:global([data-theme="dark"]) .rubroList svg,
+:global([data-theme="dark"]) .pricingFeatures svg {
+  stroke: #94ae9f;
+}
+
+:global([data-theme="dark"]) .rubroTabActive {
+  background: #3d5578 !important; border-color: #526683 !important; box-shadow: none;
+}
+
+:global([data-theme="dark"]) .rubroTabBtn:hover,
+:global([data-theme="dark"]) .featureChip:hover,
+:global([data-theme="dark"]) .bentoCard:hover {
+  border-color: #526683; box-shadow: none;
+}
+
+:global([data-theme="dark"]) .liveQueueSection {
+  background: #141e2e;
+}
+
+:global([data-theme="dark"]) .qMetric strong {
+  color: #b7aa90;
+}
+
+:global([data-theme="dark"]) .queueAppLogo {
+  color: #a6b8d2;
+}
+
+:global([data-theme="dark"]) .qProgressBar {
+  background: #829c94;
+}
+
+:global([data-theme="dark"]) .popularCard {
+  border-color: #526683; box-shadow: none;
+}
+
+:global([data-theme="dark"]) .pricingBtnOutline {
+  color: #a6b8d2 !important; border-color: #526683;
+}
+
+:global([data-theme="dark"]) .pricingBtnOutline:hover {
+  background: #233147;
+}
+
+:global([data-theme="dark"]) .ctaBanner {
+  background: #1c2c43;
+}
+
+:global([data-theme="dark"]) .ctaBannerBtn {
+  background: #c9d1dd; color: #182233 !important; box-shadow: none;
+}
+
+:global([data-theme="dark"]) .ctaBannerBtn:hover {
+  background: #d6dce5; box-shadow: none;
+}
+
+:global([data-theme="dark"]) .queueText h2,
+:global([data-theme="dark"]) .ctaBanner h2,
+:global([data-theme="dark"]) .queueCardBody h3,
+:global([data-theme="dark"]) .qStatusBox strong {
+  color: #dce1e8;
+}
