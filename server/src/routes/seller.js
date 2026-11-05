@@ -35,7 +35,7 @@ async function sendActivationEmail({ email, name, activationUrl }) {
 }
 
 // Middleware para verificar que el usuario sea Vendedor
-export const verifySeller = (req, res, next) => {
+export const verifySeller = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -48,6 +48,9 @@ export const verifySeller = (req, res, next) => {
     if (decoded.role !== 'seller') {
       return res.status(403).json({ error: 'Acceso de vendedor requerido' });
     }
+
+    const seller = (await query('SELECT is_active FROM sellers WHERE id=$1', [decoded.id])).rows[0];
+    if (!seller?.is_active) return res.status(403).json({ error: 'Cuenta de vendedor desactivada' });
 
     req.seller = decoded;
     next();

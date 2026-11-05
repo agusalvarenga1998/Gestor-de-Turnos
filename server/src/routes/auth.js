@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { query } from '../db/config.js';
 import { generateToken, verifyToken } from '../middleware/auth.js';
 import * as googleAuthService from '../services/googleAuthService.js';
+import * as googleCalendarService from '../services/googleCalendarService.js';
+import { createOAuthState, consumeOAuthState } from '../utils/oauthState.js';
 import { copyTemplateServicesToDoctor } from '../services/templateService.js';
 import { logAction } from '../services/auditService.js';
 import { generateSecret, verifyTOTP } from '../utils/totp.js';
@@ -450,7 +452,7 @@ router.put('/profile', verifyToken, async (req, res) => {
 // Iniciar flujo de autenticación con Google
 router.get('/google', (req, res) => {
   try {
-    const authUrl = googleAuthService.getAuthUrl();
+    const authUrl = googleAuthService.getAuthUrl(createOAuthState(res, 'google', 'login'));
     res.redirect(authUrl);
   } catch (error) {
     console.error('Error iniciando Google Auth:', error);
@@ -464,7 +466,7 @@ router.get('/google', (req, res) => {
 // Callback de Google OAuth
 router.get('/google/callback', async (req, res) => {
   try {
-    const { code, state, error } = req.query;
+    const { code, error } = req.query;
 
     if (error) {
       console.log('❌ Error de Google:', error);
@@ -473,6 +475,12 @@ router.get('/google/callback', async (req, res) => {
 
     if (!code) {
       return res.redirect(`${FRONTEND_URL}/login?error=no_code`);
+    }
+
+    const oauthTarget = consumeOAuthState(req, res, 'google');
+    if (oauthTarget !== 'login') {
+      await googleCalendarService.handleCallback(code, oauthTarget);
+      return res.redirect(`${FRONTEND_URL}/settings?connected=true`);
     }
 
     console.log('\n🔵 === GOOGLE AUTH CALLBACK ===');
@@ -602,14 +610,7 @@ router.get('/google/callback', async (req, res) => {
     const token = generateToken(doctor);
     console.log('✓ JWT generado');
 
-    // Redirigir al cliente con el token
-    // Si viene del flujo de vincular calendario (tiene doctorId en state), redirigimos a settings
-    let redirectUrl = `${FRONTEND_URL}/auth/callback?token=${encodeURIComponent(token)}`;
-    
-    if (state && state.length > 20) { // Si el state parece un UUID (doctorId)
-      redirectUrl = `${FRONTEND_URL}/settings?token=${encodeURIComponent(token)}&connected=true`;
-    }
-    
+    const redirectUrl = `${FRONTEND_URL}/auth/callback?token=${encodeURIComponent(token)}`;
     console.log('🔄 Redirigiendo a:', redirectUrl.split('?')[0]);
     console.log('✓ Flujo completado\n');
 

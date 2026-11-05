@@ -50,6 +50,12 @@ export const verifyToken = async (req, res, next) => {
 };
 
 // Middleware para verificar rol de doctor y suscripción activa
+export const verifyQueryToken = (req, res, next) => {
+  if (typeof req.query.token !== 'string') return res.status(401).json({ success: false, message: 'Token requerido' });
+  req.headers.authorization = `Bearer ${req.query.token}`;
+  return verifyToken(req, res, next);
+};
+
 export const verifyDoctorRole = async (req, res, next) => {
   if (!req.user || req.user.role !== 'doctor') {
     return res.status(403).json({
@@ -63,21 +69,14 @@ export const verifyDoctorRole = async (req, res, next) => {
     return next();
   }
 
-  // Si ya sabemos que está expirada por el token, bloqueamos
-  if (req.user.subscription_status === 'expired') {
-    return res.status(403).json({
-      success: false,
-      subscriptionExpired: true,
-      message: 'Debes pagar para seguir usando la app'
-    });
-  }
-
-  next();
+  // Consultar el estado actual: el token puede ser anterior a la renovación.
+  return checkSubscription(req, res, next);
 };
 
 // Middleware específico para verificar suscripción consultando la DB (más seguro)
 export const checkSubscription = async (req, res, next) => {
   try {
+    if (req.subscriptionChecked) return next();
     // Si es Modo Demo de Vendedor, omitir chequeo de bloqueo por vencimiento
     if (req.user && req.user.isDemoMode) {
       return next();
@@ -101,7 +100,9 @@ export const checkSubscription = async (req, res, next) => {
     if ((doctor.subscription_status === 'trial' && doctor.trial_ends_at && new Date(doctor.trial_ends_at) < now) ||
         (doctor.subscription_status === 'active' && doctor.subscription_expires_at && new Date(doctor.subscription_expires_at) < now)) {
       isExpired = true;
-      await query("UPDATE doctors SET subscription_status = 'expired' WHERE id = $1", [req.user.id]);
+      await query(`UPDATE doctors SET subscription_status = 'expired' WHERE id = $1 AND
+        ((subscription_status='trial' AND trial_ends_at < now()) OR
+         (subscription_status='active' AND subscription_expires_at < now()))`, [req.user.id]);
     } else if (doctor.subscription_status === 'expired') {
       isExpired = true;
     }
@@ -114,6 +115,7 @@ export const checkSubscription = async (req, res, next) => {
       });
     }
 
+    req.subscriptionChecked = true;
     next();
   } catch (error) {
     console.error('Error verificando suscripción:', error);

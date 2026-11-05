@@ -9,6 +9,7 @@ import path from 'path';
 
 import { logAction } from '../services/auditService.js';
 import { sendPlanRequestEmailToAdmin } from '../services/emailService.js';
+import { parsePlanPrice } from '../utils/planPrice.js';
 
 const router = express.Router();
 
@@ -74,12 +75,18 @@ router.post('/subscriptions/request', verifyOnlyDoctorRole, async (req, res) => 
       return res.status(400).json({ success: false, message: 'pricing_plan_id is required' });
     }
 
-    const planResult = await query('SELECT id, name, price FROM pricing_plans WHERE id = $1', [pricing_plan_id]);
+    const planResult = await query('SELECT id, name, price FROM pricing_plans WHERE id = $1 AND is_enabled = true', [pricing_plan_id]);
     if (planResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Plan not found' });
     }
 
     const plan = planResult.rows[0];
+    let amount;
+    try {
+      amount = parsePlanPrice(plan.price);
+    } catch {
+      return res.status(422).json({ success: false, message: 'El precio del plan no es válido. Contactá al administrador.' });
+    }
 
     // Obtener detalles del doctor para notificar al admin
     const doctorResult = await query('SELECT name, email, phone FROM doctors WHERE id = $1', [req.user.id]);
@@ -89,7 +96,7 @@ router.post('/subscriptions/request', verifyOnlyDoctorRole, async (req, res) => 
       `INSERT INTO subscriptions (doctor_id, pricing_plan_id, amount, status)
        VALUES ($1, $2, $3, 'pending')
        RETURNING *`,
-      [req.user.id, plan.id, plan.price]
+      [req.user.id, plan.id, amount]
     );
 
     // Enviar notificación por email al administrador
@@ -119,11 +126,17 @@ router.post('/subscriptions/mercadopago-preference', verifyOnlyDoctorRole, async
       return res.status(400).json({ success: false, message: 'pricing_plan_id is required' });
     }
 
-    const planResult = await query('SELECT id, name, price FROM pricing_plans WHERE id = $1', [pricing_plan_id]);
+    const planResult = await query('SELECT id, name, price FROM pricing_plans WHERE id = $1 AND is_enabled = true', [pricing_plan_id]);
     if (planResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Plan not found' });
     }
     const plan = planResult.rows[0];
+    let amount;
+    try {
+      amount = parsePlanPrice(plan.price);
+    } catch {
+      return res.status(422).json({ success: false, message: 'El precio del plan no es válido. Contactá al administrador.' });
+    }
 
     // Obtener email del doctor
     const doctorResult = await query('SELECT email FROM doctors WHERE id = $1', [req.user.id]);
@@ -134,7 +147,7 @@ router.post('/subscriptions/mercadopago-preference', verifyOnlyDoctorRole, async
       `INSERT INTO subscriptions (doctor_id, pricing_plan_id, amount, status)
        VALUES ($1, $2, $3, 'pending')
        RETURNING id`,
-      [req.user.id, plan.id, plan.price]
+      [req.user.id, plan.id, amount]
     );
     const subscriptionId = subResult.rows[0].id;
 
@@ -148,7 +161,7 @@ router.post('/subscriptions/mercadopago-preference', verifyOnlyDoctorRole, async
     const preference = await createSubscriptionPreference({
       subscriptionId,
       planName: plan.name,
-      price: plan.price,
+      price: amount,
       doctorEmail
     }, platformToken);
 

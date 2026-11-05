@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { verifyToken } from '../middleware/auth.js';
+import { createOAuthState, consumeOAuthState } from '../utils/oauthState.js';
+import { verifyToken, verifyQueryToken } from '../middleware/auth.js';
 import { checkPlanFeature } from '../middleware/checkPlanFeature.js';
 import { query } from '../db/config.js';
 import * as googleCalendarService from '../services/googleCalendarService.js';
@@ -12,7 +13,7 @@ const router = express.Router();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // Generar URL de autenticación (requiere token en query string)
-router.get('/auth', (req, res) => {
+router.get('/auth', verifyQueryToken, (req, res) => {
   try {
     // Obtener token de query string
     const token = req.query.token;
@@ -32,6 +33,7 @@ router.get('/auth', (req, res) => {
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.purpose || decoded.role !== 'doctor') throw new Error('Sesión de profesional requerida');
       console.log('Token verificado. Doctor ID:', decoded.id);
     } catch (jwtError) {
       console.error('Error verificando JWT:', jwtError.message);
@@ -56,14 +58,12 @@ router.get('/auth', (req, res) => {
         });
       }
       
-      const authUrl = googleCalendarService.getAuthUrl(doctorId);
+      const authUrl = googleCalendarService.getAuthUrl(createOAuthState(res, 'google', doctorId));
       console.log('Redirigiendo a Google...');
       res.redirect(authUrl);
     }).catch((dbErr) => {
       console.error('Error al verificar plan:', dbErr);
-      const authUrl = googleCalendarService.getAuthUrl(doctorId);
-      console.log('Redirigiendo a Google (con error en verificación de plan)...');
-      res.redirect(authUrl);
+      res.status(503).json({ success: false, message: 'No se pudo verificar el plan. Volvé a intentar.' });
     });
   } catch (error) {
     console.error('Error generando URL de autenticación:', error.message);
@@ -79,10 +79,10 @@ router.get('/auth', (req, res) => {
 router.get('/callback', async (req, res) => {
   try {
     console.log('\n📍 === GOOGLE CALLBACK RECIBIDO ===');
-    console.log('Query params:', req.query);
 
-    const { code, state } = req.query;
-    const doctorId = state;
+    const { code } = req.query;
+    const doctorId = consumeOAuthState(req, res, 'google');
+    if (doctorId === 'login') throw new Error('Flujo de OAuth incorrecto');
 
     console.log('Code recibido:', code ? `${code.substring(0, 20)}...` : 'NO');
     console.log('State (doctorId):', doctorId);

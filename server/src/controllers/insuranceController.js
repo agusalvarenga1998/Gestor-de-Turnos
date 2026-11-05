@@ -377,6 +377,8 @@ export const setServiceCoverage = async (req, res) => {
 export const getPlans = async (req, res) => {
   try {
     const { id } = req.params; // insurance company id
+    const insurance = await query('SELECT id FROM insurance_companies WHERE id=$1 AND doctor_id=$2', [id, req.user.id]);
+    if (!insurance.rowCount) return res.status(404).json({ success: false, message: 'Obra social no encontrada' });
     const plans = await insurancePlanService.getPlansByInsurance(id);
     res.json({ success: true, plans });
   } catch (error) {

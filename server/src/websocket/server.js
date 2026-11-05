@@ -94,7 +94,7 @@ export const setupWebSocket = (wss) => {
     });
 
     ws.on('pong', () => {
-      // Respuesta a ping del servidor
+      ws.isAlive = true;
     });
   });
 

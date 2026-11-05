@@ -43,7 +43,7 @@ export const checkPlanFeature = (featureField) => {
       next();
     } catch (error) {
       console.error(`Error verificando característica de plan (${featureField}):`, error);
-      next(); // En caso de error de base de datos, permitimos pasar para no degradar el servicio
+      return res.status(503).json({ success: false, message: 'No pudimos verificar los permisos del plan. Volvé a intentar.' });
     }
   };
 };

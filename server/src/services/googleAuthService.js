@@ -19,7 +19,7 @@ const getOAuth2Client = () => {
 };
 
 // Generar URL de autorización
-export const getAuthUrl = () => {
+export const getAuthUrl = (state) => {
   const oauth2Client = getOAuth2Client();
   // Usamos los scopes cortos y estándar
   const scopes = [
@@ -31,6 +31,7 @@ export const getAuthUrl = () => {
 
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
+    state,
     scope: scopes,
     include_granted_scopes: false,
     prompt: 'consent'

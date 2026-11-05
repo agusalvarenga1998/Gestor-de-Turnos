@@ -3,7 +3,8 @@ import jwt from 'jsonwebtoken';
 import { query } from '../db/config.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyQueryToken } from '../middleware/auth.js';
+import { createOAuthState, consumeOAuthState } from '../utils/oauthState.js';
 
 dotenv.config();
 
@@ -52,7 +53,7 @@ const verifyAdmin = (req, res, next) => {
 };
 
 // 1. Redirigir al portal de autorización de Mercado Pago para Médicos
-router.get('/oauth/auth', async (req, res) => {
+router.get('/oauth/auth', verifyQueryToken, async (req, res) => {
   try {
     const token = req.query.token;
 
@@ -67,6 +68,7 @@ router.get('/oauth/auth', async (req, res) => {
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.purpose || decoded.role !== 'doctor') throw new Error('Sesión de profesional requerida');
     } catch (jwtError) {
       console.error('Error verificado JWT:', jwtError.message);
       return res.status(401).json({
@@ -103,7 +105,8 @@ router.get('/oauth/auth', async (req, res) => {
       });
     }
 
-    const authUrl = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${doctorId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const state = createOAuthState(res, 'mp', doctorId);
+    const authUrl = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
     
     console.log(`Redirigiendo a Mercado Pago para vincular el médico: ${doctorId}`);
     res.redirect(authUrl);
@@ -153,7 +156,8 @@ router.get('/oauth/admin/auth', async (req, res) => {
 
     console.log(`Admin OAuth Info: ClientID = ${clientId}, RedirectURI = ${redirectUri}`);
 
-    const authUrl = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=admin:${adminId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const state = createOAuthState(res, 'mp', `admin:${adminId}`);
+    const authUrl = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
     
     console.log(`Redirigiendo a Mercado Pago para vincular el admin: ${adminId}`);
     res.redirect(authUrl);
@@ -167,7 +171,6 @@ router.get('/oauth/admin/auth', async (req, res) => {
 router.get('/oauth/callback', async (req, res) => {
   try {
     console.log('=== CALLBACK MP OAUTH RECIBIDO ===');
-    console.log('Query:', req.query);
 
     const { code, state } = req.query;
 
@@ -176,8 +179,9 @@ router.get('/oauth/callback', async (req, res) => {
       return res.redirect(`${FRONTEND_URL}/settings?mp_connected=error`);
     }
 
-    const isAdmin = state.startsWith('admin:');
-    const targetId = isAdmin ? state.split(':')[1] : state;
+    const target = consumeOAuthState(req, res, 'mp');
+    const isAdmin = target.startsWith('admin:');
+    const targetId = isAdmin ? target.split(':')[1] : target;
 
     const clientId = await getClientId();
     const clientSecret = getClientSecret();

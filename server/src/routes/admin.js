@@ -3,7 +3,7 @@ import { getSmtpStatus } from '../services/emailService.js';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { query } from '../db/config.js';
+import { query, transaction } from '../db/config.js';
 import { sendProfessionalApprovalEmail } from '../services/emailService.js';
 import multer from 'multer';
 import XLSX from 'xlsx';
@@ -442,66 +442,27 @@ router.patch('/subscriptions/:id/approve', verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1. Obtener la solicitud de suscripción
-    const subResult = await query(
-      'SELECT id, doctor_id, pricing_plan_id, amount FROM subscriptions WHERE id = $1 AND status = \'pending\'',
-      [id]
-    );
-
-    if (subResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Solicitud de suscripción pendiente no encontrada' });
-    }
-
-    const subscription = subResult.rows[0];
-
-    // 2. Buscar el plan solicitado
-    const planResult = await query(
-      'SELECT id, key FROM pricing_plans WHERE id = $1',
-      [subscription.pricing_plan_id]
-    );
-
-    if (planResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Plan comercial no encontrado' });
-    }
-
-    const plan = planResult.rows[0];
-    const plan_type = plan.key === 'commission' ? 'commission' : 'monthly';
-
-    // 3. Calcular vencimiento de suscripción (30 días a partir de hoy)
-    const now = new Date();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
-
-    // 4. Actualizar doctor
-    await query(
-      `UPDATE doctors
-       SET subscription_status = 'active',
-           subscription_expires_at = $1,
-           pricing_plan_id = $2,
-           plan_type = $3
-       WHERE id = $4`,
-      [expiresAt, plan.id, plan_type, subscription.doctor_id]
-    );
-
-    // 5. Actualizar registro de suscripción
-    const updatedSubResult = await query(
-      `UPDATE subscriptions
-       SET status = 'approved',
-           period_start = $1,
-           period_end = $2
-       WHERE id = $3
-       RETURNING *`,
-      [now, expiresAt, id]
-    );
+    const subscription = await transaction(async client => {
+      const sub = (await client.query("SELECT id, doctor_id, pricing_plan_id FROM subscriptions WHERE id=$1 AND status='pending' FOR UPDATE", [id])).rows[0];
+      if (!sub) throw Object.assign(new Error('Solicitud pendiente no encontrada'), { status: 404 });
+      const plan = (await client.query('SELECT id, key FROM pricing_plans WHERE id=$1', [sub.pricing_plan_id])).rows[0];
+      if (!plan) throw Object.assign(new Error('Plan comercial no encontrado'), { status: 404 });
+      const doctor = (await client.query(`UPDATE doctors SET subscription_status='active',
+        subscription_expires_at=GREATEST(COALESCE(subscription_expires_at,now()),now())+interval '30 days',
+        pricing_plan_id=$2, plan_type=$3 WHERE id=$1 RETURNING subscription_expires_at`,
+        [sub.doctor_id, plan.id, plan.key === 'commission' ? 'commission' : 'monthly'])).rows[0];
+      if (!doctor) throw new Error('Profesional no encontrado');
+      return (await client.query("UPDATE subscriptions SET status='approved', period_start=now(), period_end=$2 WHERE id=$1 RETURNING *", [id, doctor.subscription_expires_at])).rows[0];
+    });
 
     res.json({
       success: true,
       message: 'Suscripción aprobada y plan activado con éxito.',
-      subscription: updatedSubResult.rows[0]
+      subscription
     });
   } catch (error) {
     console.error('Approve subscription error:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(error.status || 500).json({ error: error.status ? error.message : 'Server error' });
   }
 });
 
