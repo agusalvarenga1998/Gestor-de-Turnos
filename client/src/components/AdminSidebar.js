@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import axios from 'axios';
@@ -13,6 +13,25 @@ export default function AdminSidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [pendingDoctorsCount, setPendingDoctorsCount] = useState(0);
   const [pendingTicketsCount, setPendingTicketsCount] = useState(0);
+  const [pendingActivationsCount, setPendingActivationsCount] = useState(0);
+
+  const fetchActivationCount = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/subscriptions/pending-count`, { headers: { Authorization: `Bearer ${token}` } });
+      if (response.data.success) setPendingActivationsCount(response.data.count);
+    } catch (error) { console.error('No se pudo actualizar el contador de solicitudes'); }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchActivationCount();
+    const timer = setInterval(fetchActivationCount, 30000);
+    window.addEventListener('activation-requests-updated', fetchActivationCount);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('activation-requests-updated', fetchActivationCount);
+    };
+  }, [token, location.pathname, fetchActivationCount]);
 
   useEffect(() => {
     if (token) {
@@ -70,6 +89,13 @@ export default function AdminSidebar() {
       label: 'Planes y Pagos',
       icon: '💳',
       path: '/admin/subscriptions'
+    },
+    {
+      label: 'Solicitudes de activación',
+      icon: '📩',
+      path: '/admin/activation-requests',
+      badge: pendingActivationsCount > 0 ? pendingActivationsCount : null,
+      badgeColor: '#f59e0b'
     },
     {
       label: 'Planes Landing',

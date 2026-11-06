@@ -92,21 +92,24 @@ router.post('/subscriptions/request', verifyOnlyDoctorRole, async (req, res) => 
     const doctorResult = await query('SELECT name, email, phone FROM doctors WHERE id = $1', [req.user.id]);
     const doctor = doctorResult.rows[0] || {};
 
-    const result = await query(
-      `INSERT INTO subscriptions (doctor_id, pricing_plan_id, amount, status)
-       VALUES ($1, $2, $3, 'pending')
-       RETURNING *`,
-      [req.user.id, plan.id, amount]
-    );
+    const result = await transaction(async () => {
+      const subscription = await query(
+        `INSERT INTO subscriptions (doctor_id, pricing_plan_id, amount, status)
+         VALUES ($1, $2, $3, 'pending')
+         RETURNING *`,
+        [req.user.id, plan.id, amount]
+      );
 
-    // Enviar notificación por email al administrador
-    sendPlanRequestEmailToAdmin({
-      doctorName: doctor.name || req.user.name,
-      doctorEmail: doctor.email || req.user.email,
-      doctorPhone: doctor.phone,
-      planName: plan.name,
-      planPrice: plan.price
-    }).catch(err => console.error('Error enviando email de solicitud al admin:', err));
+      // Guardar solicitud y avisos juntos; SMTP se procesa con reintentos después del commit.
+      await sendPlanRequestEmailToAdmin({
+        doctorName: doctor.name || req.user.name,
+        doctorEmail: doctor.email || req.user.email,
+        doctorPhone: doctor.phone,
+        planName: plan.name,
+        planPrice: plan.price
+      });
+      return subscription;
+    });
 
     res.status(201).json({
       success: true,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import AdminLayout from '../components/AdminLayout';
 import Loading from '../components/Loading';
@@ -7,45 +7,35 @@ import styles from './AdminSubscriptionsPage.module.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-export default function AdminSubscriptionsPage() {
+export default function AdminSubscriptionsPage({ requestsOnly = false }) {
   const { token } = useAdminAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mpAccount, setMpAccount] = useState(null);
   const [loadingMp, setLoadingMp] = useState(false);
   const [mpMessage, setMpMessage] = useState('');
+  const [error, setError] = useState('');
+  const [busyId, setBusyId] = useState(null);
 
-  useEffect(() => {
-    fetchSubscriptions();
-    fetchMpAccount();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('mp_connected') === 'true') {
-      setMpMessage('✓ Cuenta de Mercado Pago vinculada correctamente.');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (urlParams.get('mp_connected') === 'error') {
-      setMpMessage('✕ Error al vincular la cuenta de Mercado Pago.');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
-
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/admin/subscriptions`, {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/subscriptions${requestsOnly ? "?status=pending" : ""}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
         setSubscriptions(response.data.subscriptions);
+        setError('');
       }
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
+      setError('No se pudieron cargar las solicitudes. Volvé a intentar.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, requestsOnly]);
 
-  const fetchMpAccount = async () => {
+  const fetchMpAccount = useCallback(async () => {
     try {
       setLoadingMp(true);
       const response = await axios.get(`${API_BASE_URL}/api/mercadopago/oauth/admin/account`, {
@@ -61,7 +51,24 @@ export default function AdminSubscriptionsPage() {
     } finally {
       setLoadingMp(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchSubscriptions();
+    if (!requestsOnly) fetchMpAccount();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mp_connected') === 'true') {
+      setMpMessage('✓ Cuenta de Mercado Pago vinculada correctamente.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('mp_connected') === 'error') {
+      setMpMessage('✕ Error al vincular la cuenta de Mercado Pago.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    const timer = setInterval(fetchSubscriptions, 30000);
+    return () => clearInterval(timer);
+  }, [token, requestsOnly, fetchSubscriptions, fetchMpAccount]);
 
   const handleConnectMp = () => {
     if (!token) return;
@@ -70,34 +77,40 @@ export default function AdminSubscriptionsPage() {
 
   const handleApproveSubscription = async (id) => {
     if (!window.confirm('¿Estás seguro de que deseas aprobar esta suscripción? Esto activará y extenderá el plan del profesional por 30 días.')) return;
+    if (busyId) return;
+    setBusyId(id);
     try {
       const response = await axios.patch(`${API_BASE_URL}/api/admin/subscriptions/${id}/approve`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
         alert('Suscripción aprobada con éxito.');
-        fetchSubscriptions();
+        await fetchSubscriptions();
+        window.dispatchEvent(new Event('activation-requests-updated'));
       }
     } catch (error) {
       console.error('Error approving subscription:', error);
       alert(error.response?.data?.error || 'Error al aprobar la suscripción.');
-    }
+    } finally { setBusyId(null); }
   };
 
   const handleRejectSubscription = async (id) => {
     if (!window.confirm('¿Estás seguro de que deseas rechazar esta solicitud de suscripción?')) return;
+    if (busyId) return;
+    setBusyId(id);
     try {
       const response = await axios.patch(`${API_BASE_URL}/api/admin/subscriptions/${id}/reject`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
         alert('Solicitud rechazada.');
-        fetchSubscriptions();
+        await fetchSubscriptions();
+        window.dispatchEvent(new Event('activation-requests-updated'));
       }
     } catch (error) {
       console.error('Error rejecting subscription:', error);
       alert(error.response?.data?.error || 'Error al rechazar la solicitud.');
-    }
+    } finally { setBusyId(null); }
   };
 
   const getStatusBadge = (status) => {
@@ -119,7 +132,10 @@ export default function AdminSubscriptionsPage() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    return new Date(dateString).toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour: '2-digit',
+      minute: '2-digit',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
@@ -138,9 +154,13 @@ export default function AdminSubscriptionsPage() {
     <AdminLayout>
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>Historial de Suscripciones</h1>
-        <p>Total de registros: {subscriptions.length}</p>
+        <h1>{requestsOnly ? 'Solicitudes para activar cuentas' : 'Historial de suscripciones'}</h1>
+        <p>{requestsOnly ? 'Solicitudes pendientes de revisión' : 'Total de registros'}: {subscriptions.length}</p>
       </div>
+
+      {error && <div className={styles.mpErrorAlert} role="alert">{error} <button onClick={fetchSubscriptions}>Reintentar</button></div>}
+      <button className={styles.refreshButton} onClick={fetchSubscriptions}>Actualizar solicitudes</button>
+      {requestsOnly && <p className={styles.requestInfo}>Revisá el plan solicitado y verificá el pago antes de activar la cuenta. Las solicitudes permanecen pendientes hasta que las apruebes o rechaces.</p>}
 
       {mpMessage && (
         <div className={mpMessage.startsWith('✓') ? styles.mpSuccessAlert : styles.mpErrorAlert}>
@@ -148,7 +168,7 @@ export default function AdminSubscriptionsPage() {
         </div>
       )}
 
-      <div className={styles.mpConnectionCard}>
+      {!requestsOnly && <div className={styles.mpConnectionCard}>
         <div className={styles.mpCardHeader}>
           <h3>💰 Cobro de Suscripciones (Mercado Pago)</h3>
           <p>Vincula la cuenta de Mercado Pago única donde se acreditarán los pagos de todos los planes de suscripción de los médicos.</p>
@@ -176,11 +196,11 @@ export default function AdminSubscriptionsPage() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
-      {subscriptions.length === 0 ? (
+      {subscriptions.length === 0 && !error ? (
         <div className={styles.emptyState}>
-          <p>No hay registros de suscripciones aún</p>
+          <p>{requestsOnly ? 'No hay solicitudes pendientes de activación.' : 'No hay registros de suscripciones aún'}</p>
         </div>
       ) : (
         <div className={styles.tableWrapper}>
@@ -188,7 +208,8 @@ export default function AdminSubscriptionsPage() {
             <thead>
               <tr>
                 <th>Doctor</th>
-                <th>Email</th>
+                <th>Contacto</th>
+                <th>Plan solicitado</th>
                 <th>Monto</th>
                 <th>Estado</th>
                 <th>Inicio</th>
@@ -201,9 +222,10 @@ export default function AdminSubscriptionsPage() {
               {subscriptions.map(sub => (
                 <tr key={sub.id}>
                   <td>{sub.name || '-'}</td>
-                  <td>{sub.email || '-'}</td>
+                  <td>{sub.email || '-'}{sub.phone && <div>{sub.phone}</div>}</td>
+                  <td>{sub.plan_name || 'Sin plan asociado'}</td>
                   <td>
-                    {sub.amount ? `$${parseFloat(sub.amount).toFixed(2)}` : '-'}
+                    {sub.amount != null ? Number(sub.amount).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) : '-'}
                   </td>
                   <td>{getStatusBadge(sub.status)}</td>
                   <td>{formatDate(sub.period_start)}</td>
@@ -214,6 +236,7 @@ export default function AdminSubscriptionsPage() {
                       <div className={styles.actionButtons}>
                         <button
                           onClick={() => handleApproveSubscription(sub.id)}
+                          disabled={busyId !== null}
                           className={styles.approveBtn}
                           title="Aprobar Suscripción"
                         >
@@ -221,6 +244,7 @@ export default function AdminSubscriptionsPage() {
                         </button>
                         <button
                           onClick={() => handleRejectSubscription(sub.id)}
+                          disabled={busyId !== null}
                           className={styles.rejectBtn}
                           title="Rechazar Suscripción"
                         >

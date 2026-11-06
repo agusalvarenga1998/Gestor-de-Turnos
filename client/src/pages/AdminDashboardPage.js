@@ -11,6 +11,18 @@ export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const { admin, token } = useAdminAuth();
   const [systemStatus, setSystemStatus] = useState(null);
+  const [pendingActivations, setPendingActivations] = useState(null);
+  const fetchActivationCount = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/subscriptions/pending-count`, { headers: { Authorization: `Bearer ${token}` } });
+      if (response.data.success) setPendingActivations(response.data.count);
+    } catch { setPendingActivations(null); }
+  }, [token]);
+  useEffect(() => {
+    if (!token) return;
+    const timer = setInterval(fetchActivationCount, 30000);
+    return () => clearInterval(timer);
+  }, [token, fetchActivationCount]);
   useEffect(() => {
     axios.get(`${API_BASE_URL}/api/admin/system-status`, { headers: { Authorization: `Bearer ${token}` } }).then(r => setSystemStatus(r.data)).catch(() => setSystemStatus({ database: 'unavailable', smtp: 'unavailable' }));
   }, [token]);
@@ -25,6 +37,7 @@ export default function AdminDashboardPage() {
     expiringTrial: 0
   });
   const fetchDashboardData = useCallback(async () => {
+    fetchActivationCount();
     try {
       // 1. Obtener lista de doctores
       const docsRes = await axios.get(`${API_BASE_URL}/api/admin/doctors`, {
@@ -93,7 +106,7 @@ export default function AdminDashboardPage() {
     } catch (error) {
       console.error('Error fetching admin dashboard data:', error);
     }
-  }, [token]);
+  }, [token, fetchActivationCount]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -117,6 +130,14 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className={styles.content}>
+          <div className={styles.alertBanner}>
+            <span className={styles.alertIcon}>📩</span>
+            <div className={styles.alertText}>
+              <strong>Solicitudes para activar cuentas{pendingActivations !== null ? `: ${pendingActivations} pendientes` : ''}</strong>
+              <span>{pendingActivations === 0 ? 'No hay solicitudes pendientes.' : pendingActivations === null ? 'Abrí el panel para consultar las solicitudes.' : 'Hay profesionales esperando la revisión y activación de su plan.'}</span>
+            </div>
+            <button className={styles.alertBtn} onClick={() => navigate('/admin/activation-requests')}>Ver solicitudes</button>
+          </div>
           {/* Banners de Alerta Importante */}
           {stats.pending > 0 && (
             <div className={styles.alertBanner}>

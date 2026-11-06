@@ -203,7 +203,15 @@ function AppContent() {
         path="/admin/subscriptions"
         element={
           <ProtectedAdminRoute>
-            <AdminSubscriptionsPage />
+            <AdminSubscriptionsPage key="history" />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/activation-requests"
+        element={
+          <ProtectedAdminRoute>
+            <AdminSubscriptionsPage key="requests" requestsOnly />
           </ProtectedAdminRoute>
         }
       />

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { query } from '../db/config.js';
 
-// Only appointment notices go through this queue. Short-lived access codes stay synchronous.
+// Appointment and plan-request notices use this queue. Short-lived access codes stay synchronous.
 export async function enqueueEmail(payload, { ttlMinutes = 1440 } = {}) {
   const id = randomUUID();
   const messageId = `<${id}@notifications.turnohub.com.ar>`;

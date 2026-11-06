@@ -139,6 +139,19 @@
   font-size: 0.9rem;
 }
 
+.refreshButton {
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  background: var(--bg-secondary, #fff);
+  color: var(--text-primary, #0f172a);
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.requestInfo { color: var(--text-secondary, #475569); line-height: 1.6; margin-bottom: 1.5rem; }
+.actionButtons button:disabled { opacity: 0.55; cursor: wait; }
+
 /* Mercado Pago Connection Styles */
 .mpSuccessAlert {
   background-color: #d1fae5;

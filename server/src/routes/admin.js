@@ -412,6 +412,17 @@ router.post('/doctors/:id/extend', verifyAdmin, async (req, res) => {
 });
 
 // Get subscription history
+router.get('/subscriptions/pending-count', verifyAdmin, async (req, res) => {
+  try {
+    const result = await query("SELECT COUNT(*)::integer AS count FROM subscriptions WHERE status='pending'");
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ success: true, count: result.rows[0].count });
+  } catch (error) {
+    console.error('Get pending subscription count error:', error);
+    res.status(500).json({ error: 'No se pudieron consultar las solicitudes pendientes' });
+  }
+});
+
 router.get('/subscriptions', verifyAdmin, async (req, res) => {
   try {
     const result = await query(`
@@ -420,6 +431,8 @@ router.get('/subscriptions', verifyAdmin, async (req, res) => {
         s.doctor_id,
         d.email,
         d.name,
+        d.phone,
+        p.name AS plan_name,
         s.amount,
         s.status,
         s.period_start,
@@ -427,9 +440,12 @@ router.get('/subscriptions', verifyAdmin, async (req, res) => {
         s.created_at
       FROM subscriptions s
       LEFT JOIN doctors d ON s.doctor_id = d.id
-      ORDER BY s.created_at DESC
-    `);
+      LEFT JOIN pricing_plans p ON s.pricing_plan_id = p.id
+      WHERE ($1::boolean = false OR s.status = 'pending')
+      ORDER BY (s.status = 'pending') DESC, s.created_at DESC
+    `, [req.query.status === 'pending']);
 
+    res.setHeader('Cache-Control', 'no-store');
     res.json({ success: true, subscriptions: result.rows });
   } catch (error) {
     console.error('Get subscriptions error:', error);
