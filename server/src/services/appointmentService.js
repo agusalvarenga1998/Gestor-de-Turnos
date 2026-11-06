@@ -464,7 +464,7 @@ export const recalculateQueueForDate = async (doctorId, appointmentDate) => {
   }
 };
 
-// Auto-actualizar citas pasadas no completadas a estado 'absent' (Ausente)
+// Vencer solicitudes antiguas sin modificar la asistencia de turnos confirmados
 export const autoUpdatePastAppointments = async (doctorId) => {
   try {
     const now = new Date();
@@ -479,21 +479,7 @@ export const autoUpdatePastAppointments = async (doctorId) => {
     const dateIdx = doctorId ? '$2' : '$1';
     const timeIdx = doctorId ? '$3' : '$2';
 
-    // 1. Citas programadas pasadas -> Ausente ('absent')
-    const resultAbsent = await query(`
-      UPDATE appointments
-      SET status = 'absent', updated_at = CURRENT_TIMESTAMP
-      ${docClause} status = 'scheduled'
-        AND (
-          appointment_date < ${dateIdx}::date
-          OR (
-            appointment_date = ${dateIdx}::date
-            AND (appointment_time + (COALESCE(duration_minutes, 30) || ' minutes')::INTERVAL) < ${timeIdx}::time
-          )
-        )
-      RETURNING id
-    `, params);
-
+    // La asistencia la confirma el profesional; no inferir ausencias por horario.
     // 2. Solicitudes de turno pasadas nunca respondidas -> Solicitud Vencida ('expired')
     const resultExpired = await query(`
       UPDATE appointments
@@ -509,9 +495,6 @@ export const autoUpdatePastAppointments = async (doctorId) => {
       RETURNING id
     `, params);
 
-    if (resultAbsent.rows.length > 0) {
-      console.log(`🤖 Auto-update: ${resultAbsent.rows.length} citas pasadas marcadas como 'absent' ${doctorId ? `para doctor ${doctorId}` : ''}`);
-    }
     if (resultExpired.rows.length > 0) {
       console.log(`🤖 Auto-update: ${resultExpired.rows.length} solicitudes de turno vencidas marcadas como 'expired' ${doctorId ? `para doctor ${doctorId}` : ''}`);
     }

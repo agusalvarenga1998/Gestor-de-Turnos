@@ -27,6 +27,7 @@ export default function AdminDashboardPage() {
     axios.get(`${API_BASE_URL}/api/admin/system-status`, { headers: { Authorization: `Bearer ${token}` } }).then(r => setSystemStatus(r.data)).catch(() => setSystemStatus({ database: 'unavailable', smtp: 'unavailable' }));
   }, [token]);
   const [tickets, setTickets] = useState([]);
+  const [ticketsError, setTicketsError] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -94,13 +95,15 @@ export default function AdminDashboardPage() {
 
       // 2. Obtener tickets de soporte
       try {
-        const ticketsRes = await axios.get(`${API_BASE_URL}/api/admin/tickets`, {
+        const ticketsRes = await axios.get(`${API_BASE_URL}/api/admin/support-tickets`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (ticketsRes.data.success) {
           setTickets(ticketsRes.data.tickets || []);
+          setTicketsError(false);
         }
       } catch (tErr) {
+        setTicketsError(true);
         console.log('No se pudieron cargar los tickets de soporte');
       }
     } catch (error) {
@@ -232,9 +235,9 @@ export default function AdminDashboardPage() {
               <div className={styles.statInfo}>
                 <p className={styles.statLabel}>Tickets Pendientes</p>
                 <p className={styles.statValue} style={{ color: pendingTickets.length > 0 ? '#dc2626' : undefined }}>
-                  {pendingTickets.length}
+                  {ticketsError ? '—' : pendingTickets.length}
                 </p>
-                <span className={styles.statSub}>{tickets.length} tickets en total</span>
+                <span className={styles.statSub}>{ticketsError ? 'No se pudo consultar soporte. Reintentá actualizar.' : `${tickets.length} tickets en total`}</span>
               </div>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { needsAppointmentClosure } from '../utils/appointmentState';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -484,7 +485,8 @@ export default function AppointmentsPage() {
     setQuickPatientSuccess('');
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, appointment) => {
+    if (needsAppointmentClosure(appointment)) return <span className={`${styles.statusBadge} ${styles.statusPending}`}>Pendiente de cierre</span>;
     const badges = {
       pending: { label: 'Por Aprobar', class: styles.statusPending },
       pending_payment: { label: 'Pendiente de Pago', class: styles.statusPending },
@@ -618,7 +620,7 @@ export default function AppointmentsPage() {
                 <div className={styles.mobileAgendaCardHeader}>
                   <div className={styles.mobileAgendaTimeActive}>{slot} hs</div>
                   <div className={styles.mobileAgendaBadgeGroup}>
-                    {getStatusBadge(appt.status)}
+                    {getStatusBadge(appt.status, appt)}
                     {appt.delay_minutes > 0 && (
                       <span className={styles.mobileDelayLabel}>+{appt.delay_minutes}m</span>
                     )}
@@ -756,7 +758,7 @@ export default function AppointmentsPage() {
                           </td>
                         ) : null}
                         <td data-label="Presentismo" className={styles.statusCell}>
-                          {getStatusBadge(appt.status)}
+                          {getStatusBadge(appt.status, appt)}
                           {appt.delay_minutes > 0 && (
                             <div className={styles.delayBadge}>+{appt.delay_minutes} min</div>
                           )}
@@ -830,7 +832,7 @@ export default function AppointmentsPage() {
                               </>
                             ) : (
                               <div className={styles.statusOnly}>
-                                {getStatusBadge(appt.status)}
+                                {getStatusBadge(appt.status, appt)}
                               </div>
                             )}
                             
@@ -1390,7 +1392,7 @@ export default function AppointmentsPage() {
                           <td className={styles.coverage} data-label="Cobertura">
                             {parseFloat(appt.coverage_amount || 0) > 0 ? `-$${parseFloat(appt.coverage_amount).toLocaleString()}` : '-'}
                           </td>
-                          <td data-label="Estado">{getStatusBadge(appt.status)}</td>
+                          <td data-label="Estado">{getStatusBadge(appt.status, appt)}</td>
                           <td className={styles.toChargeCell} data-label="A COBRAR">
                             <div className={styles.toChargeAmount}>
                               ${toCharge > 0 ? toCharge.toLocaleString() : '0'}
@@ -1437,7 +1439,7 @@ export default function AppointmentsPage() {
                               </>
                             ) : (
                               <div className={styles.statusOnly}>
-                                {getStatusBadge(appt.status)}
+                                {getStatusBadge(appt.status, appt)}
                               </div>
                             )}
                             
@@ -1485,7 +1487,7 @@ export default function AppointmentsPage() {
                         </span>
                       </div>
                       <div className={styles.mobileApptStatus}>
-                        {getStatusBadge(appt.status)}
+                        {getStatusBadge(appt.status, appt)}
                       </div>
                     </div>
 

@@ -5,6 +5,7 @@ import { jwtSecret as JWT_SECRET } from '../utils/security.js';
 
 // Middleware para verificar JWT
 export const verifyToken = async (req, res, next) => {
+  let sessionValidated = false;
   try {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -17,6 +18,7 @@ export const verifyToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     if (decoded.purpose || decoded.role !== 'doctor') throw new Error('Token de sesión requerido');
+    sessionValidated = true;
     req.user = decoded;
 
     // Validar existencia del doctor y versión de token (excepto en Modo Demo de vendedor)
@@ -42,6 +44,7 @@ export const verifyToken = async (req, res, next) => {
 
     next();
   } catch (error) {
+    if (sessionValidated) return res.status(503).json({ success: false, message: 'No pudimos verificar tu sesión. Volvé a intentar en unos segundos.' });
     res.status(401).json({
       success: false,
       message: 'Token inválido o expirado'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import axios from 'axios';
@@ -8,11 +8,27 @@ import styles from './SubscriptionExpiredPage.module.css';
 
 export default function SubscriptionExpiredPage() {
   const navigate = useNavigate();
-  const { user, logout, refreshUser } = useAuth();
+  const { logout, refreshUser } = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [requestsError, setRequestsError] = useState('');
+  const loadRequests = useCallback(async () => {
+    try {
+      const response = await apiClient.get('/api/doctor/subscriptions/history');
+      setPendingRequests((response.data.subscriptions || []).filter(sub => sub.status === 'pending'));
+      setRequestsError('');
+    } catch {
+      setRequestsError('No pudimos consultar tus solicitudes. Volvé a intentar antes de enviar otra.');
+    } finally { setLoadingRequests(false); }
+  }, []);
+  useEffect(() => {
+    loadRequests();
+    const timer = setInterval(loadRequests, 15000);
+    return () => clearInterval(timer);
+  }, [loadRequests]);
 
   useEffect(() => {
     fetchPlans();
@@ -64,7 +80,7 @@ export default function SubscriptionExpiredPage() {
       setSubmitting(true);
       const response = await apiClient.post('/api/doctor/subscriptions/request', { pricing_plan_id: planId });
       if (response.data.success) {
-        setRequestSent(true);
+        await loadRequests();
         alert('Solicitud enviada correctamente. Tu cuenta se activará en cuanto el administrador la apruebe.');
       }
     } catch (err) {
@@ -137,12 +153,14 @@ export default function SubscriptionExpiredPage() {
           </p>
         </div>
 
-        {requestSent && (
+        {pendingRequests.length > 0 && (
           <div className={styles.alertSuccess}>
-            <strong>¡Solicitud Pendiente!</strong> Ya hemos enviado tu solicitud al administrador. Tu cuenta se reactivará automáticamente una vez aprobada.
+            <strong>Solicitud pendiente de revisión.</strong> Tu cuenta se reactivará cuando el administrador apruebe el plan.
+            <ul>{pendingRequests.map(request => <li key={request.id}>{request.plan_name || 'Plan solicitado'} · {new Date(request.created_at).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}</li>)}</ul>
           </div>
         )}
 
+        {requestsError && <div role="alert">{requestsError} <button onClick={loadRequests}>Reintentar</button></div>}
         <div className={styles.plansSection}>
           <h2>Planes Disponibles</h2>
           {loading ? (
@@ -196,9 +214,9 @@ export default function SubscriptionExpiredPage() {
                       <button
                         className={styles.requestBtn}
                         onClick={() => handleRequestPlan(p.id)}
-                        disabled={submitting}
+                        disabled={submitting || loadingRequests || !!requestsError || pendingRequests.some(request => request.pricing_plan_id === p.id)}
                       >
-                        Solicitar Habilitación Manual
+                        {pendingRequests.some(request => request.pricing_plan_id === p.id) ? 'Solicitud pendiente' : 'Solicitar habilitación manual'}
                       </button>
                     </div>
                   </div>

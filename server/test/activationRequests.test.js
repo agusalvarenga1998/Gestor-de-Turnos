@@ -11,7 +11,7 @@ nodemailer.createTransport = originalTransport;
 const { default: pool } = await import('../src/db/config.js');
 const handler = router.stack.find(layer => layer.route?.path === '/subscriptions/request').route.stack.at(-1).handle;
 
-async function request({ failQueue = false } = {}) {
+async function request({ failQueue = false, existing = false } = {}) {
   const originalQuery = pool.query;
   const originalConnect = pool.connect;
   const statements = [];
@@ -23,6 +23,7 @@ async function request({ failQueue = false } = {}) {
   pool.connect = async () => ({
     async query(sql, params) {
       statements.push(sql);
+      if (sql.startsWith('SELECT * FROM subscriptions')) return { rows: existing ? [{ id: 'existing-request', amount: 24999, status: 'pending' }] : [] };
       if (sql.includes('INSERT INTO subscriptions')) return { rows: [{ id: 'request-id', amount: params[2], status: 'pending' }] };
       if (sql.includes('INSERT INTO email_outbox')) {
         if (failQueue && emails.length === 1) throw new Error('Simulated queue failure');
@@ -56,4 +57,25 @@ test('si falla guardar un aviso se revierte todo y no se informa éxito', async 
   assert.equal(statements.at(-1), 'ROLLBACK');
   assert.equal(statements.includes('COMMIT'), false);
   assert.equal(released, true);
+});
+
+test('reutiliza una solicitud pendiente del mismo plan sin crear otra', async () => {
+  const { res, statements } = await request({ existing: true });
+  assert.equal(res.body.subscription.id, 'existing-request');
+  assert.equal(statements.some(sql => sql.includes('INSERT INTO subscriptions')), false);
+  assert.equal(statements.at(-1), 'COMMIT');
+});
+
+test('el mantenimiento de turnos no marca ausentes automáticamente', async () => {
+  const { autoUpdatePastAppointments } = await import('../src/services/appointmentService.js');
+  const originalQuery = pool.query;
+  const statements = [];
+  pool.query = async sql => { statements.push(sql); return { rows: [] }; };
+  try {
+    await autoUpdatePastAppointments('doctor-id');
+    assert.equal(statements.length, 1);
+    assert.match(statements[0], /SET status = 'expired'/);
+    assert.doesNotMatch(statements[0], /SET status = 'absent'/);
+    assert.match(statements[0], /status IN \('pending', 'pending_payment'\)/);
+  } finally { pool.query = originalQuery; }
 });

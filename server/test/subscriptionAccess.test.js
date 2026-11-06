@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import jwt from 'jsonwebtoken';
 
 // Aislar la DB: estas pruebas nunca abren una conexión.
 process.env.JWT_SECRET = 'local-tests-only-secret';
 const { default: pool } = await import('../src/db/config.js');
-const { verifyDoctorRole, checkSubscription } = await import('../src/middleware/auth.js');
+const { verifyDoctorRole, checkSubscription, verifyToken } = await import('../src/middleware/auth.js');
 
 test('una renovación habilita la sesión aunque el token diga expired; consulta una sola vez', async () => {
   const original = pool.query;
@@ -34,5 +35,18 @@ test('una sesión con token active queda bloqueada si la DB está vencida', asyn
     await verifyDoctorRole({ user: { id: 'test-id', role: 'doctor', subscription_status: 'active' } }, res, () => assert.fail('Acceso permitido'));
     assert.equal(status, 403);
     assert.equal(body.subscriptionExpired, true);
+  } finally { pool.query = original; }
+});
+
+test('una caída de DB no se informa como credenciales inválidas', async () => {
+  const original = pool.query;
+  pool.query = async () => { throw new Error('DB unavailable'); };
+  try {
+    const token = jwt.sign({ id: 'doctor', role: 'doctor' }, process.env.JWT_SECRET);
+    const res = { status(code) { this.code = code; return this; }, json(body) { this.body = body; } };
+    await verifyToken({ headers: { authorization: `Bearer ${token}` } }, res, () => assert.fail('Debe reintentar'));
+    assert.equal(res.code, 503);
+    await verifyToken({ headers: { authorization: 'Bearer invalid' } }, res, () => assert.fail('Token inválido'));
+    assert.equal(res.code, 401);
   } finally { pool.query = original; }
 });

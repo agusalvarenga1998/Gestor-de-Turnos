@@ -13,6 +13,7 @@ export default function AdminSidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [pendingDoctorsCount, setPendingDoctorsCount] = useState(0);
   const [pendingTicketsCount, setPendingTicketsCount] = useState(0);
+  const [ticketsError, setTicketsError] = useState(false);
   const [pendingActivationsCount, setPendingActivationsCount] = useState(0);
 
   const fetchActivationCount = useCallback(async () => {
@@ -52,15 +53,16 @@ export default function AdminSidebar() {
 
       // 2. Obtener tickets pendientes
       try {
-        const ticketsRes = await axios.get(`${API_BASE_URL}/api/admin/tickets`, {
+        const ticketsRes = await axios.get(`${API_BASE_URL}/api/admin/support-tickets`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (ticketsRes.data?.success && ticketsRes.data?.tickets) {
           const pendingT = ticketsRes.data.tickets.filter(t => t.status === 'pending').length;
           setPendingTicketsCount(pendingT);
+          setTicketsError(false);
         }
       } catch (e) {
-        // Ignorar si el endpoint no existe o falla silenciosamente
+        setTicketsError(true);
       }
     } catch (error) {
       // Error silencioso para no romper renderizado de sidebar
@@ -118,7 +120,7 @@ export default function AdminSidebar() {
       path: '/admin/reports'
     },
     {
-      label: 'Tickets de Soporte',
+      label: ticketsError ? 'Soporte (sin actualizar)' : 'Tickets de Soporte',
       icon: '📩',
       path: '/admin/support-tickets',
       badge: pendingTicketsCount > 0 ? pendingTicketsCount : null,

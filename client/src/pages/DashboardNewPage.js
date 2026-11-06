@@ -1,3 +1,4 @@
+import { needsAppointmentClosure } from '../utils/appointmentState';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DoctorLayout from '../components/DoctorLayout';
@@ -263,7 +264,8 @@ export default function DashboardNewPage() {
     </div>
   );
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, appointment) => {
+    if (needsAppointmentClosure(appointment)) return <span className={`${styles.statusBadge} ${styles.statusScheduled}`}>PENDIENTE DE CIERRE</span>;
     const badges = {
       scheduled: { label: 'PROGRAMADO', class: styles.statusScheduled },
       completed: { label: 'COMPLETADO', class: styles.statusCompleted },
@@ -460,7 +462,7 @@ export default function DashboardNewPage() {
                         <p className={styles.apptReason}>{appt.reason_for_visit || 'Consulta general'}</p>
                       </div>
                       <div className={styles.apptStatus}>
-                        {getStatusBadge(appt.status)}
+                        {getStatusBadge(appt.status, appt)}
                       </div>
                       <div className={styles.apptAction}>
                         <button 
@@ -513,7 +515,7 @@ export default function DashboardNewPage() {
                         <p className={styles.apptReason}>{appt.reason_for_visit || 'Consulta general'}</p>
                       </div>
                       <div className={styles.apptStatus}>
-                        {getStatusBadge(appt.status)}
+                        {getStatusBadge(appt.status, appt)}
                       </div>
                       <div className={styles.apptAction}>
                         <button 

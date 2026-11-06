@@ -136,12 +136,10 @@ export const callNextPatient = async (doctorId) => {
       try {
         console.log(`📧 Enviando aviso de turno llamado por WhatsApp a: ${calledPatient.patient_phone}`);
         await sendWhatsAppConfirmationServer({
-          phone: calledPatient.patient_phone,
+          toPhone: calledPatient.patient_phone,
           patientName: calledPatient.patient_name,
           doctorName: status.doctor.name,
           serviceName: calledPatient.service_name || 'Consulta',
-          appointmentDate: new Date().toISOString().split('T')[0],
-          appointmentTime: new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
           customMessage: `¡Hola ${calledPatient.patient_name}! Es tu turno con ${status.doctor.name}. Por favor pasa al consultorio.`
         });
       } catch (wsErr) {

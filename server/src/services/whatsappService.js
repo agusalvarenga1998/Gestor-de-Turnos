@@ -17,7 +17,8 @@ export const sendWhatsAppConfirmationServer = async ({
   time,
   serviceName,
   meetLink,
-  clinicAddress
+  clinicAddress,
+  customMessage
 }) => {
   if (!toPhone) return false;
 
@@ -40,6 +41,7 @@ export const sendWhatsAppConfirmationServer = async ({
     else if (clinicAddress) message += `📍 *Lugar:* ${clinicAddress}\n`;
 
     message += `\n_Mensaje automático enviado por TurnoHub_ 🚀`;
+    if (customMessage) message = `${customMessage}\n\n_Mensaje automático enviado por TurnoHub_`;
 
     // 1. Meta / WhatsApp Cloud API
     if (process.env.WHATSAPP_CLOUD_TOKEN && process.env.WHATSAPP_CLOUD_PHONE_ID) {

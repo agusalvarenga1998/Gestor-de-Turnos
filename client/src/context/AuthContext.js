@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 
 export const AuthContext = createContext();
@@ -8,10 +8,13 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sessionError, setSessionError] = useState(null);
+  const [verificationAttempt, setVerificationAttempt] = useState(0);
 
   // Verificar token al cargar la aplicación
   useEffect(() => {
     const verifyToken = async () => {
+      setSessionError(null);
       if (token) {
         try {
           const response = await authAPI.verify(token);
@@ -23,15 +26,20 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (err) {
           console.error('Error verificando token:', err);
-          localStorage.removeItem('token');
-          setToken(null);
+          if ([401, 403].includes(err.response?.status)) {
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
+          } else {
+            setSessionError('No pudimos conectar para verificar tu sesión. Tu sesión se conserva; volvé a intentar.');
+          }
         }
       }
       setLoading(false);
     };
 
     verifyToken();
-  }, [token]);
+  }, [token, verificationAttempt]);
 
   const login = async (email, password, challengeToken, code) => {
     setError(null);
@@ -134,7 +142,7 @@ export const AuthProvider = ({ children }) => {
   const isPending = user?.status === 'pending';
   const isSubscriptionExpired = user?.subscription_status === 'expired';
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     if (token) {
       try {
         const response = await authAPI.verify(token);
@@ -145,13 +153,15 @@ export const AuthProvider = ({ children }) => {
         console.error('Error refrescando usuario:', err);
       }
     }
-  };
+  }, [token]);
 
   const value = {
     user,
     token,
     loading,
     error,
+    sessionError,
+    retrySession: () => { setLoading(true); setVerificationAttempt(attempt => attempt + 1); },
     isAuthenticated: !!user && !!token && !isPending,
     isPending,
     isSubscriptionExpired,

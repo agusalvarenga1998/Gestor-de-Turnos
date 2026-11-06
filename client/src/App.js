@@ -7,6 +7,7 @@ import { SellerAuthProvider } from './context/SellerAuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { useAuth } from './hooks/useAuth';
+import { isDoctorArea } from './utils/doctorRoutes';
 
 // Páginas - Doctor
 import LoginPage from './pages/LoginPage';
@@ -136,15 +137,19 @@ function PageTracker() {
 
 function AppContent() {
   const location = useLocation();
-  const { isAuthenticated, loading, isSubscriptionExpired, user } = useAuth();
+  const { isAuthenticated, loading, isSubscriptionExpired, user, sessionError, retrySession } = useAuth();
 
   if (loading) {
     return <Loading />;
   }
 
+  if (sessionError && (isDoctorArea(location.pathname) || location.pathname === '/' || location.pathname === '/login')) {
+    return <main style={{ maxWidth: 520, margin: '15vh auto', padding: 24 }} role="alert"><h1>No pudimos verificar tu sesión</h1><p>{sessionError}</p><button onClick={retrySession}>Reintentar conexión</button></main>;
+  }
+
   // Redirigir al profesional a la configuración si es su primer ingreso o no completó su perfil
   const isProfileIncomplete = isAuthenticated && user && (!user.rubro || !user.specialization || !user.address);
-  if (isProfileIncomplete && !location.pathname.startsWith('/patient') && location.pathname !== '/settings') {
+  if (isProfileIncomplete && isDoctorArea(location.pathname) && location.pathname !== '/settings' && !isSubscriptionExpired) {
     return <Navigate to="/settings" replace />;
   }
 

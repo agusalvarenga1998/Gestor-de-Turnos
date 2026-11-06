@@ -54,7 +54,7 @@ const verifyOnlyDoctorRole = (req, res, next) => {
 router.get('/subscriptions/history', verifyOnlyDoctorRole, async (req, res) => {
   try {
     const result = await query(
-      `SELECT s.id, s.amount, s.status, s.period_start, s.period_end, s.created_at, p.name as plan_name, p.price_period
+      `SELECT s.id, s.pricing_plan_id, s.amount, s.status, s.period_start, s.period_end, s.created_at, p.name as plan_name, p.price_period
        FROM subscriptions s
        LEFT JOIN pricing_plans p ON s.pricing_plan_id = p.id
        WHERE s.doctor_id = $1
@@ -93,7 +93,9 @@ router.post('/subscriptions/request', verifyOnlyDoctorRole, async (req, res) => 
     const doctor = doctorResult.rows[0] || {};
 
     const result = await transaction(async () => {
-      const subscription = await query(
+      await query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`subscription-request:${req.user.id}:${plan.id}`]);
+      const pending = await query("SELECT * FROM subscriptions WHERE doctor_id=$1 AND pricing_plan_id=$2 AND status='pending' ORDER BY created_at DESC LIMIT 1", [req.user.id, plan.id]);
+      const subscription = pending.rows.length ? pending : await query(
         `INSERT INTO subscriptions (doctor_id, pricing_plan_id, amount, status)
          VALUES ($1, $2, $3, 'pending')
          RETURNING *`,
