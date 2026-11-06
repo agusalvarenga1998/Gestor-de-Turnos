@@ -18,7 +18,10 @@
     "test:integration": "node test/booking.integration.js",
     "test:outbox": "node test/outbox.integration.js",
     "test:migrations": "node test/migrations.integration.js",
-    "integrations:check": "node src/check-integrations.js"
+    "integrations:check": "node src/check-integrations.js",
+    "backup:create": "node src/backup.js create",
+    "backup:restore-check": "node src/backup.js restore-check",
+    "test:operations": "node test/operations.integration.js"
   },
   "keywords": [
     "medical",

@@ -15,6 +15,8 @@ import * as mpService from '../services/mercadopagoService.js';
 import axios from 'axios';
 import { sendPushToDoctor } from '../cron/reminderCron.js';
 import { sendWhatsAppConfirmationServer } from '../services/whatsappService.js';
+import { getPatientRescheduleSlots, reschedulePatientAppointment } from '../services/patientRescheduleService.js';
+import { notifyWaitlistForSlot } from '../services/waitlistService.js';
 
 const router = express.Router();
 router.use('/public', publicLimit);
@@ -609,11 +611,12 @@ router.post('/public/create', transactionalRoute(async (req, res) => {
         serviceId || null,
         serviceDuration,
         isCash ? true : false,
-        JSON.stringify({ name: `${patientName} ${patientLastName || ''}`.trim(), phone: patientPhone || '', documentNumber: patientDocumentNumber || '' })
+        JSON.stringify({ name: `${patientName} ${patientLastName || ''}`.trim(), phone: patientPhone || '', email: patientEmail || '', documentNumber: patientDocumentNumber || '' })
       ]
     );
 
     const appointment = appointmentResult.rows[0];
+    const appointmentId = appointment.id;
 
     console.log('✓ Cita pendiente creada:', appointment.id);
 
@@ -653,6 +656,8 @@ router.post('/public/create', transactionalRoute(async (req, res) => {
       }
 
       sendNewAppointmentNotificationToDoctor({
+        appointmentId,
+        doctorId,
         to: doctor.email,
         doctorName: doctor.name,
         patientName: `${patientName} ${patientLastName}`,
@@ -686,6 +691,8 @@ router.post('/public/create', transactionalRoute(async (req, res) => {
 
       // NOTIFICAR AL PACIENTE (Solicitud Registrada - Pendiente de Aprobación del Profesional)
       sendAppointmentConfirmation({
+        appointmentId,
+        doctorId,
         to: patientEmail,
         patientName: `${patientName} ${patientLastName}`,
         doctorName: doctor.name,
@@ -948,6 +955,9 @@ router.get('/public/:token', async (req, res) => {
         a.appointment_time,
         a.reason_for_visit,
         a.status,
+        a.payment_status,
+        a.booking_fee_paid,
+        a.duration_minutes,
         a.delay_minutes,
         a.delay_reason,
         a.meet_link,
@@ -1026,7 +1036,7 @@ router.post('/public/:token/cancel', async (req, res) => {
 
     // Buscar la cita y obtener fecha/hora
     const result = await query(
-      `SELECT id, appointment_date, appointment_time, status, doctor_id
+      `SELECT id, appointment_date, appointment_time, status, doctor_id, service_id
        FROM appointments
        WHERE confirmation_token::text = lower($1) OR portal_token::text = lower($1) OR (appointment_code ~* '^[0-9a-f-]{36}$' AND lower(appointment_code)=lower($1))`,
       [token]
@@ -1066,6 +1076,7 @@ router.post('/public/:token/cancel', async (req, res) => {
     );
 
     console.log('✓ Cita cancelada por el paciente:', appointment.id);
+    afterCommit(() => notifyWaitlistForSlot(appointment));
 
     res.json({
       success: true,
@@ -1077,6 +1088,25 @@ router.post('/public/:token/cancel', async (req, res) => {
       success: false,
       message: 'Error al procesar la cancelación'
     });
+  }
+});
+
+router.get('/public/:token/reschedule-slots/:date', async (req, res) => {
+  try {
+    const slots = await getPatientRescheduleSlots(req.params.token, req.params.date);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json({ success: true, slots });
+  } catch (error) {
+    res.status(error.status || 503).json({ success: false, message: error.status ? error.message : 'No pudimos consultar los horarios. Volvé a intentar.' });
+  }
+});
+
+router.post('/public/:token/reschedule', async (req, res) => {
+  try {
+    const appointment = await reschedulePatientAppointment(req.params.token, req.body.date, req.body.time);
+    res.json({ success: true, appointment, message: 'Turno reprogramado. Se conservan los pagos y el estado de confirmación.' });
+  } catch (error) {
+    res.status(error.status || (['23505', '23P01'].includes(error.code) ? 409 : 503)).json({ success: false, message: error.status ? error.message : 'No pudimos cambiar el turno. Actualizá los horarios y volvé a intentar.' });
   }
 });
 
@@ -1140,11 +1170,15 @@ router.patch('/:appointmentId/accept', async (req, res) => {
       });
     }
 
-    if (appointmentData.status !== 'pending' && appointmentData.status !== 'pending_payment') {
+    if (appointmentData.status === 'pending_payment') {
+      return res.status(409).json({ success: false, message: 'El pago todavía no está acreditado. Verificá el pago antes de confirmar el turno.' });
+    }
+
+    if (appointmentData.status !== 'pending') {
       console.log(`⚠️ Intentando aceptar cita ${appointmentId} pero el estado actual es: '${appointmentData.status}'`);
       return res.status(400).json({
         success: false,
-        message: 'Esta cita no está pendiente de aprobación o pago (Estado actual: ' + appointmentData.status + ')'
+        message: 'Esta cita no está pendiente de confirmación (Estado actual: ' + appointmentData.status + ')'
       });
     }
 
@@ -1154,9 +1188,12 @@ router.patch('/:appointmentId/accept', async (req, res) => {
        SET status = 'scheduled',
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
+       AND status = 'pending'
        RETURNING id, status`,
       [appointmentId]
     );
+
+    if (!result.rows.length) return res.status(409).json({ success: false, message: 'El turno cambió de estado. Actualizá la agenda antes de confirmar.' });
 
     console.log('✓ Cita aceptada:', appointmentId);
 
@@ -1185,6 +1222,8 @@ router.patch('/:appointmentId/accept', async (req, res) => {
     // Enviar email de confirmación (estado confirmado) al paciente de manera asíncrona
     if (appointmentData.patient_email) {
       sendAppointmentConfirmation({
+        appointmentId,
+        doctorId,
         to: appointmentData.patient_email,
         patientName: appointmentData.patient_name,
         doctorName: appointmentData.doctor_name,
@@ -1297,10 +1336,16 @@ router.patch('/:appointmentId/reject', async (req, res) => {
     );
 
     console.log('✗ Cita rechazada:', appointmentId);
+    afterCommit(async () => {
+      const released = (await query('SELECT doctor_id,appointment_date,appointment_time,service_id FROM appointments WHERE id=$1', [appointmentId])).rows[0];
+      if (released) await notifyWaitlistForSlot(released);
+    });
 
     // Enviar email de rechazo al paciente de manera asíncrona
     if (appointmentData.patient_email) {
       sendAppointmentRejectionEmail({
+        appointmentId,
+        doctorId,
         to: appointmentData.patient_email,
         patientName: appointmentData.patient_name,
         doctorName: appointmentData.doctor_name,
@@ -1381,6 +1426,8 @@ router.patch('/:appointmentId/delay', async (req, res) => {
     // Enviar notificación por email al paciente
     if (appointmentData.patient_email && delay_minutes > 0) {
       await sendDelayNotification({
+        appointmentId,
+        doctorId,
         to: appointmentData.patient_email,
         patientName: appointmentData.patient_name,
         doctorName: appointmentData.doctor_name,

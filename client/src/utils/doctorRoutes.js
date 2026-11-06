@@ -1,1 +1,1 @@
-export const isDoctorArea = pathname => /^\/(dashboard|onboarding|appointments|queue|patients|patient-history|insurance|settings|notifications|working-hours|services|reports|movements|doctor)(\/|$)/.test(pathname);
+export const isDoctorArea = pathname => /^\/(dashboard|onboarding|appointments|queue|patients|patient-history|insurance|settings|notifications|working-hours|services|reports|movements|doctor|team|operations)(\/|$)/.test(pathname);

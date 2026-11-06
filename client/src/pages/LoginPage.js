@@ -245,7 +245,8 @@ export default function LoginPage() {
               </div>
 
               <div className={styles.helpLinks}>
-                <Link to="/forgot-password" className={styles.link}>Olvidé mi contraseña</Link>
+                  <Link to="/forgot-password" className={styles.link}>Olvidé mi contraseña</Link>
+                  <Link to="/reception" className={styles.link}>Acceso de recepción</Link>
                 <Link to="/support" className={styles.link}>Necesito ayuda</Link>
               </div>
 

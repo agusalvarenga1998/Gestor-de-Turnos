@@ -8,6 +8,9 @@ import { WebSocketProvider } from './context/WebSocketContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { useAuth } from './hooks/useAuth';
 import { isDoctorArea } from './utils/doctorRoutes';
+import ReceptionPage from './pages/ReceptionPage';
+import TeamPage from './pages/TeamPage';
+import OperationsPage from './pages/OperationsPage';
 
 // Páginas - Doctor
 import LoginPage from './pages/LoginPage';
@@ -169,6 +172,8 @@ function AppContent() {
 
       {/* Rutas de autenticación (siempre disponibles) */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/reception" element={<ReceptionPage />} />
+      <Route path="/admin/operations" element={<ProtectedAdminRoute><OperationsPage key="admin-operations" admin /></ProtectedAdminRoute>} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/account-pending" element={<AccountPendingPage />} />
@@ -292,6 +297,8 @@ function AppContent() {
       {isAuthenticated && (
         <>
           <Route path="/dashboard" element={<DashboardNewPage />} />
+          <Route path="/team" element={<TeamPage />} />
+          <Route path="/operations" element={<OperationsPage key="doctor-operations" />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/queue" element={<LiveQueuePage />} />
@@ -313,7 +320,7 @@ function AppContent() {
     </Routes>
     
     {/* Overlay de suscripción expirada */}
-    {isAuthenticated && isSubscriptionExpired && (
+    {isAuthenticated && isSubscriptionExpired && (isDoctorArea(location.pathname) || location.pathname === '/subscription-expired') && (
       <SubscriptionExpiredPage />
     )}
     <WhatsAppBubble />

@@ -19,6 +19,7 @@ try {
       await client.query(`SET LOCAL search_path TO ${schema}`);
       await client.query(`
         CREATE TABLE doctors(id uuid PRIMARY KEY);
+        CREATE TABLE subscriptions(id uuid PRIMARY KEY);
         CREATE TABLE patients(id uuid PRIMARY KEY,doctor_id uuid,document_number text);
         CREATE TABLE services(id ${serviceType} PRIMARY KEY,duration_minutes integer,price numeric,booking_fee numeric);
         CREATE TABLE appointments(id uuid PRIMARY KEY,doctor_id uuid,appointment_date date,appointment_time time,duration_minutes integer,status text);
@@ -44,7 +45,7 @@ try {
       }
       await client.query('UPDATE waiting_queue SET service_id=$1 WHERE id=1', [serviceId]);
       assert.equal((await client.query('SELECT 1 FROM waiting_queue q JOIN services s ON q.service_id=s.id')).rowCount, 1);
-      assert.equal((await client.query('SELECT * FROM schema_migrations')).rowCount, 3);
+      assert.equal((await client.query('SELECT * FROM schema_migrations')).rowCount, 5);
       await client.query(`DROP SCHEMA ${schema} CASCADE`);
       console.log(`PASS services ${serviceType} / waiting_queue ${queueType}: migración completa, datos preservados e idempotencia`);
     });
@@ -58,6 +59,8 @@ try {
       CREATE TABLE schema_migrations(version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now());
       INSERT INTO schema_migrations(version) VALUES('002_stabilization');
       CREATE TABLE doctors(id uuid PRIMARY KEY);
+      CREATE TABLE patients(id uuid PRIMARY KEY);
+      CREATE TABLE subscriptions(id uuid PRIMARY KEY);
       CREATE TABLE appointments(
         id uuid PRIMARY KEY,
         doctor_id uuid,

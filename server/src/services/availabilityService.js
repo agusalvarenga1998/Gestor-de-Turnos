@@ -184,7 +184,7 @@ export const isAvailableAt = async (doctorId, date, time, durationMinutes = 30, 
 };
 
 // Obtener próximas disponibilidades para una fecha y duración específica
-export const getNextAvailableSlots = async (doctorId, date, slotDurationMinutes = 30) => {
+export const getNextAvailableSlots = async (doctorId, date, slotDurationMinutes = 30, excludeId = null) => {
   const [year, month, day] = date.split('-').map(Number);
   const dateObj = new Date(year, month - 1, day);
   const dayOfWeek = dateObj.getDay();
@@ -223,9 +223,9 @@ export const getNextAvailableSlots = async (doctorId, date, slotDurationMinutes 
   // Obtener citas existentes para calcular solapamientos
   const appointments = await query(
     `SELECT appointment_time, duration_minutes FROM appointments
-     WHERE doctor_id = $1 AND appointment_date = $2 AND status NOT IN ('cancelled', 'rejected')
+     WHERE doctor_id = $1 AND appointment_date = $2 AND status NOT IN ('cancelled', 'rejected', 'absent', 'completed') AND ($3::uuid IS NULL OR id <> $3)
      ORDER BY appointment_time ASC`,
-    [doctorId, date]
+    [doctorId, date, excludeId]
   );
 
   const bookedRanges = appointments.rows.map(a => {

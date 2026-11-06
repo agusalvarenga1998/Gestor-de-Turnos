@@ -1,4 +1,4 @@
-import { needsAppointmentClosure } from '../utils/appointmentState';
+import { appointmentStatusInfo, appointmentPaymentInfo } from '../utils/appointmentState';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -486,21 +486,11 @@ export default function AppointmentsPage() {
   };
 
   const getStatusBadge = (status, appointment) => {
-    if (needsAppointmentClosure(appointment)) return <span className={`${styles.statusBadge} ${styles.statusPending}`}>Pendiente de cierre</span>;
-    const badges = {
-      pending: { label: 'Por Aprobar', class: styles.statusPending },
-      pending_payment: { label: 'Pendiente de Pago', class: styles.statusPending },
-      scheduled: { label: 'Programado', class: styles.statusScheduled },
-      completed: { label: 'Completado', class: styles.statusCompleted },
-      cancelled: { label: 'Cancelado', class: styles.statusCancelled },
-      rejected: { label: 'Rechazado', class: styles.statusRejected },
-      absent: { label: 'Ausente', class: styles.statusAbsent },
-      expired: { label: 'Solicitud Vencida', class: styles.statusExpired }
-    };
-    const badge = badges[status] || badges.scheduled;
-    return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
+    const info = appointmentStatusInfo(appointment || { status });
+    const classes = { pending: styles.statusPending, scheduled: styles.statusScheduled, completed: styles.statusCompleted, cancelled: styles.statusCancelled, rejected: styles.statusRejected, absent: styles.statusAbsent, expired: styles.statusExpired };
+    const payment = appointment ? appointmentPaymentInfo(appointment) : null;
+    return <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}><span className={`${styles.statusBadge} ${classes[info.tone] || styles.statusScheduled}`}>{info.label}</span>{payment && <small>{payment.label}</small>}</span>;
   };
-
   const handleAcceptAppointment = async (appointmentId) => {
     try {
       setLoading(true);
@@ -643,6 +633,8 @@ export default function AppointmentsPage() {
                     <div className={styles.cardActionsMobile}>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
+                        disabled={appt.status === "pending_payment"}
+                        title={appt.status === "pending_payment" ? "Esperando acreditación del pago" : "Confirmar turno"}
                         className={styles.mobileAcceptBtn}
                       >
                         Aceptar
@@ -795,6 +787,8 @@ export default function AppointmentsPage() {
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
+                        disabled={appt.status === "pending_payment"}
+                        title={appt.status === "pending_payment" ? "Esperando acreditación del pago" : "Confirmar turno"}
                                   className={styles.acceptBtn}
                                   title="Confirmar/Aceptar cita"
                                 >
@@ -1404,6 +1398,8 @@ export default function AppointmentsPage() {
                               <>
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
+                        disabled={appt.status === "pending_payment"}
+                        title={appt.status === "pending_payment" ? "Esperando acreditación del pago" : "Confirmar turno"}
                                   className={styles.acceptBtn}
                                   title="Confirmar/Aceptar cita"
                                 >
@@ -1539,6 +1535,8 @@ export default function AppointmentsPage() {
                         <>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleAcceptAppointment(appt.id); }}
+                        disabled={appt.status === "pending_payment"}
+                        title={appt.status === "pending_payment" ? "Esperando acreditación del pago" : "Confirmar turno"}
                             className={styles.mobileAcceptBtn}
                           >
                             Aceptar

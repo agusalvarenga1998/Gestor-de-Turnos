@@ -46,7 +46,7 @@ try {
   check('aviso vencido no se envía y elimina datos', (await row(expired.id)).status === 'expired' && (await row(expired.id)).payload === null);
   const rejected = await enqueue();
   await processEmailOutbox(async () => { throw Object.assign(new Error('Dirección inválida'), { responseCode: 550, code: 'EENVELOPE' }); }, { jobId: rejected.id });
-  check('rechazo permanente no genera reintentos infinitos', (await row(rejected.id)).status === 'failed' && (await row(rejected.id)).payload === null);
+  check('rechazo permanente queda detenido y permite reintento manual hasta vencer', (await row(rejected.id)).status === 'failed' && (await row(rejected.id)).payload !== null);
   const exhausted = await enqueue();
   await query('UPDATE email_outbox SET attempts=7 WHERE id=$1', [exhausted.id]);
   await processEmailOutbox(async () => { throw new Error('Error temporal'); }, { jobId: exhausted.id });

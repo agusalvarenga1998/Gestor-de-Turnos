@@ -1,3 +1,4 @@
+import SettingsNavigation from '../components/SettingsNavigation';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -79,7 +80,6 @@ export default function SettingsPage() {
   });
 
   // Estados de Navegación por Categorías (Tabs)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     const tabFromUrl = searchParams.get('tab');
     if (tabFromUrl && ['profile', 'mercadopago', 'google', 'push', 'subscription', 'security', 'onboarding'].includes(tabFromUrl)) {
@@ -714,7 +714,7 @@ export default function SettingsPage() {
     <DoctorLayout>
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Configuración del Perfil</h1>
+          <h1 className={styles.title}>Configuración del consultorio</h1>
           <p className={styles.subtitle}>Gestiona tu cuenta, integraciones de cobro, sincronización y preferencias.</p>
         </div>
 
@@ -731,236 +731,8 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Selector / Menú Desplegable para Celulares */}
-        <div className={styles.mobileCategoryMenu}>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={styles.mobileMenuToggleBtn}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="material-symbols-outlined" style={{ color: '#2563eb', fontSize: '20px' }}>settings</span>
-              <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>
-                {activeTab === 'profile' && '👤 Datos Generales'}
-                {activeTab === 'mercadopago' && '💳 Mercado Pago'}
-                {activeTab === 'google' && '📅 Google Calendar'}
-                {activeTab === 'push' && '🔔 Notificaciones Celular'}
-                {activeTab === 'subscription' && '💎 Plan y Suscripción'}
-                {activeTab === 'security' && '🔐 Seguridad y Datos'}
-                {activeTab === 'onboarding' && '📋 Guía de Inicio'}
-              </span>
-            </div>
-            <span className="material-symbols-outlined" style={{ transition: 'transform 0.2s', transform: mobileMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-              expand_more
-            </span>
-          </button>
-
-          {mobileMenuOpen && (
-            <div className={styles.mobileMenuList}>
-              <div className={styles.mobileMenuGroupTitle}>CONFIGURACIÓN DE CUENTA</div>
-              <button
-                type="button"
-                className={`${styles.mobileMenuItem} ${activeTab === 'profile' ? styles.mobileMenuItemActive : ''}`}
-                onClick={() => { handleSelectTab('profile'); setMobileMenuOpen(false); }}
-              >
-                <Icon name="users" size={18} color={activeTab === 'profile' ? '#2563eb' : '#64748b'} />
-                <span>Datos Generales (Perfil, dirección y GPS)</span>
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.mobileMenuItem} ${activeTab === 'mercadopago' ? styles.mobileMenuItemActive : ''}`}
-                onClick={() => { handleSelectTab('mercadopago'); setMobileMenuOpen(false); }}
-              >
-                <Icon name="check-circle" size={18} color={activeTab === 'mercadopago' ? '#009ee3' : '#64748b'} />
-                <span style={{ flex: 1 }}>Mercado Pago (Cobros de señas online)</span>
-                {profileData.mp_connected && <span className={styles.tabBadgeSuccess}>✓</span>}
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.mobileMenuItem} ${activeTab === 'google' ? styles.mobileMenuItemActive : ''}`}
-                onClick={() => { handleSelectTab('google'); setMobileMenuOpen(false); }}
-              >
-                <Icon name="calendar" size={18} color={activeTab === 'google' ? '#2563eb' : '#64748b'} />
-                <span style={{ flex: 1 }}>Google Calendar (Sincronización)</span>
-                {googleConnected && <span className={styles.tabBadgeSuccess}>✓</span>}
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.mobileMenuItem} ${activeTab === 'push' ? styles.mobileMenuItemActive : ''}`}
-                onClick={() => { handleSelectTab('push'); setMobileMenuOpen(false); }}
-              >
-                <Icon name="download" size={18} color={activeTab === 'push' ? '#10b981' : '#64748b'} />
-                <span style={{ flex: 1 }}>Notificaciones Celular (Alertas PWA)</span>
-                {pushSubscribed && <span className={styles.tabBadgeSuccess}>✓</span>}
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.mobileMenuItem} ${activeTab === 'subscription' ? styles.mobileMenuItemActive : ''}`}
-                onClick={() => { handleSelectTab('subscription'); setMobileMenuOpen(false); }}
-              >
-                <Icon name="wallet" size={18} color={activeTab === 'subscription' ? '#3b82f6' : '#64748b'} />
-                <span>Plan y Suscripción (Facturación y planes)</span>
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.mobileMenuItem} ${activeTab === 'security' ? styles.mobileMenuItemActive : ''}`}
-                onClick={() => { handleSelectTab('security'); setMobileMenuOpen(false); }}
-              >
-                <Icon name="lock" size={18} color={activeTab === 'security' ? '#dc2626' : '#64748b'} />
-                <span>Seguridad y Datos (Sesiones y privacidad)</span>
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.mobileMenuItem} ${activeTab === 'onboarding' ? styles.mobileMenuItemActive : ''}`}
-                onClick={() => { handleSelectTab('onboarding'); setMobileMenuOpen(false); }}
-              >
-                <Icon name="reports" size={18} color={activeTab === 'onboarding' ? '#f59e0b' : '#64748b'} />
-                <span>Guía de Inicio (Checklist consultorio)</span>
-              </button>
-
-              <div className={styles.mobileMenuGroupTitle} style={{ marginTop: '0.75rem' }}>CONFIGURACIONES DE ATENCIÓN</div>
-              <a href="/working-hours" className={styles.mobileMenuItem}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#0284c7' }}>schedule</span>
-                <span>Horarios de Atención</span>
-                <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '14px', color: '#94a3b8' }}>open_in_new</span>
-              </a>
-              <a href="/services" className={styles.mobileMenuItem}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#16a34a' }}>medical_services</span>
-                <span>Servicios y Precios</span>
-                <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '14px', color: '#94a3b8' }}>open_in_new</span>
-              </a>
-              <a href="/insurance" className={styles.mobileMenuItem}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#8b5cf6' }}>health_and_safety</span>
-                <span>Obras Sociales y Convenios</span>
-                <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '14px', color: '#94a3b8' }}>open_in_new</span>
-              </a>
-            </div>
-          )}
-        </div>
-
-        {/* Layout en 2 Columnas: Sidebar Menú + Contenido Activo */}
         <div className={styles.settingsLayout}>
-          {/* Menú Lateral de Categorías de Configuración (Solo visible en escritorio >900px) */}
-          <aside className={styles.settingsSidebar}>
-            <div className={styles.sidebarGroup}>
-              <span className={styles.sidebarGroupTitle}>Configuración de Cuenta</span>
-              <nav className={styles.sidebarNav}>
-                <button
-                  type="button"
-                  className={`${styles.navItem} ${activeTab === 'profile' ? styles.navItemActive : ''}`}
-                  onClick={() => handleSelectTab('profile')}
-                >
-                  <Icon name="users" size={20} color={activeTab === 'profile' ? '#2563eb' : '#64748b'} />
-                  <div className={styles.navItemText}>
-                    <span className={styles.navItemTitle}>Datos Generales</span>
-                    <span className={styles.navItemSub}>Perfil, dirección y GPS</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.navItem} ${activeTab === 'mercadopago' ? styles.navItemActive : ''}`}
-                  onClick={() => handleSelectTab('mercadopago')}
-                >
-                  <Icon name="check-circle" size={20} color={activeTab === 'mercadopago' ? '#009ee3' : '#64748b'} />
-                  <div className={styles.navItemText}>
-                    <span className={styles.navItemTitle}>Mercado Pago</span>
-                    <span className={styles.navItemSub}>Cobros de señas online</span>
-                  </div>
-                  {profileData.mp_connected && <span className={styles.tabBadgeSuccess}>✓</span>}
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.navItem} ${activeTab === 'google' ? styles.navItemActive : ''}`}
-                  onClick={() => handleSelectTab('google')}
-                >
-                  <Icon name="calendar" size={20} color={activeTab === 'google' ? '#2563eb' : '#64748b'} />
-                  <div className={styles.navItemText}>
-                    <span className={styles.navItemTitle}>Google Calendar</span>
-                    <span className={styles.navItemSub}>Sincronización de agenda</span>
-                  </div>
-                  {googleConnected && <span className={styles.tabBadgeSuccess}>✓</span>}
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.navItem} ${activeTab === 'push' ? styles.navItemActive : ''}`}
-                  onClick={() => handleSelectTab('push')}
-                >
-                  <Icon name="download" size={20} color={activeTab === 'push' ? '#10b981' : '#64748b'} />
-                  <div className={styles.navItemText}>
-                    <span className={styles.navItemTitle}>Notificaciones Celular</span>
-                    <span className={styles.navItemSub}>Alertas PWA Push</span>
-                  </div>
-                  {pushSubscribed && <span className={styles.tabBadgeSuccess}>✓</span>}
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.navItem} ${activeTab === 'subscription' ? styles.navItemActive : ''}`}
-                  onClick={() => handleSelectTab('subscription')}
-                >
-                  <Icon name="wallet" size={20} color={activeTab === 'subscription' ? '#3b82f6' : '#64748b'} />
-                  <div className={styles.navItemText}>
-                    <span className={styles.navItemTitle}>Plan y Suscripción</span>
-                    <span className={styles.navItemSub}>Planes y facturación</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.navItem} ${activeTab === 'security' ? styles.navItemActive : ''}`}
-                  onClick={() => handleSelectTab('security')}
-                >
-                  <Icon name="lock" size={20} color={activeTab === 'security' ? '#dc2626' : '#64748b'} />
-                  <div className={styles.navItemText}>
-                    <span className={styles.navItemTitle}>Seguridad y Datos</span>
-                    <span className={styles.navItemSub}>Sesiones y privacidad</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.navItem} ${activeTab === 'onboarding' ? styles.navItemActive : ''}`}
-                  onClick={() => handleSelectTab('onboarding')}
-                >
-                  <Icon name="reports" size={20} color={activeTab === 'onboarding' ? '#f59e0b' : '#64748b'} />
-                  <div className={styles.navItemText}>
-                    <span className={styles.navItemTitle}>Guía de Inicio</span>
-                    <span className={styles.navItemSub}>Checklist inicial</span>
-                  </div>
-                </button>
-              </nav>
-            </div>
-
-            <div className={styles.sidebarGroup} style={{ marginTop: '1.5rem' }}>
-              <span className={styles.sidebarGroupTitle}>Configuraciones de Atención</span>
-              <nav className={styles.sidebarNav}>
-                <a href="/working-hours" className={styles.navItemLink}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#0284c7' }}>schedule</span>
-                  <span>Horarios de Atención</span>
-                  <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '16px', color: '#94a3b8' }}>open_in_new</span>
-                </a>
-                <a href="/services" className={styles.navItemLink}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#16a34a' }}>medical_services</span>
-                  <span>Servicios y Precios</span>
-                  <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '16px', color: '#94a3b8' }}>open_in_new</span>
-                </a>
-                <a href="/insurance" className={styles.navItemLink}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#8b5cf6' }}>health_and_safety</span>
-                  <span>Obras Sociales y Convenios</span>
-                  <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '16px', color: '#94a3b8' }}>open_in_new</span>
-                </a>
-              </nav>
-            </div>
-          </aside>
+          <SettingsNavigation activeTab={activeTab} onSelect={handleSelectTab} />
 
           {/* Panel Principal del Tab Seleccionado */}
           <main className={styles.settingsContent}>

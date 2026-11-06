@@ -245,6 +245,7 @@ export const updateAppointment = async (req, res) => {
       });
     }
 
+    if (appointment.status === 'pending_payment' && updateData.status === 'scheduled') return res.status(409).json({ success: false, message: 'El pago todavía no está acreditado. Verificá el pago antes de confirmar el turno.' });
     if (appointment.payment_status === 'paid' && updateData.payment_status && updateData.payment_status !== 'paid') return res.status(409).json({ success: false, message: 'El cobro ya está registrado. Registra una devolución en Caja si corresponde.' });
     if (updateData.delay_minutes !== undefined && (!Number.isInteger(Number(updateData.delay_minutes)) || Number(updateData.delay_minutes) < 0 || Number(updateData.delay_minutes) > 480)) return res.status(400).json({ success: false, message: 'La demora debe estar entre 0 y 480 minutos.' });
     if (updateData.insurance_company_id && !(await query('SELECT id FROM insurance_companies WHERE id=$1 AND doctor_id=$2', [updateData.insurance_company_id, doctorId])).rowCount) return res.status(400).json({ success: false, message: 'Cobertura no disponible.' });

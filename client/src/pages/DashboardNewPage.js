@@ -1,4 +1,5 @@
-import { needsAppointmentClosure } from '../utils/appointmentState';
+import OperationalSummary from '../components/OperationalSummary';
+import { appointmentStatusInfo, appointmentPaymentInfo } from '../utils/appointmentState';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DoctorLayout from '../components/DoctorLayout';
@@ -265,18 +266,11 @@ export default function DashboardNewPage() {
   );
 
   const getStatusBadge = (status, appointment) => {
-    if (needsAppointmentClosure(appointment)) return <span className={`${styles.statusBadge} ${styles.statusScheduled}`}>PENDIENTE DE CIERRE</span>;
-    const badges = {
-      scheduled: { label: 'PROGRAMADO', class: styles.statusScheduled },
-      completed: { label: 'COMPLETADO', class: styles.statusCompleted },
-      cancelled: { label: 'CANCELADO', class: styles.statusCancelled },
-      absent: { label: 'AUSENTE', class: styles.statusAbsent },
-      expired: { label: 'SOLICITUD VENCIDA', class: styles.statusExpired }
-    };
-    const badge = badges[status] || badges.scheduled;
-    return <span className={`${styles.statusBadge} ${badge.class}`}>{badge.label}</span>;
+    const info = appointmentStatusInfo(appointment || { status });
+    const classes = { pending: styles.statusPending, scheduled: styles.statusScheduled, completed: styles.statusCompleted, cancelled: styles.statusCancelled, rejected: styles.statusRejected, absent: styles.statusAbsent, expired: styles.statusExpired };
+    const payment = appointment ? appointmentPaymentInfo(appointment) : null;
+    return <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}><span className={`${styles.statusBadge} ${classes[info.tone] || styles.statusScheduled}`}>{info.label}</span>{payment && <small>{payment.label}</small>}</span>;
   };
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour >= 6 && hour < 12) {
@@ -329,6 +323,8 @@ export default function DashboardNewPage() {
           </div>
         </header>
 
+        <OperationalSummary />
+
         {/* Banner de Configuración Pendiente (Onboarding) */}
         {stats.incompleteConfig && stats.incompleteConfig.length > 0 && (
           <div className={styles.onboardingBanner}>
@@ -359,25 +355,9 @@ export default function DashboardNewPage() {
 
         {/* Fila de Indicadores y Acciones Urgentes */}
         <div className={styles.actionableMetrics}>
-          {stats.pendingApprovalCount > 0 && (
-            <div className={`${styles.actionCard} ${styles.danger}`} onClick={() => navigate('/appointments?tab=pending')}>
-              <div className={styles.actionCardHeader}>
-                <span className={styles.actionNumber}>{stats.pendingApprovalCount}</span>
-                <Icon name="warning" size={20} />
-              </div>
-              <p className={styles.actionText}>Por Aprobar</p>
-            </div>
-          )}
+
           
-          {stats.pendingPaymentCount > 0 && (
-            <div className={`${styles.actionCard} ${styles.warning}`} onClick={() => navigate('/appointments?tab=pending-payment')}>
-              <div className={styles.actionCardHeader}>
-                <span className={styles.actionNumber}>{stats.pendingPaymentCount}</span>
-                <Icon name="wallet" size={20} />
-              </div>
-              <p className={styles.actionText}>Pagos Pendientes</p>
-            </div>
-          )}
+
 
           {stats.indebtedPatientsCount > 0 && (
             <div className={`${styles.actionCard} ${styles.orange}`} onClick={() => navigate('/movements')}>
@@ -757,7 +737,7 @@ export default function DashboardNewPage() {
                 </div>
                 <div className={styles.detailCard}>
                   <label>💳 Estado de Pago</label>
-                  <p>{selectedAppointment.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}</p>
+                  <p>{appointmentPaymentInfo(selectedAppointment).label}</p>
                 </div>
                 <div className={styles.detailCard}>
                   <label>⚡ Estado Turno</label>

@@ -26,6 +26,8 @@ import movementsRoutes from './routes/movements.js';
 import supportRoutes from './routes/support.js';
 import queueRoutes from './routes/queue.js';
 import sellerRoutes from './routes/seller.js';
+import receptionRoutes from './routes/reception.js';
+import operationsRoutes from './routes/operations.js';
 import path from 'path';
 import { uploadsDir } from './utils/paths.js';
 import { query } from './db/config.js';
@@ -170,6 +172,8 @@ app.use('/api/movements', movementsRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/seller', sellerRoutes);
+app.use('/api/reception', receptionRoutes);
+app.use('/api/operations', operationsRoutes);
 
 // Servir archivos estáticos (uploads)
 // Los adjuntos clínicos se entregan mediante patient-records/file con autenticación.

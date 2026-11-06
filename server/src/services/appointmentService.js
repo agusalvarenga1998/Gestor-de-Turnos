@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as googleCalendarService from './googleCalendarService.js';
 import * as emailService from './emailService.js';
 import { sendWhatsAppConfirmationServer } from './whatsappService.js';
+import { notifyWaitlistForSlot } from './waitlistService.js';
 const generateAppointmentCode = () => randomUUID();
 
 // Crear una cita
@@ -110,6 +111,8 @@ export const createAppointment = async (doctorId, patientId, appointmentData) =>
     if (patient && patient.email) {
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/appointment/${confirmationToken}`;
       emailService.sendAppointmentConfirmation({
+        appointmentId,
+        doctorId,
         to: patient.email,
         patientName: patient.name,
         doctorName: doctor.name,
@@ -196,7 +199,7 @@ export const getAppointmentsByDoctor = async (doctorId, filters = {}) => {
     LEFT JOIN services s ON a.service_id = s.id
     LEFT JOIN insurance_companies ic ON a.insurance_company_id = ic.id
     LEFT JOIN insurance_plans ip ON a.insurance_plan_id = ip.id
-    WHERE a.doctor_id = $1 AND a.status != 'pending_payment'
+    WHERE a.doctor_id = $1
   `;
 
   const params = [doctorId];
@@ -292,6 +295,10 @@ export const updateAppointment = async (appointmentId, updateData) => {
     );
 
     const updatedAppointment = result.rows[0];
+    if (currentAppointment && !['cancelled','rejected','expired'].includes(currentAppointment.status) &&
+      (['cancelled','rejected'].includes(updatedAppointment.status) || currentAppointment.appointment_date !== updatedAppointment.appointment_date || currentAppointment.appointment_time !== updatedAppointment.appointment_time)) {
+      afterCommit(() => notifyWaitlistForSlot(currentAppointment));
+    }
 
     // Si la cita se completa y no se ha cobrado la comisión, cobrarla ahora
     if (updatedAppointment.status === 'completed' && !updatedAppointment.fee_charged && updatedAppointment.system_fee > 0) {
@@ -357,6 +364,7 @@ export const cancelAppointment = async (appointmentId) => {
       [appointmentId]
     );
 
+    if (appointment && appointment.status !== 'cancelled') afterCommit(() => notifyWaitlistForSlot(appointment));
     // Eliminar evento de Google Calendar si existe
     if (appointment && appointment.google_event_id) {
       try {

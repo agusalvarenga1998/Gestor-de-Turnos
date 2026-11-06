@@ -79,3 +79,21 @@ test('el mantenimiento de turnos no marca ausentes automáticamente', async () =
     assert.match(statements[0], /status IN \('pending', 'pending_payment'\)/);
   } finally { pool.query = originalQuery; }
 });
+
+test('no confirma un turno mientras el pago está pendiente de acreditación', async () => {
+  const { default: appointmentsRouter } = await import('../src/routes/appointments.js');
+  const accept = appointmentsRouter.stack.find(layer => layer.route?.path === '/:appointmentId/accept').route.stack.at(-1).handle;
+  const originalQuery = pool.query;
+  let updates = 0;
+  pool.query = async sql => {
+    if (sql.includes('UPDATE')) updates++;
+    return { rows: [{ status: 'pending_payment', doctor_id: 'doctor-id' }] };
+  };
+  const res = { status(code) { this.code = code; return this; }, json(body) { this.body = body; return this; } };
+  try {
+    await accept({ params: { appointmentId: 'appointment-id' }, user: { id: 'doctor-id' } }, res);
+    assert.equal(res.code, 409);
+    assert.match(res.body.message, /pago/);
+    assert.equal(updates, 0);
+  } finally { pool.query = originalQuery; }
+});

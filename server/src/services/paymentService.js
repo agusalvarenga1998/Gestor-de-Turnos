@@ -51,8 +51,8 @@ export async function applyApprovedPayment(payment, referenceId, kind) {
         const info = (await query(`SELECT d.name as doctor_name,d.email as doctor_email,p.name,p.email FROM doctors d JOIN patients p ON p.id=$2 WHERE d.id=$1`, [row.doctor_id, row.patient_id])).rows[0];
         if (!info) return;
         await Promise.allSettled([
-          sendNewAppointmentNotificationToDoctor({ to: info.doctor_email, doctorName: info.doctor_name, patientName: info.name, appointmentDate: row.appointment_date, appointmentTime: row.appointment_time, dashboardUrl: `${process.env.FRONTEND_URL}/appointments` }),
-          sendAppointmentConfirmation({ to: info.email, patientName: info.name, doctorName: info.doctor_name, appointmentDate: row.appointment_date, appointmentTime: row.appointment_time, appointmentCode: row.appointment_code, confirmUrl: `${process.env.FRONTEND_URL}/patient/appointment/${row.portal_token}`, status: 'pending' })
+          sendNewAppointmentNotificationToDoctor({ appointmentId: referenceId, doctorId: row.doctor_id, to: info.doctor_email, doctorName: info.doctor_name, patientName: info.name, appointmentDate: row.appointment_date, appointmentTime: row.appointment_time, dashboardUrl: `${process.env.FRONTEND_URL}/appointments` }),
+          sendAppointmentConfirmation({ appointmentId: referenceId, doctorId: row.doctor_id, to: info.email, patientName: info.name, doctorName: info.doctor_name, appointmentDate: row.appointment_date, appointmentTime: row.appointment_time, appointmentCode: row.appointment_code, confirmUrl: `${process.env.FRONTEND_URL}/patient/appointment/${row.portal_token}`, status: 'pending' })
         ]);
       });
     }

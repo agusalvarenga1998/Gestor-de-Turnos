@@ -52,6 +52,8 @@ export default function Sidebar({ isMobile, isOpen, onClose, onOpenTour }) {
     { icon: 'bell', label: 'Notificaciones', path: '/notifications' },
     { icon: 'warning', label: 'Reportar Problema', path: '/support' },
     { icon: 'settings', label: 'Configuración', path: '/settings' },
+    { icon: 'users', label: 'Equipo y recepción', path: '/team' },
+    { icon: 'reports', label: 'Operaciones y seguimiento', path: '/operations' },
   ];
 
   const handleLogout = async () => {

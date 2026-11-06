@@ -36,3 +36,5 @@ Thumbs.db
 
 # Uploads
 server/uploads/
+server/backups/
+server/backup-status.json

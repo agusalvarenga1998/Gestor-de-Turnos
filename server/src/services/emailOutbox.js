@@ -2,18 +2,21 @@ import { randomUUID } from 'node:crypto';
 import { query } from '../db/config.js';
 
 // Appointment and plan-request notices use this queue. Short-lived access codes stay synchronous.
-export async function enqueueEmail(payload, { ttlMinutes = 1440 } = {}) {
+export async function enqueueEmail(payload, { ttlMinutes = 1440, doctorId = null, category = 'general', appointmentId = null } = {}) {
   const id = randomUUID();
   const messageId = `<${id}@notifications.turnohub.com.ar>`;
-  await query(`INSERT INTO email_outbox(id,payload,expires_at)
-    VALUES($1,$2,now()+$3*interval '1 minute')`, [id, { ...payload, messageId }, ttlMinutes]);
+  const address = typeof payload.to === 'string' ? payload.to : '';
+  const recipientHint = /^[^@]+@[^@]+$/.test(address) ? `${address[0]}***@${address.split('@')[1]}` : 'Destinatario reservado';
+  await query(`INSERT INTO email_outbox(id,payload,expires_at,doctor_id,category,recipient_hint,appointment_id,appointment_context)
+    VALUES($1,$2,now()+$3*interval '1 minute',$4,$5,$6,$7,
+    (SELECT jsonb_build_object('date',appointment_date::text,'time',appointment_time::text,'status',status) FROM appointments WHERE id=$7))`, [id, { ...payload, messageId }, ttlMinutes, doctorId, category, recipientHint, appointmentId]);
   return { id, queued: true, sent: false, messageId };
 }
 
 export async function processEmailOutbox(sendMail, { jobId = null } = {}) {
-  // Clear private message contents after delivery, expiry, or exhaustion of retries.
+  // El contenido se elimina al enviar o vencer; los fallidos conservan contenido solo hasta su TTL para reintento manual.
   await query(`UPDATE email_outbox SET status='expired',payload=NULL,finished_at=now(),lease_token=NULL,lease_until=NULL
-    WHERE status IN ('pending','processing') AND expires_at<=now() AND (lease_until IS NULL OR lease_until<=now())`);
+    WHERE status IN ('pending','processing','failed') AND expires_at<=now() AND (lease_until IS NULL OR lease_until<=now())`);
   await query("DELETE FROM email_outbox WHERE finished_at < now()-interval '7 days'");
   const lease = randomUUID();
   const job = (await query(`UPDATE email_outbox SET status='processing',lease_token=$1,
@@ -24,6 +27,14 @@ export async function processEmailOutbox(sendMail, { jobId = null } = {}) {
     RETURNING *`, [lease, jobId])).rows[0];
   if (!job) return false;
   try {
+    if (job.appointment_id && job.appointment_context) {
+      const context = job.appointment_context;
+      const current = await query('SELECT id FROM appointments WHERE id=$1 AND appointment_date=$2 AND appointment_time=$3 AND status=$4', [job.appointment_id, context.date, context.time, context.status]);
+      if (!current.rowCount) {
+        await query("UPDATE email_outbox SET status='expired',payload=NULL,finished_at=now(),lease_token=NULL,lease_until=NULL WHERE id=$1 AND lease_token=$2", [job.id, lease]);
+        return true;
+      }
+    }
     await sendMail(job.payload);
     await query(`UPDATE email_outbox SET status='sent',payload=NULL,finished_at=now(),error_code=NULL,
       lease_token=NULL,lease_until=NULL WHERE id=$1 AND lease_token=$2`, [job.id, lease]);
@@ -33,7 +44,7 @@ export async function processEmailOutbox(sendMail, { jobId = null } = {}) {
     // Never persist SMTP responses, which can contain recipient addresses or message text.
     const code = /^[A-Z0-9_]{1,40}$/.test(error.code || '') ? error.code : 'DELIVERY_FAILED';
     await query(`UPDATE email_outbox SET status=$3,error_code=$4,lease_token=NULL,lease_until=NULL,
-      available_at=now()+$5*interval '1 second',payload=CASE WHEN $6 THEN NULL ELSE payload END,
+      available_at=now()+$5*interval '1 second',
       finished_at=CASE WHEN $6 THEN now() ELSE NULL END WHERE id=$1 AND lease_token=$2`,
     [job.id, lease, exhausted ? 'failed' : 'pending', code, Math.min(3600, 30 * 2 ** (job.attempts - 1)), exhausted]);
   }

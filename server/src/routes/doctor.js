@@ -104,6 +104,7 @@ router.post('/subscriptions/request', verifyOnlyDoctorRole, async (req, res) => 
 
       // Guardar solicitud y avisos juntos; SMTP se procesa con reintentos después del commit.
       await sendPlanRequestEmailToAdmin({
+        doctorId: req.user.id,
         doctorName: doctor.name || req.user.name,
         doctorEmail: doctor.email || req.user.email,
         doctorPhone: doctor.phone,

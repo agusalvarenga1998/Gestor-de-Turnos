@@ -55,6 +55,8 @@ transporter.verify((error) => {
 
 // Enviar email de confirmación o solicitud de cita
 export async function sendAppointmentConfirmation({
+  appointmentId,
+  doctorId,
   to,
   patientName,
   doctorName,
@@ -289,7 +291,7 @@ export async function sendAppointmentConfirmation({
       to: to,
       subject: emailSubject,
       html: htmlContent
-    });
+    }, { doctorId: doctorId || null, appointmentId: appointmentId || null, category: 'appointment' });
 
     console.log('✓ Confirmación guardada en la cola:', info.messageId);
     return info;
@@ -302,6 +304,8 @@ export async function sendAppointmentConfirmation({
 
 // Enviar notificación de retraso a pacientes afectados
 export async function sendDelayNotification({
+  appointmentId,
+  doctorId,
   to,
   patientName,
   doctorName,
@@ -435,7 +439,7 @@ export async function sendDelayNotification({
       to: to,
       subject: `⏱️ Tu cita con ${doctorName} se ha retrasado ${delayMinutes} minutos`,
       html: htmlContent
-    }, { ttlMinutes: 60 });
+    }, { doctorId: doctorId || null, appointmentId: appointmentId || null, category: 'appointment', ttlMinutes: 60 });
 
     console.log('✓ Aviso de retraso guardado en la cola:', info.messageId);
     return info;
@@ -448,6 +452,8 @@ export async function sendDelayNotification({
 
 // Enviar notificación de rechazo de cita
 export async function sendAppointmentRejectionEmail({
+  appointmentId,
+  doctorId,
   to,
   patientName,
   doctorName,
@@ -612,7 +618,7 @@ export async function sendAppointmentRejectionEmail({
       to: to,
       subject: `❌ Tu cita con ${doctorName} ha sido rechazada`,
       html: htmlContent
-    });
+    }, { doctorId: doctorId || null, appointmentId: appointmentId || null, category: 'appointment' });
 
     console.log('✓ Aviso de rechazo guardado en la cola:', info.messageId);
     return info;
@@ -722,6 +728,8 @@ export async function sendProfessionalApprovalEmail({
 
 // Enviar notificación de nuevo turno al doctor (para aprobar/rechazar)
 export async function sendNewAppointmentNotificationToDoctor({
+  appointmentId,
+  doctorId,
   to,
   doctorName,
   patientName,
@@ -805,15 +813,15 @@ export async function sendNewAppointmentNotificationToDoctor({
       </html>
     `;
 
-    const info = await transporter.sendMail({
+    const info = await enqueueEmail({
       from: getSender(),
       to: to,
       subject: `Nuevo turno pendiente: ${patientName}`,
       html: htmlContent
-    });
+    }, { doctorId: doctorId || null, appointmentId: appointmentId || null, category: 'appointment' });
 
     console.log('✓ Notificación enviada al profesional:', to);
-    return { sent: true, messageId: info.messageId };
+    return info;
   } catch (error) {
     console.error('❌ Error enviando email al profesional:', error.message);
     return { sent: false, error: error.message };
@@ -822,6 +830,8 @@ export async function sendNewAppointmentNotificationToDoctor({
 
 // Enviar recordatorio de cita (24hs antes)
 export async function sendAppointmentReminder({
+  appointmentId,
+  doctorId,
   to,
   patientName,
   doctorName,
@@ -877,14 +887,14 @@ export async function sendAppointmentReminder({
       </html>
     `;
 
-    const info = await transporter.sendMail({
+    const info = await enqueueEmail({
       from: getSender(),
       to: to,
       subject: `Recordatorio: Tu turno con ${doctorName} es mañana`,
       html: htmlContent
-    });
+    }, { doctorId: doctorId || null, appointmentId: appointmentId || null, category: 'reminder' });
 
-    return { sent: true, messageId: info.messageId };
+    return info;
   } catch (error) {
     console.error('❌ Error enviando recordatorio:', error.message);
     return { sent: false, error: error.message };
@@ -1398,7 +1408,7 @@ export async function sendDoctorBirthdayGreetingEmail({
 export async function sendPlanRequestEmailToAdmin(details) {
   const notifications = buildPlanRequestNotifications(details, { from: getSender() });
   const jobs = [];
-  for (const mail of notifications) jobs.push(await enqueueEmail(mail, { ttlMinutes: 7 * 24 * 60 }));
+  for (const mail of notifications) jobs.push(await enqueueEmail(mail, { ttlMinutes: 7 * 24 * 60, doctorId: details.doctorId || null, category: 'plan_request' }));
   return { queued: true, jobs };
 }
 

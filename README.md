@@ -34,7 +34,7 @@ Sistema web moderno para la gestión eficiente de turnos médicos, permitiendo q
 - Autenticación JWT
 - Encriptación de datos sensibles
 - Rate limiting
-- HIPAA compliance
+- Acceso a datos clínicos restringido por profesional
 
 ## 🔧 Requisitos Previos
 
@@ -143,8 +143,8 @@ ConsultorioMedico/
 - ✅ Contraseñas hasheadas (bcrypt)
 - ✅ Validación de entrada
 - ✅ Rate limiting
-- ✅ HIPAA compliance
-- ✅ Backups encriptados
+- Controles de acceso por rol; cumplimiento normativo sujeto a evaluación
+- Herramientas de respaldo cifrado y prueba de restauración: ver [MEJORAS_OPERATIVAS.md](MEJORAS_OPERATIVAS.md)
 
 ## 📝 Licencia
 

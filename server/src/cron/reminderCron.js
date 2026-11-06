@@ -97,7 +97,7 @@ export const initReminderCron = () => {
       
       const result = await query(`
         SELECT 
-          a.id, 
+          a.id, a.doctor_id,
           a.appointment_date, 
           a.appointment_time, 
           p.name as patient_name, 
@@ -123,6 +123,8 @@ export const initReminderCron = () => {
           console.log(`📧 Enviando recordatorio a ${appointment.patient_email} para el turno con ${appointment.doctor_name}`);
           
           const emailSent = await sendAppointmentReminder({
+            appointmentId: appointment.id,
+            doctorId: appointment.doctor_id,
             to: appointment.patient_email,
             patientName: appointment.patient_name,
             doctorName: appointment.doctor_name,
@@ -132,9 +134,9 @@ export const initReminderCron = () => {
             clinicAddress: appointment.clinic_address
           });
 
-          if (emailSent.sent) {
+          if (emailSent.sent || emailSent.queued) {
             await query('UPDATE appointments SET reminder_sent = true WHERE id = $1', [appointment.id]);
-            console.log(`✓ Recordatorio enviado y marcado para el turno ${appointment.id}`);
+            console.log(`✓ Recordatorio guardado en cola para el turno ${appointment.id}`);
           }
         } catch (innerError) {
           console.error(`❌ Error procesando recordatorio para turno ${appointment.id}:`, innerError.message);

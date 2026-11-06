@@ -239,6 +239,9 @@ export const appointmentAPI = {
     return response.data;
   },
 
+  getRescheduleSlots: async (token, date) => (await axios.get(`${API_BASE_URL}/api/appointments/public/${encodeURIComponent(token)}/reschedule-slots/${date}`)).data,
+  reschedulePublic: async (token, date, time) => (await axios.post(`${API_BASE_URL}/api/appointments/public/${encodeURIComponent(token)}/reschedule`, { date, time })).data,
+
   cancelPublic: async (token) => {
     // Esta llamada no requiere autenticación - permite al paciente cancelar su turno
     const response = await axios.post(`${API_BASE_URL}/api/appointments/public/${token}/cancel`);

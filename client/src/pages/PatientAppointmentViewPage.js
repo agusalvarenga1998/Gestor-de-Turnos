@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { appointmentAPI } from '../services/api';
 import Icon from '../components/Icon';
 import styles from './PatientAppointmentViewPage.module.css';
+import { appointmentStatusInfo, appointmentPaymentInfo } from '../utils/appointmentState';
 
 
 export default function PatientAppointmentViewPage() {
@@ -14,6 +15,46 @@ export default function PatientAppointmentViewPage() {
   const [error, setError] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [hasAttemptedAutoVerify, setHasAttemptedAutoVerify] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [newDate, setNewDate] = useState('');
+  const [newTime, setNewTime] = useState('');
+  const [rescheduleSlots, setRescheduleSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [rescheduleError, setRescheduleError] = useState('');
+  const [rescheduleNotice, setRescheduleNotice] = useState('');
+
+  useEffect(() => {
+    if (!rescheduleOpen || !newDate) return;
+    let active = true;
+    setSlotsLoading(true);
+    setNewTime('');
+    setRescheduleSlots([]);
+    setRescheduleError('');
+    appointmentAPI.getRescheduleSlots(appointmentCode, newDate).then(response => {
+      if (active) setRescheduleSlots(response.slots || []);
+    }).catch(err => {
+      if (active) setRescheduleError(err.response?.data?.message || 'No pudimos consultar horarios. Elegí otra fecha o volvé a intentar.');
+    }).finally(() => { if (active) setSlotsLoading(false); });
+    return () => { active = false; };
+  }, [appointmentCode, rescheduleOpen, newDate]);
+
+  const handleReschedule = async event => {
+    event.preventDefault();
+    if (rescheduling || !newTime) return;
+    setRescheduling(true);
+    setRescheduleError('');
+    try {
+      const response = await appointmentAPI.reschedulePublic(appointmentCode, newDate, newTime);
+      setRescheduleNotice(response.message);
+      setRescheduleOpen(false);
+      await fetchAppointment();
+    } catch (err) {
+      setRescheduleError(err.response?.data?.message || 'No pudimos confirmar el cambio por un problema de conexión. Actualizá tu turno antes de volver a intentar.');
+      setNewTime('');
+    } finally { setRescheduling(false); }
+  };
 
   // Intentar confirmar automáticamente si la cita está en espera (ideal al volver de MP)
   useEffect(() => {
@@ -29,15 +70,15 @@ export default function PatientAppointmentViewPage() {
       const response = { data: await appointmentAPI.verifyPublicPayment(appointment.id) };
       
       if (response.data.success) {
-        if (!paymentId) alert('Pago recibido. El profesional confirmará tu turno.');
+        setPaymentMessage(response.data.message || 'Estado del pago actualizado.');
         fetchAppointment();
       } else {
-        if (!paymentId) alert(response.data.message || 'El pago aún registra como pendiente. Intenta nuevamente en unos segundos.');
+        setPaymentMessage(response.data.message || 'El pago todavía no está acreditado. Podés verificarlo nuevamente en unos segundos.');
         fetchAppointment();
       }
     } catch (err) {
       console.error('Error contactando a MP para verificar pago:', err);
-      if (!paymentId) alert('Hubo un problema de conexión al verificar; aguarda un instante y presiona el botón nuevamente.');
+      setPaymentMessage('No pudimos verificar el pago por un problema de conexión. Volvé a intentar.');
       fetchAppointment();
     }
   };
@@ -161,7 +202,7 @@ export default function PatientAppointmentViewPage() {
               <span className={`material-symbols-outlined ${styles.logoIcon}`}>hub</span>
               <div className={styles.statusGroup}>
                 <div className={`${styles.badge} ${styles['badge' + appointment.status.toUpperCase()]}`}>
-                  {{scheduled:'CONFIRMADO',pending:'ESPERANDO CONFIRMACIÓN',pending_payment:'PAGO PENDIENTE',completed:'FINALIZADO',cancelled:'CANCELADO',rejected:'NO ACEPTADO',absent:'AUSENTE',expired:'VENCIDO'}[appointment.status] || 'EN REVISIÓN'}
+                  {appointmentStatusInfo(appointment, { patient: true }).label}
                 </div>
                 <div className={styles.shortCode}>
                   Enlace privado de tu turno
@@ -171,10 +212,11 @@ export default function PatientAppointmentViewPage() {
             
             <div className={styles.statusAnnouncement}>
               {appointment.status === 'scheduled' && <h1>Tu cita está lista</h1>}
-              {appointment.status === 'pending_payment' && <h1 style={{ color: '#f59e0b' }}>Pago en Proceso</h1>}
+              {appointment.status === 'pending_payment' && <h1 style={{ color: '#f59e0b' }}>Pago pendiente de acreditación</h1>}
               {appointment.status === 'pending' && <h1>Solicitud recibida</h1>}
               {appointment.status === 'completed' && <h1>Cita Concluida</h1>}
               {appointment.status === 'cancelled' && <h1>Cita Cancelada</h1>}
+              {appointment.status === 'rejected' && <h1>Solicitud no aceptada</h1>}
               {appointment.status === 'absent' && <h1 style={{ color: '#ea580c' }}>Ausente / No asististe</h1>}
               {appointment.status === 'expired' && <h1 style={{ color: '#64748b' }}>Solicitud Vencida (Sin respuesta)</h1>}
               {isToday && appointment.status === 'scheduled' && (
@@ -184,6 +226,12 @@ export default function PatientAppointmentViewPage() {
           </div>
 
           <div className={styles.ticketBody}>
+            <section aria-label="Estado del pago" style={{ marginBottom: 20 }}>
+              <strong>{appointmentPaymentInfo(appointment).label}</strong>
+              {appointment.status === 'pending' && <p>{appointmentPaymentInfo(appointment).received ? 'Recibimos tu pago. El turno todavía necesita la confirmación del profesional.' : 'Tu solicitud fue recibida. Esperá la confirmación del profesional antes de asistir.'}</p>}
+              {['cancelled', 'rejected'].includes(appointment.status) && appointmentPaymentInfo(appointment).received && <p>El pago registrado no implica una devolución automática. Contactá al profesional para revisar tu caso.</p>}
+              {paymentMessage && <p role="status">{paymentMessage}</p>}
+            </section>
             {/* Aviso de Pago Pendiente */}
             {appointment.status === 'pending_payment' && (
               <div className={styles.paymentPendingCard}>
@@ -369,6 +417,25 @@ export default function PatientAppointmentViewPage() {
           </div>
 
           <div className={styles.ticketActions}>
+            {rescheduleNotice && <p role="status">{rescheduleNotice}</p>}
+            {['scheduled', 'pending'].includes(appointment.status) && (
+              <button className={styles.btnPrimary} onClick={() => { setRescheduleOpen(open => !open); setRescheduleError(''); }} disabled={rescheduling}>Cambiar fecha y horario</button>
+            )}
+            {rescheduleOpen && <form onSubmit={handleReschedule} style={{ width: '100%', display: 'grid', gap: 12 }}>
+              <h2>Reprogramar mi turno</h2>
+              <p>Necesitás al menos 24 horas de anticipación para el turno actual y el nuevo. Se conservan el profesional, servicio, pagos y estado de confirmación. Al confirmar se libera el horario anterior.</p>
+              <label htmlFor="reschedule-date">Nueva fecha</label>
+              <input id="reschedule-date" type="date" required value={newDate} min={new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(Date.now() + 86400000))} onChange={event => { setNewTime(''); setNewDate(event.target.value); }} disabled={rescheduling} />
+              <label htmlFor="reschedule-time">Horario disponible (hora de Argentina)</label>
+              <select id="reschedule-time" required value={newTime} onChange={event => setNewTime(event.target.value)} disabled={rescheduling || slotsLoading || !newDate}>
+                <option value="">{slotsLoading ? 'Consultando horarios…' : 'Elegí un horario'}</option>
+                {rescheduleSlots.map(time => <option key={time} value={time}>{time.slice(0, 5)}</option>)}
+              </select>
+              {newDate && !slotsLoading && !rescheduleSlots.length && !rescheduleError && <p>No hay horarios disponibles para esa fecha.</p>}
+              {rescheduleError && <p role="alert">{rescheduleError}</p>}
+              <button type="submit" className={styles.btnPrimary} disabled={rescheduling || slotsLoading || !newTime}>{rescheduling ? 'Guardando cambio…' : 'Confirmar cambio de horario'}</button>
+              <button type="button" className={styles.btnSecondary} disabled={rescheduling} onClick={() => setRescheduleOpen(false)}>Mantener mi turno actual</button>
+            </form>}
             <button className={styles.btnPrimary} onClick={fetchAppointment}>
               <Icon name="refresh" size={18} /> Actualizar Turno
             </button>

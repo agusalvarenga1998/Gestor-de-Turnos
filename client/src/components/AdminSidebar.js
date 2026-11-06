@@ -92,6 +92,7 @@ export default function AdminSidebar() {
       icon: '💳',
       path: '/admin/subscriptions'
     },
+    { label: 'Correos y respaldos', icon: '🛠️', path: '/admin/operations' },
     {
       label: 'Solicitudes de activación',
       icon: '📩',
