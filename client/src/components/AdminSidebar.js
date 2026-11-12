@@ -70,6 +70,7 @@ export default function AdminSidebar() {
   };
 
   const menuItems = [
+    { label: 'WhatsApp', icon: '💬', path: '/admin/whatsapp' },
     {
       label: 'Dashboard',
       icon: '🏠',

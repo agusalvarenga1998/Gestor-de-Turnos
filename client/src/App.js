@@ -54,6 +54,7 @@ import AdminReportsPage from './pages/AdminReportsPage';
 import AdminSupportTicketsPage from './pages/AdminSupportTicketsPage';
 import AdminActivityPage from './pages/AdminActivityPage';
 import AdminSellersPage from './pages/AdminSellersPage';
+import AdminWhatsAppPage from './pages/AdminWhatsAppPage';
 
 // Páginas - Vendedor
 import SellerLoginPage from './pages/SellerLoginPage';
@@ -193,6 +194,7 @@ function AppContent() {
 
       {/* Rutas del Admin */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route path="/admin/whatsapp" element={<ProtectedAdminRoute><AdminWhatsAppPage /></ProtectedAdminRoute>} />
       <Route
         path="/admin/dashboard"
         element={

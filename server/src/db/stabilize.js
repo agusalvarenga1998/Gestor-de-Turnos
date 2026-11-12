@@ -2,6 +2,7 @@ import { stabilizeLedger } from './stabilizeLedger.js';
 import { migrateNotificationOutbox } from './notificationOutbox.js';
 import { migrateReceptionAccounts } from './receptionAccounts.js';
 import { migrateOperations } from './operations.js';
+import { migrateWhatsAppConnection } from './whatsappConnection.js';
 import 'dotenv/config';
 import { pathToFileURL } from 'node:url';
 import pool, { transaction } from './config.js';
@@ -241,6 +242,7 @@ export async function stabilizeSchema() {
   await migrateNotificationOutbox();
   await migrateReceptionAccounts();
   await migrateOperations();
+  await migrateWhatsAppConnection();
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -28,6 +28,9 @@ import queueRoutes from './routes/queue.js';
 import sellerRoutes from './routes/seller.js';
 import receptionRoutes from './routes/reception.js';
 import operationsRoutes from './routes/operations.js';
+import { createWhatsAppConnectionRouter } from './routes/whatsappConnection.js';
+import { whatsappConnectionRepository } from './db/whatsappConnection.js';
+import { verifyAdmin } from './middleware/adminAuth.js';
 import path from 'path';
 import { uploadsDir } from './utils/paths.js';
 import { query } from './db/config.js';
@@ -164,6 +167,10 @@ app.use('/api/availability', availabilityRoutes);
 app.use('/api/google', googleCalendarRoutes);
 app.use('/api/insurance', insuranceRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/whatsapp-connection', createWhatsAppConnectionRouter({
+  verifyAdmin,repository:whatsappConnectionRepository,
+  config:{appSecret:process.env.WHATSAPP_META_APP_SECRET,encryptionKey:process.env.WHATSAPP_CREDENTIALS_KEY}
+}));
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/patient-records', patientRecordRoutes);
